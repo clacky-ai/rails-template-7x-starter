@@ -20,10 +20,4 @@ test:
 
 production:
   adapter:  postgresql
-  host:     localhost
-  encoding: unicode
-  database: myapp_production
-  pool:     16
-  username: postgres
-  password: postgres
-  template: template0
+  url:      <%= ENV['DATABASE_URL'] %>
