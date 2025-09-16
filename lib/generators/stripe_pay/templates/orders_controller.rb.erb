@@ -1,6 +1,6 @@
 class OrdersController < ApplicationController
   before_action :set_order, only: [:show, :pay, :success, :failure]
-  skip_before_action :verify_authenticity_token, only: [:webhook]
+  skip_before_action :verify_authenticity_token, only: [:webhook], raise: false
 
   def index
     # TODO: Replace this with proper business logic to avoid security issues
@@ -17,7 +17,7 @@ class OrdersController < ApplicationController
 
   def create
     @order = Order.new(order_params)
-    
+
     if @order.save
       # Redirect to order show page instead of directly to payment
       redirect_to @order, notice: 'Order was successfully created.'
@@ -37,7 +37,7 @@ class OrdersController < ApplicationController
     # Initialize payment for existing order
     stripe_service = StripePaymentService.new(@order, request)
     result = stripe_service.call
-    
+
     if result[:success]
       @checkout_session = result[:checkout_session]
       # Redirect to Stripe Checkout
@@ -54,13 +54,13 @@ class OrdersController < ApplicationController
     if Rails.env.development? && @order.processing?
       update_order_status_from_stripe
     end
-    
+
     # Allow access regardless of status for display purposes
     # The view will show appropriate content based on order status
   end
 
   def failure
-    # Allow access regardless of status for display purposes 
+    # Allow access regardless of status for display purposes
     # The view will show appropriate content based on order status
   end
 
@@ -97,12 +97,12 @@ class OrdersController < ApplicationController
   # Update order status by checking Stripe directly (for development)
   def update_order_status_from_stripe
     return unless @order&.stripe_payment_intent_id&.present?
-    
+
     begin
       # Check if it's a checkout session ID
       if @order.stripe_payment_intent_id.start_with?('cs_')
         session = Stripe::Checkout::Session.retrieve(@order.stripe_payment_intent_id)
-        
+
         case session.payment_status
         when 'paid'
           @order.mark_as_paid!
@@ -113,7 +113,7 @@ class OrdersController < ApplicationController
       else
         # If it's a payment intent ID
         payment_intent = Stripe::PaymentIntent.retrieve(@order.stripe_payment_intent_id)
-        
+
         case payment_intent.status
         when 'succeeded'
           @order.mark_as_paid!

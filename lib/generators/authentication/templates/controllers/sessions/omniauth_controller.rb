@@ -1,5 +1,5 @@
 class Sessions::OmniauthController < ApplicationController
-  skip_before_action :verify_authenticity_token
+  skip_before_action :verify_authenticity_token, raise: false
 
   def create
     @user = User.from_omniauth(omniauth)
@@ -22,7 +22,7 @@ class Sessions::OmniauthController < ApplicationController
 
   private
 
-    def omniauth
-      request.env["omniauth.auth"]
-    end
+  def omniauth
+    request.env["omniauth.auth"]
+  end
 end
