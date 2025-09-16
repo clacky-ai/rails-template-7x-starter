@@ -2,12 +2,14 @@ module FriendlyErrorHandlingConcern
   extend ActiveSupport::Concern
 
   included do
-    rescue_from ActionView::SyntaxErrorInTemplate, with: :handle_friendly_error
-    rescue_from ActiveRecord::StatementInvalid, with: :handle_friendly_error
-    rescue_from ActiveRecord::RecordNotFound, with: :handle_friendly_error
-    rescue_from StandardError, with: :handle_friendly_error
- 
-    before_action :check_pending_migrations
+    if Rails.env.development?
+      rescue_from ActionView::SyntaxErrorInTemplate, with: :handle_friendly_error
+      rescue_from ActiveRecord::StatementInvalid, with: :handle_friendly_error
+      rescue_from ActiveRecord::RecordNotFound, with: :handle_friendly_error
+      rescue_from StandardError, with: :handle_friendly_error
+
+      before_action :check_pending_migrations
+    end
   end
 
   private

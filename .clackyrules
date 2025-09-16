@@ -71,7 +71,9 @@ Use `curl -X POST localhost:3000/sign_in -H "Content-Type: application/json" -d 
 
 Do not use `rails console`, use `rails runner` instead if you want insert or check db data.
 
-Temporary files needed during development (such as one-off test code) should be written in the `tmp` directory.
+Use `bundle exec rspec spec/requests/xxx_spec.rb --format documentation` for single test.
+
+Temporary files should be written in the `tmp` directory.
 
 
 ### Some files never edit
