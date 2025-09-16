@@ -1,10 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* Do not adjust these styles */
-.avatar > div {
-  display: flex;
-}
+@import 'base'
 
 /* customize your own style here */
+

@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Do not adjust styles here */
+/* Daisy avatar styling */
+.avatar > div {
+  aspect-ratio: 1 / 1;
+}
+
+.avatar > .placeholder > div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1 / 1;
+}
+
+/* Field with errors styling */
+.field_with_errors {
+  @apply inline-block w-full;
+}
+
+.field_with_errors input,
+.field_with_errors textarea,
+.field_with_errors select {
+  @apply border-error;
+}

@@ -1,9 +1,6 @@
 <% if model.errors.any? %>
-  <div class="alert alert-error">
-    <svg class="w-6 h-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-    </svg>
-    <div>
+  <div class="alert alert-error flex justify-between items-start" x-data="{ show: true }" x-show="show">
+    <div class="flex-1 pr-4">
       <h3 class="font-medium">
         <%= pluralize(model.errors.count, "error") %> prohibited this <%= model.class.model_name.human.downcase %> from being saved:
       </h3>
@@ -13,5 +10,10 @@
         <% end %>
       </ul>
     </div>
+    <button type="button" class="btn btn-sm btn-ghost ml-auto flex-shrink-0" @click="show = false">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
   </div>
 <% end %>

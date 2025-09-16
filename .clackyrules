@@ -41,7 +41,7 @@ Do not generate any fake data that should originally be in the database for user
 
 Do not write any business logic in the admin backend that should only be for website management and maintenance.
 
-Generate images using this placeholder website: https://images.unsplash.com/ and simultaneously verify accessibility with `curl` if you need static assets.
+Generate images using this placeholder website: https://images.unsplash.com/ and simultaneously verify accessibility with `curl` if you need static assets or activestorage seed data.
 
 Use `rails generate service xxx` to generate a service file, not generate by yourself.
 
@@ -57,7 +57,7 @@ Do not use `to_param` in model, no need friendly url.
 
 ALWAYS prefer daisyUI native components(tab/modal/dropdown etc) over custom JavaScript solutions.
 
-Every form should include error messages using the shared partial. Add `<%= render 'shared/error_messages', model: @your_model %>` at the beginning of every form for consistent error display.
+Every form should include error messages using the shared partial. Add `<%= render 'shared/error_messages', model: @your_model %>` at the beginning of every form for consistent error display. Never write nested form.
 
 ## Testing Requirements
 
@@ -65,7 +65,7 @@ Keep `rake test` all passed Before delivery feature to users.
 
 Double check `rake test` all passed at last when you finish the task.
 
-Use `curl -X POST localhost:3000/sign_in -H "Content-Type: application/json" -d '{"email":"user@example.com","password":"pass"}'` then use returned session_token in `Authorization: Bearer <token>` header.
+Use `curl -X POST localhost:3000/sign_in -H "Content-Type: application/json" -d '{"email":"user@example.com","password":"pass"}'` then use returned session_token in `Authorization: Bearer <token>` header. Use `rails runner "User.create(xxx)"` if need create user first.
 
 Do not use `rails console`, use `rails runner` instead if you want insert or check db data.
 
