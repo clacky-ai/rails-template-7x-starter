@@ -1,0 +1,9 @@
+Description:
+    Generates a home controller with index action(no views by default, write your own), adds root route, and creates request spec
+
+Example:
+    bin/rails generate home
+
+    This will create:
+        Controller: app/controllers/home_controller.rb
+        Request spec: spec/requests/home_spec.rb

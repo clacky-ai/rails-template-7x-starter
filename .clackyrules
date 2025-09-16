@@ -15,15 +15,15 @@ RSpec
 
 Do not add or remove any components and avoid upgrading or downgrading components.
 
+
 ## When you should restart project
 
 In most cases, restarting project is unnecessary because Rails automatically hot-reloads code changes. However, changes to files within the `config/` directory (except `config/routes.rb`), including updates to configurations like `config/application.yml`, explicitly require a project restart.
 
-## Initialize project tips
 
-During the system initialization process, you should prioritize creating a beautiful home page that does not require login. Once completed, directly run the project
+### Some important tips when Developing home page/user authentication/payment/LLM-calling(AI APP) system
 
-### Some import tips when Developing user authentication/payment/LLM-calling(AI APP) system
+Should prioritize creating a beautiful no-login-required home page. Use `rails g home` to generate it first. Once completed, run the project directly.
 
 **IMPORTANT:** Do not recreate administrator functionality in User model. Administrator system already exists.
 
@@ -34,6 +34,7 @@ when developing order/payment system, don't write it yourself. Use `rails genera
 **IMPORTANT for stripe_pay:** Before running `rails generate stripe_pay`, ensure NO Order model exists. The generator will create the Order model, migration, and all related files. If Order model already exists, remove it first to avoid conflicts.
 
 Should only need to support Stripe payments by default.
+
 
 ### Some important tips when coding
 
@@ -59,6 +60,7 @@ ALWAYS prefer daisyUI native components(tab/modal/dropdown etc) over custom Java
 
 Every form should include error messages using the shared partial. Add `<%= render 'shared/error_messages', model: @your_model %>` at the beginning of every form for consistent error display. Never write nested form.
 
+
 ## Testing Requirements
 
 Keep `rake test` all passed Before delivery feature to users.
@@ -70,6 +72,7 @@ Use `curl -X POST localhost:3000/sign_in -H "Content-Type: application/json" -d 
 Do not use `rails console`, use `rails runner` instead if you want insert or check db data.
 
 Temporary files needed during development (such as one-off test code) should be written in the `tmp` directory.
+
 
 ### Some files never edit
 

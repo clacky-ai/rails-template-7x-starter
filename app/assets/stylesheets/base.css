@@ -6,6 +6,7 @@
 /* Daisy avatar styling */
 .avatar > div {
   aspect-ratio: 1 / 1;
+  display: flex;
 }
 
 .avatar > .placeholder > div {
