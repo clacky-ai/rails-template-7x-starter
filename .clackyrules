@@ -17,16 +17,16 @@ Do not add or remove any components and avoid upgrading or downgrading component
 
 Use simple, clear language and avoid technical jargon.
 
-## What time you should start/stop project
+## What time you should run/stop project
+
+Always keep the project running status.
 
 Restarting project is unnecessary because Rails automatically hot-reloads code changes in most cases. Changes to files within the `config/` directory (except `config/routes.rb`), explicitly require a project restart.
-
-After complete home page, Start project ASAP.
 
 
 ### Some important tips when Developing home page/user authentication/payment/LLM-calling(AI APP) system
 
-Should prioritize creating a beautiful no-login-required home page. Use `rails g home` to generate it first.
+Should prioritize creating a beautiful no-login-required home page. Use `rails g home` to generate it first, You should create `home/index.html.erb`, then call `run_project` tools immediately to let user see the effect ASAP.
 
 **IMPORTANT:** Do not recreate administrator functionality in User model. Administrator system already exists.
 
@@ -70,7 +70,7 @@ Keep `rake test` all passed Before delivery feature to users.
 
 Double check `rake test` all passed at last when you finish the task.
 
-Use `curl -X POST localhost:3000/sign_in -H "Content-Type: application/json" -d '{"email":"user@example.com","password":"pass"}'` then use returned session_token in `Authorization: Bearer <token>` header. Use `rails runner "User.create(xxx)"` if need create user first.
+Use `curl -X POST localhost:3000/sign_in -H "Content-Type: application/json" -d '{"email":"user@example.com","password":"pass"}'` return session_token then `curl -H "Authorization: Bearer <session_token>" -s xxx` for page test. Use `rails runner "User.create(xxx)"` if need create user first.
 
 Do not use `rails console`, use `rails runner` instead if you want insert or check db data.
 
