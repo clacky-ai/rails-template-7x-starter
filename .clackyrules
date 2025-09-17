@@ -52,15 +52,15 @@ Use `rails generate service xxx` to generate a service file, not generate by you
 
 When installing libraries, try to specify the version you are most familiar with (e.g., npm, bundle) instead of the latest version.
 
-Always keep UI responsiveness in mind when coding for user interfaces.
-
 Use `rails generate admin_crud xxx` (where xxx is your model name that you created before) to create the initial CRUD when developing the admin management page
 
 Use `rails generate crud xxx [action1] [action2] [--auth]` (where xxx is your model name that you created before, action is optional(all actions by default), --auth means need authenticate_user!) to create the initial CRUD when developing the user-side functionality
 
 Do not use `to_param` in model, no need friendly url.
 
-ALWAYS prefer daisyUI native components(tab/modal/dropdown etc) over custom JavaScript solutions.
+Always keep UI responsiveness in mind when coding for user interfaces.
+
+ALWAYS prefer Tailwind CSS v3 syntax for implementing UI styles, Alpine.js for UI components and JavaScript functionality, and minimize writing native JavaScript as much as possible.
 
 Every form should include error messages using the shared partial. Add `<%= render 'shared/error_messages', model: @your_model %>` at the beginning of every form for consistent error display. Never write nested form.
 
