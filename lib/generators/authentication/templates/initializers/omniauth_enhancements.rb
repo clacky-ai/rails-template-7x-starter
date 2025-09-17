@@ -1,0 +1,108 @@
+# OmniAuth Builder Enhancement
+# Extends provider method via monkey patch to automatically handle OAuth configuration logic
+
+module OmniAuth
+  class Builder
+    # Save the original provider method
+    alias_method :original_provider, :provider
+
+    # Override provider method to add automatic OAuth configuration functionality
+    def provider(klass, *args, **opts, &block)
+      # Check if it's a supported OAuth provider
+      if oauth_provider?(klass)
+        # Enhance OAuth provider configuration
+        enhance_oauth_provider(klass, args, opts, &block)
+      else
+        # Use the original provider method
+        original_provider(klass, *args, **opts, &block)
+      end
+    end
+
+    private
+
+    # Check if it's a supported OAuth provider
+    def oauth_provider?(klass)
+      oauth_providers = [:google_oauth2, :facebook, :twitter2, :github]
+      oauth_providers.include?(klass.to_sym)
+    end
+
+    # Enhance OAuth provider configuration
+    def enhance_oauth_provider(klass, args, user_opts = {}, &block)
+      # Apply Clacky Auth fallback logic
+      client_id, client_secret = apply_clacky_auth_fallback(args[0], args[1])
+
+      # Build final options
+      enhanced_opts = build_provider_options(klass, user_opts, client_id)
+
+      # Call original provider method
+      original_provider(klass, client_id, client_secret, **enhanced_opts, &block)
+    end
+
+    # Apply Clacky Auth fallback logic
+    def apply_clacky_auth_fallback(client_id, client_secret)
+      clacky_auth_client_id = ENV['CLACKY_AUTH_CLIENT_ID']
+      clacky_auth_client_secret = ENV['CLACKY_AUTH_CLIENT_SECRET']
+
+      # Fallback to Clacky Auth if environment variables are empty
+      final_client_id = client_id.presence || clacky_auth_client_id
+      final_client_secret = client_secret.presence || clacky_auth_client_secret
+
+      [final_client_id, final_client_secret]
+    end
+
+    # Build provider options
+    def build_provider_options(klass, base_opts, client_id)
+      opts = base_opts.dup
+
+      # Check if using Clacky Auth
+      if using_clacky_auth?(client_id)
+        opts = opts.merge(clacky_auth_options(klass, client_id))
+      end
+
+      opts
+    end
+
+    # Check if using Clacky Auth
+    def using_clacky_auth?(client_id)
+      clacky_auth_client_id = ENV['CLACKY_AUTH_CLIENT_ID']
+      client_id == clacky_auth_client_id
+    end
+
+    # Get Clacky Auth options configuration
+    def clacky_auth_options(klass, client_id)
+      clacky_auth_domain = ENV['CLACKY_AUTH_DOMAIN']
+      provider_path = provider_oauth_path(klass)
+
+      opts = {
+        client_options: {
+          site: clacky_auth_domain,
+          authorize_url: "#{clacky_auth_domain}/oauth2/#{provider_path}/auth",
+          token_url: "#{clacky_auth_domain}/oauth2/#{provider_path}/token"
+        }
+      }
+
+      # Special handling for Google: skip JWT verification
+      if klass.to_sym == :google_oauth2
+        opts[:skip_jwt] = true
+      end
+
+      opts
+    end
+
+    # Get provider path in Clacky Auth
+    def provider_oauth_path(klass)
+      case klass.to_sym
+      when :google_oauth2
+        'google'
+      when :twitter2
+        'x'
+      when :facebook
+        'facebook'
+      when :github
+        'github'
+      else
+        klass.to_s
+      end
+    end
+  end
+end
