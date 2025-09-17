@@ -4,6 +4,7 @@ class CreateAdministrators < ActiveRecord::Migration[7.2]
       t.string :name, null: false
       t.string :password_digest
       t.string :role, null: false
+      t.boolean :first_login, default: true
 
       t.timestamps
     end

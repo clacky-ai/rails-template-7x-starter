@@ -1,0 +1,119 @@
+<% content_for :title, "Operation Log Details" %>
+
+<div class="space-y-6">
+  <!-- Page Title and Actions -->
+  <div class="flex items-center justify-between">
+    <div class="flex items-center space-x-4">
+      <%= link_to admin_admin_oplogs_path, class: "btn btn-ghost btn-sm" do %>
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+        </svg>
+        Back to Operation Logs
+      <% end %>
+      <h1 class="text-3xl font-bold">Operation Log Details</h1>
+    </div>
+
+    <div class="badge badge-lg <%= action_badge_class(@admin_oplog.action) %>">
+      <%= @admin_oplog.action_label %>
+    </div>
+  </div>
+
+  <!-- Admin oplog Content -->
+  <div class="card bg-base-100 shadow-xl">
+    <div class="card-body">
+      <!-- Main Information -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Left Column -->
+        <div class="space-y-4">
+          <!-- Administrator -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Administrator</span>
+            </label>
+            <div class="flex items-center space-x-3">
+              <div class="avatar placeholder">
+                <div class="bg-neutral text-neutral-content rounded-full w-10">
+                  <span class="text-sm"><%= @admin_oplog.administrator&.name&.first&.upcase %></span>
+                </div>
+              </div>
+              <div>
+                <div class="font-semibold"><%= @admin_oplog.administrator&.name %></div>
+                <div class="text-sm opacity-60"><%= @admin_oplog.administrator&.role_name %></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Resource -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Resource</span>
+            </label>
+            <% if @admin_oplog.resource_type.present? %>
+              <div>
+                <div class="font-medium"><%= @admin_oplog.resource_type %></div>
+                <div class="text-sm opacity-70"><%= @admin_oplog.resource_name %></div>
+              </div>
+            <% else %>
+              <span class="text-gray-500">No specific resource</span>
+            <% end %>
+          </div>
+
+          <!-- Time -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Time</span>
+            </label>
+            <div class="font-mono text-sm">
+              <%= @admin_oplog.created_at.strftime("%Y-%m-%d %H:%M:%S %Z") %>
+            </div>
+            <div class="text-xs opacity-60">
+              <%= time_ago_in_words(@admin_oplog.created_at) %> ago
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="space-y-4">
+          <!-- IP Address -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">IP Address</span>
+            </label>
+            <div class="font-mono text-sm"><%= @admin_oplog.ip_address %></div>
+          </div>
+
+          <!-- User Agent -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Browser</span>
+            </label>
+            <div class="space-y-2">
+              <div class="font-medium"><%= @admin_oplog.short_user_agent %></div>
+              <details class="collapse collapse-arrow bg-base-200">
+                <summary class="collapse-title text-xs font-medium">Full User Agent</summary>
+                <div class="collapse-content">
+                  <div class="text-xs font-mono break-all">
+                    <%= @admin_oplog.user_agent %>
+                  </div>
+                </div>
+              </details>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Details Section -->
+      <% if @admin_oplog.details.present? %>
+        <div class="divider"></div>
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text font-semibold">Details</span>
+          </label>
+          <div class="mockup-code text-sm">
+            <pre><code><%= JSON.pretty_generate(JSON.parse(@admin_oplog.details)) rescue @admin_oplog.details %></code></pre>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

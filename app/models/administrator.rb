@@ -3,6 +3,8 @@ class Administrator < ApplicationRecord
   validates :role, presence: true, inclusion: { in: %w[admin super_admin] }
   has_secure_password
 
+  has_many :admin_oplogs, dependent: :destroy
+
   # Role constants
   ROLES = %w[admin super_admin].freeze
 

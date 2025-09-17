@@ -57,4 +57,22 @@ module ApplicationHelper
     # No theme parameter needed - we have custom views
     super(scope, **options.except(:theme))
   end
+
+  # Action badge class for operation logs
+  def action_badge_class(action)
+    case action
+    when 'login'
+      'badge-success'
+    when 'logout'
+      'badge-info'
+    when 'create'
+      'badge-primary'
+    when 'update'
+      'badge-warning'
+    when 'destroy'
+      'badge-error'
+    else
+      'badge-ghost'
+    end
+  end
 end

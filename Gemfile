@@ -15,6 +15,7 @@ gem "kaminari"
 gem "good_job", "~> 4.6"
 gem "rails-i18n", "~> 7.0.10"
 gem 'mini_magick', '~> 5.3', '>= 5.3.1'
+gem 'ostruct', '~> 0.6.3'
 
 group :development do
   gem "error_highlight", ">= 0.4.0", platforms: [ :ruby ]

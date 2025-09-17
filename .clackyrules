@@ -15,6 +15,7 @@ RSpec
 
 Do not add or remove any components and avoid upgrading or downgrading components.
 
+Use simple, clear language and avoid technical jargon.
 
 ## When you should restart project
 

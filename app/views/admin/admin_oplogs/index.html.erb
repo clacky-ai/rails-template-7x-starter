@@ -1,0 +1,129 @@
+<% content_for :title, "Operation Logs" %>
+
+<div class="space-y-6">
+  <!-- Page Title and Filters -->
+  <div class="flex items-center justify-between">
+    <h1 class="text-3xl font-bold">Operation Logs</h1>
+    <div class="text-sm text-gray-500">
+      Total: <%= @admin_oplogs.total_count rescue @admin_oplogs.count %> logs
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="card bg-base-100 shadow">
+    <div class="card-body p-4">
+      <%= form_tag admin_admin_oplogs_path, method: :get, local: true, class: "flex flex-wrap gap-4 items-end" do %>
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Action</span>
+          </label>
+          <%= select_tag :action_filter, options_for_select([['All Actions', '']] + @actions.map { |a| [a.humanize, a] }, params[:action_filter]),
+                        class: "select select-bordered select-sm" %>
+        </div>
+
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Administrator</span>
+          </label>
+          <%= select_tag :administrator_filter, options_from_collection_for_select([OpenStruct.new(id: '', name: 'All Administrators')] + @administrators, :id, :name, params[:administrator_filter]),
+                        class: "select select-bordered select-sm" %>
+        </div>
+
+        <div class="form-control">
+          <%= submit_tag "Filter", class: "btn btn-primary btn-sm" %>
+          <%= link_to "Clear", admin_admin_oplogs_path, class: "btn btn-ghost btn-sm" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Admin oplogs Table -->
+  <div class="card bg-base-100 shadow-xl">
+    <div class="card-body p-0">
+      <% if @admin_oplogs.any? %>
+        <div class="overflow-x-auto">
+          <table class="table table-zebra w-full">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Administrator</th>
+                <th>Action</th>
+                <th>Resource</th>
+                <th>IP Address</th>
+                <th>Browser</th>
+                <th class="text-center">Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @admin_oplogs.each do |admin_oplog| %>
+                <tr class="hover">
+                  <td class="text-sm">
+                    <div class="font-mono"><%= admin_oplog.created_at.strftime("%m-%d %H:%M") %></div>
+                    <div class="text-xs text-gray-500"><%= admin_oplog.created_at.strftime("%Y") %></div>
+                  </td>
+                  <td>
+                    <div class="flex items-center space-x-3">
+                      <div class="avatar placeholder">
+                        <div class="bg-neutral text-neutral-content rounded-full w-8">
+                          <span class="text-xs"><%= admin_oplog.administrator&.name&.first&.upcase %></span>
+                        </div>
+                      </div>
+                      <div>
+                        <div class="font-bold text-sm"><%= admin_oplog.administrator&.name %></div>
+                        <div class="text-xs opacity-50"><%= admin_oplog.administrator&.role_name %></div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="badge <%= action_badge_class(admin_oplog.action) %>">
+                      <%= admin_oplog.action_label %>
+                    </div>
+                  </td>
+                  <td>
+                    <% if admin_oplog.resource_type.present? %>
+                      <div class="text-sm font-medium"><%= admin_oplog.resource_type %></div>
+                      <div class="text-xs text-gray-500">
+                        <%= admin_oplog.resource_name %>
+                      </div>
+                    <% else %>
+                      <span class="text-gray-400">-</span>
+                    <% end %>
+                  </td>
+                  <td class="font-mono text-xs">
+                    <%= admin_oplog.ip_address %>
+                  </td>
+                  <td class="text-xs">
+                    <%= admin_oplog.short_user_agent %>
+                  </td>
+                  <td class="text-center">
+                    <%= link_to admin_admin_oplog_path(admin_oplog.id), class: "btn btn-sm btn-ghost" do %>
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                      </svg>
+                    <% end %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <div class="text-center py-12">
+          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          <h3 class="mt-2 text-sm font-medium text-gray-900">No operation logs</h3>
+          <p class="mt-1 text-sm text-gray-500">Operation logs will appear here as administrators perform actions.</p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <% if @admin_oplogs.respond_to?(:current_page) %>
+    <div class="flex justify-center">
+      <%= paginate @admin_oplogs %>
+    </div>
+  <% end %>
+</div>
