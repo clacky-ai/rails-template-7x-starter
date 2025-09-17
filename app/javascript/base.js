@@ -24,6 +24,16 @@ document.addEventListener('DOMContentLoaded', () => {
   disableRemoteForms.forEach(form => {
     form.removeAttribute('data-remote');
   });
+
+  const turboElements = document.querySelectorAll('[data-turbo-method], [data-turbo-confirm]');
+  turboElements.forEach(element => {
+    if (element.hasAttribute('data-turbo-method')) {
+      element.setAttribute('data-method', element.getAttribute('data-turbo-method'));
+    }
+    if (element.hasAttribute('data-turbo-confirm')) {
+      element.setAttribute('data-confirm', element.getAttribute('data-turbo-confirm'));
+    }
+  });
 });
 
 // Optional: Custom JavaScript for Tailwind-based UI

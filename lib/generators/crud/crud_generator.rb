@@ -13,7 +13,22 @@ class CrudGenerator < Rails::Generators::NamedBase
     end
   end
 
+  def check_controller_conflicts
+    return if options[:force_override]
+    
+    if protected_controller_names.include?(plural_name)
+      say "Error: Cannot generate CRUD for '#{plural_name}' as it conflicts with authentication system.", :red
+      say "The following controller names are protected:", :yellow
+      protected_controller_names.each { |name| say "  - #{name}", :yellow }
+      say "\nSolutions:", :blue
+      say "1. Choose a different model name to avoid conflicts", :blue
+      say "2. Use `rails generate controller xxx` instead", :blue
+      exit(1)
+    end
+  end
+
   def generate_controller
+    check_controller_conflicts
     template "controller.rb.erb", "app/controllers/#{plural_name}_controller.rb"
   end
 
@@ -59,6 +74,18 @@ class CrudGenerator < Rails::Generators::NamedBase
 
   def requires_authentication?
     options[:auth]
+  end
+
+  def protected_controller_names
+    %w[
+      sessions
+      registrations 
+      passwords
+      profiles
+      invitations
+      omniauth
+      orders
+    ]
   end
 
   def controller_actions
