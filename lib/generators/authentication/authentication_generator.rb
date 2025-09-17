@@ -226,8 +226,8 @@ class AuthenticationGenerator < Rails::Generators::Base
       gem 'omniauth-facebook'
     end
 
-    unless gemfile_content.include?('omniauth-twitter')
-      gem 'omniauth-twitter'
+    unless gemfile_content.include?('omniauth-twitter2')
+      gem 'omniauth-twitter2'
     end
 
     unless gemfile_content.include?('omniauth-github')
