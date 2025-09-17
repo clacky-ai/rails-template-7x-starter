@@ -17,14 +17,16 @@ Do not add or remove any components and avoid upgrading or downgrading component
 
 Use simple, clear language and avoid technical jargon.
 
-## When you should restart project
+## What time you should start/stop project
 
-In most cases, restarting project is unnecessary because Rails automatically hot-reloads code changes. However, changes to files within the `config/` directory (except `config/routes.rb`), including updates to configurations like `config/application.yml`, explicitly require a project restart.
+Restarting project is unnecessary because Rails automatically hot-reloads code changes in most cases. Changes to files within the `config/` directory (except `config/routes.rb`), explicitly require a project restart.
+
+After complete home page, Start project ASAP.
 
 
 ### Some important tips when Developing home page/user authentication/payment/LLM-calling(AI APP) system
 
-Should prioritize creating a beautiful no-login-required home page. Use `rails g home` to generate it first. Once completed, run the project directly.
+Should prioritize creating a beautiful no-login-required home page. Use `rails g home` to generate it first.
 
 **IMPORTANT:** Do not recreate administrator functionality in User model. Administrator system already exists.
 
