@@ -143,9 +143,9 @@ class StripePayGenerator < Rails::Generators::Base
 
         #{generated_comment}
         <li>
-          <%= link_to admin_orders_path,
-              class: "\#{'active' if current_path.include?('/admin/orders')}" do %>
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <%= link_to admin_orders_path, 
+              class: "flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors #{current_path.include?('/admin/orders') ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : ''}" do %>
+            <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/>
             </svg>
             Orders

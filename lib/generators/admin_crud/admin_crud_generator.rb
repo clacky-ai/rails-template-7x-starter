@@ -23,6 +23,10 @@ class AdminCrudGenerator < Rails::Generators::NamedBase
     template "views/edit.html.erb", "app/views/admin/#{plural_name}/edit.html.erb"
   end
 
+  def generate_request_spec
+    template "request_spec.rb.erb", "spec/requests/admin_#{plural_name}_spec.rb"
+  end
+
   def add_routes
     route "resources :#{plural_name}", namespace: :admin
   end
@@ -141,8 +145,27 @@ class AdminCrudGenerator < Rails::Generators::NamedBase
     end
   end
 
+  def model_attachments
+    @model_attachments ||= begin
+      attachments = []
+      if defined?(ActiveStorage) && model_class.respond_to?(:reflect_on_all_attachments)
+        model_class.reflect_on_all_attachments.each do |attachment|
+          attachments << {
+            name: attachment.name.to_s,
+            type: attachment.macro # :has_one_attached or :has_many_attached
+          }
+        end
+      end
+      attachments
+    end
+  end
+
+  def has_attachments?
+    model_attachments.any?
+  end
+
   def all_form_fields
-    # Combine regular attributes, enums, and associations
+    # Combine regular attributes, enums, associations, and attachments
     fields = []
     
     # Get lists of excluded field names
@@ -179,6 +202,15 @@ class AdminCrudGenerator < Rails::Generators::NamedBase
       }
     end
     
+    # Add ActiveStorage attachment fields
+    model_attachments.each do |attachment|
+      fields << {
+        name: attachment[:name],
+        type: :attachment,
+        attachment: attachment
+      }
+    end
+    
     fields
   end
 
@@ -204,6 +236,15 @@ class AdminCrudGenerator < Rails::Generators::NamedBase
     # Add association foreign keys
     model_associations.each do |assoc|
       params << ":#{assoc[:foreign_key]}"
+    end
+    
+    # Add ActiveStorage attachments
+    model_attachments.each do |attachment|
+      if attachment[:type] == :has_many_attached
+        params << "#{attachment[:name]}: []"
+      else
+        params << ":#{attachment[:name]}"
+      end
     end
     
     params.uniq.join(', ')
@@ -257,6 +298,13 @@ class AdminCrudGenerator < Rails::Generators::NamedBase
       end
     end
     
+    # Add attachments if we still have space
+    if fields.length < 4
+      model_attachments.first(4 - fields.length).each do |attachment|
+        fields << { type: :attachment, attachment: attachment }
+      end
+    end
+    
     # Fill remaining with any other attributes if needed
     if fields.length < 4
       remaining_attrs = model_attributes.reject { |attr| 
@@ -298,19 +346,32 @@ class AdminCrudGenerator < Rails::Generators::NamedBase
     "select"
   end
 
+  def form_field_for_attachment(attachment)
+    if attachment[:type] == :has_many_attached
+      "file_field"
+    else
+      "file_field"
+    end
+  end
+
   def enum_options_for_select(enum_name, enum_values)
     enum_values.map { |key, value| [key.humanize, key] }
   end
 
   def association_options_method(association)
-    klass = association[:class_name].constantize
-    if klass.respond_to?(:name) && klass.column_names.include?('name')
-      "#{association[:class_name]}.all.map { |item| [item.name, item.id] }"
-    elsif klass.respond_to?(:title) && klass.column_names.include?('title')
-      "#{association[:class_name]}.all.map { |item| [item.title, item.id] }"
-    elsif klass.respond_to?(:email) && klass.column_names.include?('email')
-      "#{association[:class_name]}.all.map { |item| [item.email, item.id] }"
-    else
+    begin
+      klass = association[:class_name].constantize
+      if klass.respond_to?(:name) && klass.column_names.include?('name')
+        "#{association[:class_name]}.all.map { |item| [item.name, item.id] }"
+      elsif klass.respond_to?(:title) && klass.column_names.include?('title')
+        "#{association[:class_name]}.all.map { |item| [item.title, item.id] }"
+      elsif klass.respond_to?(:email) && klass.column_names.include?('email')
+        "#{association[:class_name]}.all.map { |item| [item.email, item.id] }"
+      else
+        "#{association[:class_name]}.all.map { |item| [item.id, item.id] }"
+      end
+    rescue NameError
+      # If the class doesn't exist, provide a fallback
       "#{association[:class_name]}.all.map { |item| [item.id, item.id] }"
     end
   end
@@ -334,16 +395,29 @@ class AdminCrudGenerator < Rails::Generators::NamedBase
 
   def display_value_for_association(association, instance_var)
     assoc_name = association[:name]
-    klass = association[:class_name].constantize rescue nil
-    
-    if klass && klass.column_names.include?('name')
-      "#{instance_var}.#{assoc_name}&.name"
-    elsif klass && klass.column_names.include?('title')
-      "#{instance_var}.#{assoc_name}&.title"
-    elsif klass && klass.column_names.include?('email')
-      "#{instance_var}.#{assoc_name}&.email"
-    else
+    begin
+      klass = association[:class_name].constantize
+      if klass.column_names.include?('name')
+        "#{instance_var}.#{assoc_name}&.name"
+      elsif klass.column_names.include?('title')
+        "#{instance_var}.#{assoc_name}&.title"
+      elsif klass.column_names.include?('email')
+        "#{instance_var}.#{assoc_name}&.email"
+      else
+        "#{instance_var}.#{assoc_name}&.id"
+      end
+    rescue NameError
+      # If the class doesn't exist, fall back to displaying the ID
       "#{instance_var}.#{assoc_name}&.id"
+    end
+  end
+
+  def display_value_for_attachment(attachment, instance_var)
+    attachment_name = attachment[:name]
+    if attachment[:type] == :has_many_attached
+      "#{instance_var}.#{attachment_name}.count > 0 ? pluralize(#{instance_var}.#{attachment_name}.count, 'file') : 'No files'"
+    else
+      "#{instance_var}.#{attachment_name}.attached? ? #{instance_var}.#{attachment_name}.filename : 'No file'"
     end
   end
 
@@ -368,6 +442,10 @@ class AdminCrudGenerator < Rails::Generators::NamedBase
 
   def truncate_value_for_association(association, instance_var)
     display_value_for_association(association, instance_var)
+  end
+
+  def truncate_value_for_attachment(attachment, instance_var)
+    display_value_for_attachment(attachment, instance_var)
   end
 
   def attribute_required?(attribute)

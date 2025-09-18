@@ -64,7 +64,7 @@ Do not use `to_param` in model, no need friendly url.
 
 Always keep UI responsiveness in mind when coding for user interfaces.
 
-ALWAYS prefer Tailwind CSS v3 syntax for implementing UI styles, Alpine.js for UI components and JavaScript functionality, and minimize writing native JavaScript as much as possible.
+ALWAYS prefer Tailwind CSS v3 syntax for implementing UI styles and simple UI components(tab/dropdown), Alpine.js for JavaScript functionality, and minimize writing native JavaScript as much as possible.
 
 Every form should include error messages using the shared partial. Add `<%= render 'shared/error_messages', model: @your_model %>` at the beginning of every form for consistent error display. Never write nested form.
 

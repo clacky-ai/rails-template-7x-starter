@@ -1,0 +1,13 @@
+require 'rails_helper'
+
+RSpec.describe "Admin::<%= class_name.pluralize %>", type: :request do
+  before { admin_sign_in_as(create(:administrator)) }
+
+  describe "GET /admin/<%= plural_name %>" do
+    it "returns http success" do
+      get admin_<%= plural_name %>_path
+      expect(response).to have_http_status(:success)
+    end
+  end
+
+end

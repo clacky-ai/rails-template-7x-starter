@@ -76,6 +76,26 @@
             <p class="text-sm text-red-500 mt-1"><%%= @<%= singular_name %>.errors[:<%= association[:foreign_key] %>].first %></p>
           <%% end %>
         </div>
+<% elsif field[:type] == :attachment -%>
+<% attachment = field[:attachment] -%>
+        <!-- <%= attachment[:name].humanize %> -->
+        <div class="mb-4">
+          <%%= form.label :<%= attachment[:name] %>, class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" do %>
+            <%= attachment[:name].humanize %>
+          <%% end %>
+          <%%= form.<%= form_field_for_attachment(attachment) %> :<%= attachment[:name] %>, {
+<% if attachment[:type] == :has_many_attached -%>
+            multiple: true,
+<% end -%>
+            class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+          } %>
+<% if attachment[:type] == :has_many_attached -%>
+          <p class="text-sm text-gray-500 mt-1">You can select multiple files</p>
+<% end -%>
+          <%% if @<%= singular_name %>.errors[:<%= attachment[:name] %>].any? %>
+            <p class="text-sm text-red-500 mt-1"><%%= @<%= singular_name %>.errors[:<%= attachment[:name] %>].first %></p>
+          <%% end %>
+        </div>
 <% end -%>
 
 <% end -%>

@@ -8,6 +8,9 @@ class AdminConstraint
 end
 
 Rails.application.routes.draw do
+  # write your business logic routes here
+
+
   # Do not write business logic at admin dashboard
   namespace :admin do
     resources :admin_oplogs, only: [:index, :show]
@@ -23,8 +26,6 @@ Rails.application.routes.draw do
     root to: 'dashboard#index'
   end
 
-  # write your routes here
-
   mount ActionCable.server => '/cable'
-  match '*path', to: 'application#handle_routing_error', via: :get
+  match '*path', to: 'application#handle_routing_error', via: :get, constraints: lambda { |request| request.format.html? || request.format == :html }
 end

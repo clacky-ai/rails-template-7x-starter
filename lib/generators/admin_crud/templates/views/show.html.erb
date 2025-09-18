@@ -72,6 +72,55 @@
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"><%= association[:name].to_s.humanize %></label>
           <div class="text-lg font-medium text-gray-900 dark:text-gray-100"><%%= <%= display_value_for_association(association, "@#{singular_name}") %> %></div>
         </div>
+<% elsif field[:type] == :attachment -%>
+<% attachment = field[:attachment] -%>
+        <!-- <%= attachment[:name].humanize %> -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"><%= attachment[:name].humanize %></label>
+<% if attachment[:type] == :has_many_attached -%>
+          <%% if @<%= singular_name %>.<%= attachment[:name] %>.any? %>
+            <div class="space-y-2">
+              <%% @<%= singular_name %>.<%= attachment[:name] %>.each do |file| %>
+                <div class="flex items-center p-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800">
+                  <svg class="w-5 h-5 mr-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
+                  </svg>
+                  <div>
+                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100"><%%= file.filename %></div>
+                    <div class="text-xs text-gray-500"><%%= number_to_human_size(file.byte_size) %></div>
+                  </div>
+                  <%% if file.content_type&.start_with?('image/') %>
+                    <div class="ml-auto">
+                      <%%= image_tag file, class: "w-16 h-16 object-cover rounded" %>
+                    </div>
+                  <%% end %>
+                </div>
+              <%% end %>
+            </div>
+          <%% else %>
+            <div class="text-gray-500 dark:text-gray-400">No files attached</div>
+          <%% end %>
+<% else -%>
+          <%% if @<%= singular_name %>.<%= attachment[:name] %>.attached? %>
+            <div class="flex items-center p-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800">
+              <svg class="w-5 h-5 mr-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
+              </svg>
+              <div>
+                <div class="text-sm font-medium text-gray-900 dark:text-gray-100"><%%= @<%= singular_name %>.<%= attachment[:name] %>.filename %></div>
+                <div class="text-xs text-gray-500"><%%= number_to_human_size(@<%= singular_name %>.<%= attachment[:name] %>.byte_size) %></div>
+              </div>
+              <%% if @<%= singular_name %>.<%= attachment[:name] %>.content_type&.start_with?('image/') %>
+                <div class="ml-auto">
+                  <%%= image_tag @<%= singular_name %>.<%= attachment[:name] %>, class: "w-16 h-16 object-cover rounded" %>
+                </div>
+              <%% end %>
+            </div>
+          <%% else %>
+            <div class="text-gray-500 dark:text-gray-400">No file attached</div>
+          <%% end %>
+<% end -%>
+        </div>
 <% end -%>
 
 <% end -%>
