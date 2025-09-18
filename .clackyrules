@@ -27,6 +27,10 @@ Restarting project is unnecessary because Rails automatically hot-reloads code c
 
 ### Some important tips when Developing home page/user authentication/payment/LLM-calling(AI APP) system
 
+Prioritize developing beautiful UIs with appropriate animations that match user needs, starting with Tailwind base styles at `app/assets/stylesheets/application.css` while ensuring easy global style customization for future modifications.
+
+Should prioritize creating a beautiful home page that does not require login, Use `rails g home` to generate it first.
+
 **IMPORTANT:** Do not recreate administrator functionality in User model. Administrator system already exists.
 
 When you need to user-side register/authentication system, don't write it yourself. Use `rails generate authentication` generate it first.
@@ -75,13 +79,15 @@ Use `curl -X POST localhost:3000/sign_in -H "Content-Type: application/json" -d 
 
 Do not use `rails console`, use `rails runner` instead if you want insert or check db data.
 
-Use `bundle exec rspec spec/requests/xxx_spec.rb --format documentation` for single test.
+Use `bundle exec rspec spec/requests/xxx_spec.rb --format documentation`( not -v or --version ) for single test.
 
 Temporary files should be written in the `tmp` directory.
 
 
 ### Some files never edit
 
-Never edit `application.html.erb`, update `_navbar.html.erb` instead if need add navbar.
+Never edit `application.html.erb`, update `app/views/shared/_navbar.html.erb` instead if need add navbar.
+
+Never add navbar into `home/index.html.erb`, update `app/views/shared/_navbar.html.erb` instead.
 
 Never edit `admin/base_controller.rb`
