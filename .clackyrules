@@ -29,17 +29,17 @@ Restarting project is unnecessary because Rails automatically hot-reloads code c
 
 Prioritize developing beautiful UIs with appropriate animations that match user needs, starting with Tailwind base styles at `app/assets/stylesheets/application.css` while ensuring easy global style customization for future modifications.
 
-Should prioritize creating a beautiful home page that does not require login, Use `rails g home` to generate it first.
+When you need to user-side register/authentication system, don't write it yourself. Use `rails generate authentication` generate the initial code.
 
-**IMPORTANT:** Do not recreate administrator functionality in User model. Administrator system already exists.
+Should prioritize creating a beautiful home page that does not require login, Use `rails g home` to generate controller and route, developing the view by yourself.
 
-When you need to user-side register/authentication system, don't write it yourself. Use `rails generate authentication` generate it first.
-
-when developing order/payment system, don't write it yourself. Use `rails generate stripe_pay` to generate it first.
+when developing order/payment system, don't write it yourself. Use `rails generate stripe_pay` to generate the initial code.
 
 **IMPORTANT for stripe_pay:** Before running `rails generate stripe_pay`, ensure NO Order model exists. The generator will create the Order model, migration, user-side order pages and admin crud pages. If Order model already exists, remove it first to avoid conflicts.
 
 Should only need to support Stripe payments by default.
+
+Do not recreate administrator functionality in User model. Administrator system already exists. Adding admin page low priority.
 
 
 ### Some important tips when coding
