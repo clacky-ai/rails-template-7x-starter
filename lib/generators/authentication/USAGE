@@ -59,6 +59,7 @@ Files Generated:
 
     Initializers:
         config/initializers/omniauth.rb
+        config/initializers/omniauth_enhancements.rb
 
     Routes:
         Authentication routes added to config/routes.rb
