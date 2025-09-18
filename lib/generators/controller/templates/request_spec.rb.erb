@@ -1,0 +1,69 @@
+require 'rails_helper'
+
+RSpec.describe "<%= plural_name.humanize %>", type: :request do
+
+  <%- if requires_authentication? -%>
+  before { sign_in_as(create(:user)) }
+  <%- else -%>
+  # Uncomment this if controller need authentication
+  # before { sign_in_as(create(:user)) }
+  <%- end -%>
+
+  <%- if selected_actions.include?('index') -%>
+  describe "GET /<%= plural_name %>" do
+    it "returns http success" do
+      get <%= plural_name %>_path
+      expect(response).to have_http_status(:success)
+    end
+  end
+  <%- end -%>
+
+  <%- if selected_actions.include?('show') -%>
+    <%- if single_resource? -%>
+  describe "GET /<%= singular_name %>" do
+    it "returns http success" do
+      get <%= singular_name %>_path
+      expect(response).to have_http_status(:success)
+    end
+  end
+    <%- else -%>
+  describe "GET /<%= plural_name %>/:id" do
+    let(:<%= singular_name %>) { create(:<%= singular_name %>) }
+
+    it "returns http success" do
+      get <%= singular_name %>_path(<%= singular_name %>)
+      expect(response).to have_http_status(:success)
+    end
+  end
+    <%- end -%>
+  <%- end -%>
+
+  <%- if selected_actions.include?('new') -%>
+  describe "GET /<%= single_resource? ? singular_name : plural_name %>/new" do
+    it "returns http success" do
+      get new_<%= singular_name %>_path
+      expect(response).to have_http_status(:success)
+    end
+  end
+  <% end -%>
+
+  <%- if selected_actions.include?('edit') -%>
+    <%- if single_resource? -%>
+  describe "GET /<%= singular_name %>/edit" do
+    it "returns http success" do
+      get edit_<%= singular_name %>_path
+      expect(response).to have_http_status(:success)
+    end
+  end
+    <%- else -%>
+  describe "GET /<%= plural_name %>/:id/edit" do
+    let(:<%= singular_name %>) { create(:<%= singular_name %>) }
+
+    it "returns http success" do
+      get edit_<%= singular_name %>_path(<%= singular_name %>)
+      expect(response).to have_http_status(:success)
+    end
+  end
+    <%- end -%>
+  <%- end -%>
+end

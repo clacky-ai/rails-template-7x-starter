@@ -58,7 +58,7 @@ When installing libraries, try to specify the version you are most familiar with
 
 Use `rails generate admin_crud xxx` (where xxx is your model name that you created before) to create the initial CRUD when developing the admin management page, modify generated code for free.
 
-Use `rails generate crud xxx [action1] [action2] [--auth]` (where xxx is your model name that you created before, action is optional(all actions by default), --auth means need authenticate_user!) to create the initial CRUD when developing the user-side functionality, modify generated code for free.
+Use `rails generate controller xxx [action1] [action2] [--auth] [--single]` (where xxx is your controller name, action is optional(all actions by default), --auth means need authenticate_user!, --single generates singular resource without index action) to create controllers when developing the user-side functionality, modify generated code for free.
 
 Do not use `to_param` in model, no need friendly url.
 

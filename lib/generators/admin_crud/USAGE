@@ -1,6 +1,6 @@
 Description:
-    Generate a complete admin CRUD interface for an existing model with beautiful daisyUI styling.
-    This generator automatically detects model fields and creates controller, views, and updates 
+    Generate a complete admin CRUD interface for an existing model.
+    This generator automatically detects model fields and creates controller, views, and updates
     routes and admin sidebar.
 
     IMPORTANT: The model must already exist before using this generator.
@@ -18,7 +18,7 @@ Example:
         Sidebar:     Updates app/views/shared/admin/_sidebar.html.erb
 
 Prerequisites:
-    The model must exist before running this generator. If the model doesn't exist, 
+    The model must exist before running this generator. If the model doesn't exist,
     you'll see an error message with instructions to create it first.
 
     Example:
@@ -46,7 +46,7 @@ Examples:
     # For existing User model
     bin/rails generate admin_crud User
 
-    # For existing Article model  
+    # For existing Article model
     bin/rails generate admin_crud Article
 
     # For existing Category model

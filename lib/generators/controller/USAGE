@@ -1,0 +1,38 @@
+Description:
+    Enhanced controller generator that replaces Rails built-in controller generator.
+    Creates controller with smart routing, authentication options, and comprehensive tests.
+
+    Works like standard Rails controller generator but with better defaults.
+
+Examples:
+    rails generate controller Product                     # All CRUD actions (resources)
+    rails generate controller Product index show         # Only specified actions  
+    rails generate controller Product --auth             # With authentication
+    rails generate controller Profile --single           # Singular resource (no index)
+    rails generate controller Profile show edit --single # Singular resource with specific actions
+
+Generated Files:
+    Controller:  app/controllers/products_controller.rb (with action stubs)
+    Routes:      Updates config/routes.rb (resources with smart only: options)
+    Tests:       spec/requests/products_spec.rb (comprehensive request tests)
+
+Options:
+    --auth      Adds before_action :authenticate_user!
+    --single    Generate singular resource (resource vs resources, no index action)
+
+Actions:
+    Default: index, show, new, edit (with create, update, destroy)
+    Custom:  Specify actions: index show new edit
+
+Features:
+    - Smart routing (only necessary routes, no extra ones)
+    - Authentication support with --auth flag  
+    - Singular resource support with --single flag
+    - Clean GET request tests for all actions
+    - Works without requiring existing model
+    - Clean action stubs ready for implementation
+    - Protected controller names (sessions, registrations, etc.)
+
+Protected Names (will be rejected):
+    sessions, registrations, passwords, profiles, invitations, omniauth, orders
+    Choose different names for these controllers.

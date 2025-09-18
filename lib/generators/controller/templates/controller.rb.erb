@@ -1,9 +1,9 @@
 class <%= class_name.pluralize %>Controller < ApplicationController
-<% if requires_authentication? -%>
+  <%- if requires_authentication? -%>
   before_action :authenticate_user!
+  <%- end -%>
 
-<% end -%>
-<%= controller_actions%>
+<%= controller_actions -%>
 
   private
   # Write your private methods here
