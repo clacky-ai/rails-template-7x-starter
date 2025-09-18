@@ -3,10 +3,11 @@ module FriendlyErrorHandlingConcern
 
   included do
     if Rails.env.development?
+      rescue_from StandardError, with: :handle_friendly_error
       rescue_from ActionView::SyntaxErrorInTemplate, with: :handle_friendly_error
       rescue_from ActiveRecord::StatementInvalid, with: :handle_friendly_error
       rescue_from ActiveRecord::RecordNotFound, with: :handle_friendly_error
-      rescue_from StandardError, with: :handle_friendly_error
+      rescue_from ActionController::MissingExactTemplate, with: :render_missing_template_fallback
 
       before_action :check_pending_migrations
     end
@@ -24,6 +25,15 @@ module FriendlyErrorHandlingConcern
 
   def check_pending_migrations
     ActiveRecord::Migration.check_all_pending!
+  end
+
+  def render_missing_template_fallback(exception)
+    if request.format.html?
+      Rails.logger.info("Missing template: #{exception}. Fallback rendering.")
+      render "shared/missing_template_fallback", status: :ok
+    else
+      raise exception
+    end
   end
 
   def handle_migration_error(exception)
