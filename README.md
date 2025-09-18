@@ -57,7 +57,7 @@ Default password: admin
 ## Tech stack
 
 * Ruby on Rails 7.x
-* daisyUI 4( with tailwind 3 )
+* Tailwind CSS 3 (with custom design system)
 * figaro
 * postgres
 * active_storage

@@ -12,18 +12,18 @@ module FriendlyErrorHandlingConcern
     end
   end
 
-  private
-
-  def check_pending_migrations
-    ActiveRecord::Migration.check_all_pending!
-  end
-
   def handle_routing_error
     Rails.logger.error("404 - Path not found: #{request.path}")
     @error_url = request.path
     @error_title = "Page Not Found"
     @error_description = "The page you're looking for doesn't exist. Please check the URL or go back to the homepage."
     render "shared/friendly_error", status: :not_found
+  end
+
+  private
+
+  def check_pending_migrations
+    ActiveRecord::Migration.check_all_pending!
   end
 
   def handle_migration_error(exception)

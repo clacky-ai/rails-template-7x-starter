@@ -5,28 +5,27 @@ bin/dev (Do not use `rails s` directly, as it may cause js/css loading issues)
 ### The project uses the following tech stack:
 
 Ruby on Rails 7.2
-daisyUI 4( with tailwind 3 )
+Tailwind v3
 Figaro
 PostgreSQL
 Active_Storage for upload file
 Kaminari
 Puma
 RSpec
+RailsUjs( no turo/turbolinks )
 
 Do not add or remove any components and avoid upgrading or downgrading components.
 
 Use simple, clear language and avoid technical jargon.
 
-## What time you should start/stop project
+## What time you should run/stop project
+
+Always keep the project running status.
 
 Restarting project is unnecessary because Rails automatically hot-reloads code changes in most cases. Changes to files within the `config/` directory (except `config/routes.rb`), explicitly require a project restart.
 
-After complete home page, Start project ASAP.
-
 
 ### Some important tips when Developing home page/user authentication/payment/LLM-calling(AI APP) system
-
-Should prioritize creating a beautiful no-login-required home page. Use `rails g home` to generate it first.
 
 **IMPORTANT:** Do not recreate administrator functionality in User model. Administrator system already exists.
 
@@ -45,21 +44,23 @@ Do not generate any fake data that should originally be in the database for user
 
 Do not write any business logic in the admin backend that should only be for website management and maintenance.
 
-Generate images using this placeholder website: https://images.unsplash.com/ and simultaneously verify accessibility with `curl` if you need static assets or activestorage seed data.
+Generate images using this placeholder website: https://images.unsplash.com/ and simultaneously verify accessibility with `curl` if you need static assets.
+
+Use Unsplash images instead of self-generated icons if you need placeholder images with ActiveStorage.
 
 Use `rails generate service xxx` to generate a service file, not generate by yourself.
 
 When installing libraries, try to specify the version you are most familiar with (e.g., npm, bundle) instead of the latest version.
 
-Always keep UI responsiveness in mind when coding for user interfaces.
+Use `rails generate admin_crud xxx` (where xxx is your model name that you created before) to create the initial CRUD when developing the admin management page, modify generated code for free.
 
-Use `rails generate admin_crud xxx` (where xxx is your model name that you created before) to create the initial CRUD when developing the admin management page
-
-Use `rails generate crud xxx [action1] [action2] [--auth]` (where xxx is your model name that you created before, action is optional(all actions by default), --auth means need authenticate_user!) to create the initial CRUD when developing the user-side functionality
+Use `rails generate crud xxx [action1] [action2] [--auth]` (where xxx is your model name that you created before, action is optional(all actions by default), --auth means need authenticate_user!) to create the initial CRUD when developing the user-side functionality, modify generated code for free.
 
 Do not use `to_param` in model, no need friendly url.
 
-ALWAYS prefer daisyUI native components(tab/modal/dropdown etc) over custom JavaScript solutions.
+Always keep UI responsiveness in mind when coding for user interfaces.
+
+ALWAYS prefer Tailwind CSS v3 syntax for implementing UI styles, Alpine.js for UI components and JavaScript functionality, and minimize writing native JavaScript as much as possible.
 
 Every form should include error messages using the shared partial. Add `<%= render 'shared/error_messages', model: @your_model %>` at the beginning of every form for consistent error display. Never write nested form.
 
@@ -70,7 +71,7 @@ Keep `rake test` all passed Before delivery feature to users.
 
 Double check `rake test` all passed at last when you finish the task.
 
-Use `curl -X POST localhost:3000/sign_in -H "Content-Type: application/json" -d '{"email":"user@example.com","password":"pass"}'` then use returned session_token in `Authorization: Bearer <token>` header. Use `rails runner "User.create(xxx)"` if need create user first.
+Use `curl -X POST localhost:3000/sign_in -H "Content-Type: application/json" -d '{"email":"user@example.com","password":"pass"}'` return session_token then `curl -H "Authorization: Bearer <session_token>" -s xxx` for page test. Use `rails runner "User.create(xxx)"` if need create user first.
 
 Do not use `rails console`, use `rails runner` instead if you want insert or check db data.
 

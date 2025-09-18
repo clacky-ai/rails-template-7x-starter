@@ -1,157 +1,118 @@
-<div class="hero min-h-screen bg-base-200">
-  <div class="hero-content text-center">
-    <div class="max-w-2xl w-full">
-      <!-- Dynamic Icon -->
-      <div class="avatar placeholder mx-auto mb-8">
-        <div class="bg-warning text-warning-content w-24 rounded-full">
-          <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-          </svg>
-        </div>
-      </div>
+<div class="min-h-screen bg-gray-100 flex items-center justify-center">
+  <div class="max-w-2xl w-full mx-auto text-center px-4">
+    <!-- Dynamic Icon -->
+    <div class="mx-auto mb-8 w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center">
+      <svg class="w-12 h-12 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+      </svg>
+    </div>
 
-      <!-- Dynamic Title -->
-      <h1 class="text-5xl font-bold mb-4"><%= @error_title %></h1>
-      <p class="text-lg mb-8 text-base-content/80"><%= @error_description %></p>
+    <!-- Dynamic Title -->
+    <h1 class="text-5xl font-bold mb-4 text-gray-900"><%= @error_title %></h1>
+    <p class="text-lg mb-8 text-gray-600"><%= @error_description %></p>
 
-      <% if Rails.env.development? && @original_exception %>
-        <!-- Development Info -->
-        <div class="mb-8 text-left">
-          <div class="card bg-base-100 shadow-lg">
-            <div class="card-body">
-              <div class="flex items-center justify-between mb-4">
-                <h3 class="text-base font-medium">Development Debug Info</h3>
-                <button type="button" onclick="copyErrorDetails()" class="btn btn-sm btn-outline btn-primary" id="copy-btn">
-                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                  </svg>
-                  Copy Error
-                </button>
-              </div>
+    <% if Rails.env.development? && @original_exception %>
+      <!-- Development Info -->
+      <div class="mb-8 text-left">
+        <div class="card shadow-lg">
+          <div class="card-body">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-base font-medium text-gray-900">Development Debug Info</h3>
+              <button type="button" onclick="copyErrorDetails()" class="border border-blue-600 text-blue-600 hover:bg-blue-50 font-medium py-1 px-3 rounded text-sm transition-colors" id="copy-btn">
+                <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                </svg>
+                Copy Error
+              </button>
+            </div>
 
-              <div class="collapse collapse-arrow bg-base-200">
-                <input type="checkbox" />
-                <div class="collapse-title text-sm font-medium">
-                  Click to view error details
-                </div>
-                <div class="collapse-content">
-                  <div class="bg-base-300 rounded-lg p-4 font-mono text-sm" id="error-details">
+            <div class="bg-gray-100 rounded-lg">
+              <details class="group">
+                <summary class="cursor-pointer p-4 text-sm font-medium text-gray-700 hover:bg-gray-200 rounded-lg transition-colors">
+                  <span class="inline-flex items-center">
+                    Click to view error details
+                  </span>
+                </summary>
+                <div class="p-4 border-t border-gray-200">
+                  <div class="bg-gray-800 text-white rounded-lg p-4 font-mono text-sm" id="error-details">
                     <div class="mb-2">
-                      <span class="font-semibold text-info">URL:</span> <%= @error_url %>
+                      <span class="font-semibold text-blue-400">URL:</span> <%= @error_url %>
                     </div>
                     <div class="mb-4">
-                      <span class="font-semibold text-error">Message:</span>
-                      <div class="mt-1 bg-base-100 p-2 rounded text-xs break-all">
+                      <span class="font-semibold text-red-400">Message:</span>
+                      <div class="mt-1 bg-gray-900 p-2 rounded text-xs break-all">
                         <%= @original_exception.message %>
                       </div>
                     </div>
 
                     <% if @original_exception.backtrace %>
                       <div class="mb-2">
-                        <span class="font-semibold text-warning">Stack Trace (First 10 lines):</span>
+                        <span class="font-semibold text-yellow-400">Stack Trace (First 10 lines):</span>
                       </div>
-                      <div class="bg-base-100 rounded p-2 text-xs overflow-x-auto">
+                      <div class="bg-gray-900 rounded p-2 text-xs overflow-x-auto">
                         <% @original_exception.backtrace.first(10).each_with_index do |line, index| %>
                           <div class="mb-1">
-                            <span class="text-primary font-semibold"><%= index + 1 %>:</span>
-                            <span class="text-base-content/70"><%= line %></span>
+                            <span class="text-blue-400 font-semibold"><%= index + 1 %>:</span>
+                            <span class="text-gray-300"><%= line %></span>
                           </div>
                         <% end %>
                       </div>
                     <% end %>
                   </div>
                 </div>
-              </div>
+              </details>
             </div>
           </div>
         </div>
-      <% end %>
-
-      <!-- Action Buttons -->
-      <div class="flex flex-col sm:flex-row gap-4 justify-center">
-        <%= link_to "Back to Home", '/', class: "btn btn-primary" %>
-        <button type="button" onclick="developPage()" class="btn btn-outline">
-          Fix in Chatbox
-        </button>
       </div>
+    <% end %>
+
+    <!-- Action Buttons -->
+    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <%= link_to "Back to Home", '/', class: "btn-primary" %>
+      <button type="button" onclick="developPage()" class="border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-2 px-4 rounded-lg transition-colors duration-200">
+        Fix in Chatbox
+      </button>
     </div>
   </div>
 </div>
 
 <script>
-  <!-- TODO: copy error text, send it to chatbox -->
+  function copyErrorDetails() {
+    const errorDetails = document.getElementById('error-details');
+    if (errorDetails) {
+      const text = errorDetails.innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('copy-btn');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Copied!';
+        btn.className = 'border border-green-600 text-green-600 hover:bg-green-50 font-medium py-1 px-3 rounded text-sm transition-colors';
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+          btn.className = 'border border-blue-600 text-blue-600 hover:bg-blue-50 font-medium py-1 px-3 rounded text-sm transition-colors';
+        }, 2000);
+      }).catch(err => {
+        console.error('Failed to copy: ', err);
+      });
+    }
+  }
+
   function developPage() {
     const url = window.location.pathname.substring(1);
+    const errorMessage = '<%= j @original_exception&.message || @error_description %>';
+    const fullUrl = window.location.href;
+
+    const message = `Fix this error:
+URL: ${fullUrl}
+Error: ${errorMessage}
+Path: ${url}
+
+Please help me fix this issue.`;
 
     if (typeof this.sdk !== 'undefined' && this.sdk.send) {
-      this.sdk.send(url);
+      this.sdk.send(message);
     } else {
-      console.log('SDK not available. Would send URL:', url);
+      console.log('SDK not available. Would send message:', message);
     }
-  }
-
-  function copyErrorDetails() {
-    // Use ERB-generated error text instead of parsing HTML
-    <% error_text = "URL: #{@error_url}\n\nMessage:\n#{@original_exception&.message}" %>
-    <% if @original_exception&.backtrace %>
-      <% error_text += "\n\nStack Trace (First 10 lines):\n" %>
-      <% @original_exception.backtrace.first(10).each_with_index do |line, index| %>
-        <% error_text += "#{index + 1}. #{line}\n" %>
-      <% end %>
-    <% end %>
-    const errorText = `<%= j(error_text) %>`;
-
-    // Try modern clipboard API first, then fallback to execCommand for iframe compatibility
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(errorText).then(() => {
-        showCopySuccess();
-      }).catch(() => {
-        // Fallback for iframe: use execCommand
-        fallbackCopy(errorText);
-      });
-    } else {
-      // Fallback for older browsers or iframe restrictions
-      fallbackCopy(errorText);
-    }
-  }
-
-  function fallbackCopy(text) {
-    try {
-      const textArea = document.createElement('textarea');
-      textArea.value = text;
-      textArea.style.position = 'fixed';
-      textArea.style.left = '-999999px';
-      document.body.appendChild(textArea);
-      textArea.select();
-      const successful = document.execCommand('copy');
-      document.body.removeChild(textArea);
-      
-      if (successful) {
-        showCopySuccess();
-      } else {
-        alert('复制失败，请手动复制错误信息');
-      }
-    } catch (err) {
-      alert('复制失败，请手动复制错误信息');
-    }
-  }
-
-  function showCopySuccess() {
-    const button = document.getElementById('copy-btn');
-    const originalText = button.innerHTML;
-    button.innerHTML = `
-      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-      </svg>
-      Copied!
-    `;
-    button.classList.remove('btn-outline', 'btn-primary');
-    button.classList.add('btn-success');
-
-    setTimeout(() => {
-      button.innerHTML = originalText;
-      button.classList.remove('btn-success');
-      button.classList.add('btn-outline', 'btn-primary');
-    }, 2000);
   }
 </script>

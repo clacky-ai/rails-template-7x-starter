@@ -29,8 +29,8 @@ module ApplicationHelper
   end
 
 
-  # DaisyUI flash message class helper with lighter colors
-  def flash_daisy_class(level)
+  # Flash message class helper
+  def flash_alert_class(level)
     case level.to_sym
     when :notice, :success
       'bg-green-100 text-green-800 border border-green-200'
@@ -50,11 +50,8 @@ module ApplicationHelper
     model.class.validators_on(field_name.to_sym).any? { |v| v.is_a?(ActiveModel::Validations::PresenceValidator) }
   end
 
-  # Custom paginate method to override Kaminari with DaisyUI styling
   # This prevents AI from trying to add non-existent themes
   def paginate(scope, **options)
-    # Use our custom kaminari views with DaisyUI styling
-    # No theme parameter needed - we have custom views
     super(scope, **options.except(:theme))
   end
 

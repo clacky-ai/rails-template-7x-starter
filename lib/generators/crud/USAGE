@@ -1,81 +1,26 @@
 Description:
-    Generate a minimal CRUD controller for an existing model (MINIMAL VERSION).
-    This generator creates only controller with action stubs and routes. No views are generated.
+    Generate a minimal CRUD controller for an existing model.
+    Creates controller with action stubs, routes, and tests. No views generated.
 
-    IMPORTANT: The model must already exist before using this generator.
-
-Example:
-    bin/rails generate crud Product
-
-    This will create:
-        Controller:  app/controllers/products_controller.rb (with action stubs only)
-        Routes:      Updates config/routes.rb
-        Tests:       spec/requests/products_spec.rb (basic request tests for index and show)
-
-    bin/rails generate crud Product --auth
-
-    This will create a controller with authentication required:
-        Controller:  app/controllers/products_controller.rb (with before_action :authenticate_user!)
-        Routes:      Updates config/routes.rb
-        Tests:       spec/requests/products_spec.rb (basic request tests for index and show)
-
-    bin/rails generate crud Product index show
-
-    This will create only index and show actions:
-        Controller:  app/controllers/products_controller.rb (with only index and show action stubs)
-        Routes:      Updates config/routes.rb with only: [:index, :show]
-        Tests:       spec/requests/products_spec.rb (tests for specified actions only)
-
-Prerequisites:
-    The model must exist before running this generator. If the model doesn't exist,
-    you'll see an error message with instructions to create it first.
-
-    Example:
-    bin/rails generate model Product name:string description:text price:decimal active:boolean
-    bin/rails db:migrate
-    bin/rails generate crud Product
-
-Actions:
-    If no actions are specified, all CRUD actions will be generated: index, show, new, edit
-    If actions are specified, only those actions (and their dependencies) will be generated:
-    - index: Lists all records
-    - show: Shows a single record
-    - new: Creates new records (includes create action)
-    - edit: Edits records (includes update and destroy actions)
-
-Features:
-    - Creates minimal controller with action stubs
-    - Each action contains only a comment "# Write your real logic here"
-    - No views are generated - you write your own
-    - Routes are properly configured
-    - Inherits from ApplicationController for frontend use
-    - Generates basic request tests for index and show actions
-    - Perfect for AI-assisted development without template constraints
-    - Optional authentication with --auth flag (adds before_action :authenticate_user!)
-
-Supported field types:
-    string, text, integer, decimal, float, boolean, date, datetime, timestamp, time
-
-Model Requirements:
-    - Model must inherit from ApplicationRecord
-    - Model file should be in app/models/
-    - Database table should exist (run migrations)
+    IMPORTANT: Model must exist first.
 
 Examples:
-    # For existing User model - all actions
-    bin/rails generate crud User
+    rails generate crud Product                     # All CRUD actions
+    rails generate crud Product index show         # Only specified actions  
+    rails generate crud Product --auth             # With authentication
 
-    # For existing Article model - only index and show
-    bin/rails generate crud Article index show
+Generated Files:
+    Controller:  app/controllers/products_controller.rb (action stubs only)
+    Routes:      Updates config/routes.rb
+    Tests:       spec/requests/products_spec.rb
 
-    # For existing Category model - only new and edit
-    bin/rails generate crud Category new edit
+Options:
+    --auth      Adds before_action :authenticate_user!
 
-    # For existing Post model - only index
-    bin/rails generate crud Post index
+Actions:
+    Default: index, show, new, edit (with create, update, destroy)
+    Custom:  Specify actions: index show new edit
 
-    # For existing Product model with authentication
-    bin/rails generate crud Product --auth
-
-    # For existing Order model with authentication and specific actions
-    bin/rails generate crud Order index show --auth
+Protected Names (will be rejected):
+    sessions, registrations, passwords, profiles, invitations, omniauth, orders
+    Use `rails generate controller xxx` for these names instead.
