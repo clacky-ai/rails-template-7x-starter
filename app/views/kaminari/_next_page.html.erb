@@ -1,4 +1,4 @@
-<%# Link to the "Next" page with DaisyUI styling
+<%# Link to the "Next" page with Tailwind styling
   - available local variables
     url:           url to the next page
     current_page:  a page object for the currently displayed page
@@ -6,8 +6,7 @@
     per_page:      number of items to fetch per page
     remote:        data-remote
 -%>
-<%= link_to url, rel: 'next', remote: remote, class: "join-item btn", "aria-label": "Next page" do %>
-  <span class="hidden sm:inline">下一页</span>
+<%= link_to url, rel: 'next', remote: remote, class: "px-2 py-2 text-gray-700 hover:bg-gray-100 rounded transition-colors flex items-center", "aria-label": "Next page" do %>
   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
   </svg>

@@ -59,17 +59,17 @@ module ApplicationHelper
   def action_badge_class(action)
     case action
     when 'login'
-      'badge-success'
+      'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800'
     when 'logout'
-      'badge-info'
+      'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800'
     when 'create'
-      'badge-primary'
+      'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800'
     when 'update'
-      'badge-warning'
+      'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800'
     when 'destroy'
-      'badge-error'
+      'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800'
     else
-      'badge-ghost'
+      'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800'
     end
   end
 end

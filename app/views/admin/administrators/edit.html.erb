@@ -1,98 +1,94 @@
-<div class="space-y-6">
+<% content_for :title, "Edit Administrator" %>
+
+<div class="max-w-2xl mx-auto">
   <!-- Page Title -->
-  <div class="flex items-center space-x-4">
-    <%= link_to admin_administrator_path(@administrator.id), class: "btn btn-ghost btn-sm" do %>
+  <div class="flex items-center space-x-4 mb-6">
+    <%= link_to admin_administrator_path(@administrator.id), class: "btn-ghost text-sm py-1 px-3" do %>
       <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
       </svg>
       Back to Administrator
     <% end %>
-    <h1 class="text-3xl font-bold">Edit Administrator</h1>
+    <h1 class="text-3xl font-bold text-gray-900">Edit Administrator</h1>
   </div>
 
   <!-- Form -->
-  <div class="card bg-base-100 shadow-xl">
+  <div class="card">
     <div class="card-body">
       <%= form_with model: [:admin, @administrator], local: true, class: "space-y-6" do |form| %>
         <!-- Error Messages -->
         <% if @administrator.errors.any? %>
-          <div class="alert alert-error">
-            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-            <div>
-              <h3 class="font-medium">Please fix the following errors:</h3>
-              <ul class="list-disc list-inside mt-2">
-                <% @administrator.errors.full_messages.each do |message| %>
-                  <li><%= message %></li>
-                <% end %>
-              </ul>
+          <div class="bg-red-100 text-red-800 p-4 rounded-lg border border-red-200">
+            <div class="flex items-center">
+              <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <div>
+                <h3 class="font-medium">Please fix the following errors:</h3>
+                <ul class="list-disc list-inside mt-2">
+                  <% @administrator.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
             </div>
           </div>
         <% end %>
 
         <!-- Name -->
-        <div class="form-control">
-          <%= form.label :name, class: "label" do %>
-            <span class="label-text font-medium">Name<% if field_required?(@administrator, :name) %> <span class="text-red-500">*</span><% end %></span>
+        <div class="mb-4">
+          <%= form.label :name, class: "block text-sm font-medium text-gray-700 mb-2" do %>
+            Name<% if field_required?(@administrator, :name) %> <span class="text-red-500">*</span><% end %>
           <% end %>
           <%= form.text_field :name, {
             placeholder: "Enter name...",
-            class: "input input-bordered w-full"
+            class: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
           }.merge(field_required?(@administrator, :name) ? { required: true } : {}) %>
           <% if @administrator.errors[:name].any? %>
-            <label class="label">
-              <span class="label-text-alt text-red-500"><%= @administrator.errors[:name].first %></span>
-            </label>
+            <p class="text-sm text-red-500 mt-1"><%= @administrator.errors[:name].first %></p>
           <% end %>
         </div>
 
         <!-- Password -->
-        <div class="form-control">
-          <%= form.label :password, class: "label" do %>
-            <span class="label-text font-medium">New Password <small class="text-gray-500">(leave blank to keep current)</small></span>
+        <div class="mb-4">
+          <%= form.label :password, class: "block text-sm font-medium text-gray-700 mb-2" do %>
+            New Password <small class="text-gray-500">(leave blank to keep current)</small>
           <% end %>
           <%= form.password_field :password, {
             placeholder: "Enter new password...",
-            class: "input input-bordered w-full"
+            class: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
           } %>
           <% if @administrator.errors[:password].any? %>
-            <label class="label">
-              <span class="label-text-alt text-red-500"><%= @administrator.errors[:password].first %></span>
-            </label>
+            <p class="text-sm text-red-500 mt-1"><%= @administrator.errors[:password].first %></p>
           <% end %>
         </div>
 
         <!-- Password Confirmation -->
-        <div class="form-control">
-          <%= form.label :password_confirmation, class: "label" do %>
-            <span class="label-text font-medium">Password Confirmation</span>
+        <div class="mb-4">
+          <%= form.label :password_confirmation, class: "block text-sm font-medium text-gray-700 mb-2" do %>
+            Password Confirmation
           <% end %>
           <%= form.password_field :password_confirmation, {
             placeholder: "Confirm new password...",
-            class: "input input-bordered w-full"
+            class: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
           } %>
           <% if @administrator.errors[:password_confirmation].any? %>
-            <label class="label">
-              <span class="label-text-alt text-red-500"><%= @administrator.errors[:password_confirmation].first %></span>
-            </label>
+            <p class="text-sm text-red-500 mt-1"><%= @administrator.errors[:password_confirmation].first %></p>
           <% end %>
         </div>
 
         <!-- Role (only for super admins) -->
         <% if current_admin.can_manage_administrators? %>
-          <div class="form-control">
-            <%= form.label :role, class: "label" do %>
-              <span class="label-text font-medium">Role <span class="text-red-500">*</span></span>
+          <div class="mb-4">
+            <%= form.label :role, class: "block text-sm font-medium text-gray-700 mb-2" do %>
+              Role <span class="text-red-500">*</span>
             <% end %>
             <%= form.select :role, Administrator.role_options, { selected: @administrator.role }, {
-              class: "select select-bordered w-full",
+              class: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white",
               required: true
             } %>
             <% if @administrator.errors[:role].any? %>
-              <label class="label">
-                <span class="label-text-alt text-red-500"><%= @administrator.errors[:role].first %></span>
-              </label>
+              <p class="text-sm text-red-500 mt-1"><%= @administrator.errors[:role].first %></p>
             <% end %>
           </div>
         <% end %>
@@ -113,10 +109,10 @@
 
         <!-- Form Actions -->
         <div class="flex justify-end space-x-3">
-          <%= link_to admin_administrator_path(@administrator.id), class: "btn btn-ghost" do %>
+          <%= link_to admin_administrator_path(@administrator.id), class: "btn-ghost" do %>
             Cancel
           <% end %>
-          <%= form.submit "Update Administrator", class: "btn btn-primary" %>
+          <%= form.submit "Update Administrator", class: "btn-primary" %>
         </div>
       <% end %>
     </div>

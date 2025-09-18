@@ -45,8 +45,8 @@ class AdminCrudGenerator < Rails::Generators::NamedBase
         #{generated_comment}
         <li>
           <%= link_to admin_#{plural_name}_path, 
-              class: "\#{'active' if current_path.include?('/admin/#{plural_name}')}" do %>
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              class: "flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors \#{'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' if current_path.include?('/admin/#{plural_name}')}" do %>
+            <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/>
             </svg>
             #{humanized_plural_name}
@@ -315,17 +315,6 @@ class AdminCrudGenerator < Rails::Generators::NamedBase
     end
   end
 
-  def input_class_for(attribute)
-    case attribute.type.to_s
-    when 'text'
-      "textarea"
-    when 'boolean'
-      "checkbox"
-    else
-      "input"
-    end
-  end
-
   def display_value_for(attribute, instance_var)
     case attribute.type.to_s
     when 'text'
@@ -363,7 +352,11 @@ class AdminCrudGenerator < Rails::Generators::NamedBase
     when 'text'
       "truncate(#{instance_var}.#{attribute.name}, length: 100)"
     when 'boolean'
-      "content_tag(:span, (#{instance_var}.#{attribute.name} ? 'Yes' : 'No'), class: \"badge \" + (#{instance_var}.#{attribute.name} ? 'badge-success' : 'badge-error'))"
+      "if #{instance_var}.#{attribute.name}
+         content_tag(:span, 'Yes', class: 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800')
+       else
+         content_tag(:span, 'No', class: 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800')
+       end"
     else
       "#{instance_var}.#{attribute.name}"
     end

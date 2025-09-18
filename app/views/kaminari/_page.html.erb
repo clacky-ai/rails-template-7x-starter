@@ -1,4 +1,4 @@
-<%# Link showing page number with DaisyUI styling
+<%# Link showing page number with Tailwind styling
   - available local variables
     page:          a page object for "this" page
     url:           url to this page
@@ -8,12 +8,12 @@
     remote:        data-remote
 -%>
 <% if page.current? %>
-  <input class="join-item btn btn-active" type="radio" name="options" aria-label="<%= page %>" checked />
+  <span class="px-3 py-2 bg-blue-600 text-white rounded" aria-label="Current page, Page <%= page %>"><%= page %></span>
 <% else %>
   <%= link_to page, url, {
-    remote: remote, 
+    remote: remote,
     rel: page.rel,
-    class: "join-item btn",
+    class: "px-3 py-2 text-gray-700 hover:bg-gray-100 rounded transition-colors",
     "aria-label": "Page #{page}"
   } %>
 <% end %>

@@ -1,29 +1,29 @@
-<div class="min-h-screen bg-gray-100 flex items-center justify-center">
+<div class="min-h-screen flex items-center justify-center">
   <div class="max-w-md mx-auto text-center px-4">
     <!-- Icon -->
-    <div class="mx-auto mb-8 w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center">
-      <svg class="w-12 h-12 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <div class="mx-auto mb-8 w-24 h-24 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+      <svg class="w-12 h-12 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
       </svg>
     </div>
 
     <!-- Title -->
-    <h1 class="text-5xl font-bold text-gray-900 mb-4">Page Under Development</h1>
-    <p class="text-lg text-gray-600 mb-8">This page is currently being developed. Please check back later!</p>
+    <h1 class="text-5xl font-bold text-gray-900 dark:text-white mb-4">Page Under Development</h1>
+    <p class="text-lg text-gray-600 dark:text-gray-300 mb-8">This page is currently being developed. Please check back later!</p>
     
     <!-- Action Buttons -->
     <div class="flex flex-col sm:flex-row gap-4 justify-center mb-8">
       <%= link_to "Back to Home", '/', class: "btn-primary" %>
-      <button type="button" onclick="developPage()" class="border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-2 px-4 rounded-lg transition-colors duration-200">
+      <button type="button" onclick="developPage()" class="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium py-2 px-4 rounded-lg transition-colors duration-200">
         Develop in Chatbox
       </button>
     </div>
 
     <!-- Development Info -->
-    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-      <div class="text-sm text-gray-500">
+    <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+      <div class="text-sm text-gray-500 dark:text-gray-400">
         <p>Generated view template</p>
-        <p>Generated at: <%= Time.current.strftime("%Y-%m-%d %H:%M:%S") %></p>
+        <p>Generated at: <span class="text-gray-900 dark:text-gray-200"><%= Time.current.strftime("%Y-%m-%d %H:%M:%S") %></span></p>
       </div>
     </div>
   </div>

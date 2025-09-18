@@ -1,35 +1,31 @@
-<div class="hero min-h-screen bg-gradient-to-br from-primary to-secondary">
-  <div class="hero-content text-center text-primary-content">
-    <div class="max-w-md">
-      <!-- Icon -->
-      <div class="avatar placeholder mx-auto mb-8">
-        <div class="bg-info text-info-content w-24 rounded-full">
-          <svg class="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-          </svg>
-        </div>
-      </div>
+<div class="min-h-screen flex items-center justify-center">
+  <div class="max-w-md mx-auto text-center px-4">
+    <!-- Icon -->
+    <div class="mx-auto mb-8 w-24 h-24 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+      <svg class="w-12 h-12 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+      </svg>
+    </div>
 
-      <!-- Title -->
-      <h1 class="text-5xl font-bold">Page Under Development</h1>
-      <p class="py-6">This page is currently being developed. Please check back later!</p>
-      
-      <!-- Action Buttons -->
-      <div class="flex flex-col sm:flex-row gap-4 justify-center">
-        <%%= link_to "Back to Home", '/', class: "btn btn-accent" %>
-        <button type="button" onclick="developPage()" class="btn btn-outline btn-accent">
-          Develop in Chatbox
-        </button>
-      </div>
+    <!-- Title -->
+    <h1 class="text-5xl font-bold text-gray-900 dark:text-white">Page Under Development</h1>
+    <p class="py-6 text-lg text-gray-600 dark:text-gray-300">This page is currently being developed. Please check back later!</p>
+    
+    <!-- Action Buttons -->
+    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <%%= link_to "Back to Home", '/', class: "btn-primary" %>
+      <button type="button" onclick="developPage()" class="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium py-2 px-4 rounded-lg transition-colors duration-200">
+        Develop in Chatbox
+      </button>
+    </div>
 
-      <!-- Development Info -->
-      <div class="mt-8 p-4 bg-base-100/20 rounded-lg backdrop-blur">
-        <div class="text-sm opacity-80">
-          <p>Generated view template</p>
-          <p>Generated at: <%%= Time.current.strftime("%Y-%m-%d %H:%M:%S") %></p>
-          <p>Find me in <%= @path %></p>
-        </div>
+    <!-- Development Info -->
+    <div class="mt-8 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+      <div class="text-sm text-gray-500 dark:text-gray-400">
+        <p>Generated view template</p>
+        <p>Generated at: <%%= Time.current.strftime("%Y-%m-%d %H:%M:%S") %></p>
+        <p>Find me in <%= @path %></p>
       </div>
     </div>
   </div>
