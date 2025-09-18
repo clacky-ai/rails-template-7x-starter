@@ -1,0 +1,23 @@
+module HomeStaticConcern
+  extend ActiveSupport::Concern
+
+  included do
+    before_action :check_static_mode, only: [:index]
+  end
+
+  private
+
+  def check_static_mode
+    return unless should_render_static?
+    @full_render = true
+    render 'home/static'
+  end
+
+  def should_render_static?
+    return false unless Rails.env.development?
+
+    staic_template_path = Rails.root.join('app', 'views', controller_name, 'static.html.erb')
+    index_template_path = Rails.root.join('app', 'views', controller_name, 'index.html.erb')
+    File.exist?(staic_template_path) && !File.exist?(index_template_path)
+  end
+end

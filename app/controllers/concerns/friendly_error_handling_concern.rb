@@ -3,6 +3,7 @@ module FriendlyErrorHandlingConcern
 
   included do
     if Rails.env.development?
+      rescue_from NameError, with: :handle_friendly_error
       rescue_from StandardError, with: :handle_friendly_error
       rescue_from ActionView::SyntaxErrorInTemplate, with: :handle_friendly_error
       rescue_from ActiveRecord::StatementInvalid, with: :handle_friendly_error

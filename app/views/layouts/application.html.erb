@@ -24,10 +24,14 @@
     <%= favicon_link_tag asset_path("app-favicon.svg") unless Rails.env.test? %>
   </head>
   <body class="<%= body_class %>">
-    <main class="min-h-screen">
-      <%= render 'shared/navbar' %>
-      <%= render 'shared/flash_messages' %>
+    <%- if @full_render %>
       <%= yield %>
-    </main>
+    <%- else %>
+      <main class="min-h-screen">
+        <%= render 'shared/navbar' %>
+        <%= render 'shared/flash_messages' %>
+        <%= yield %>
+      </main>
+    <%- end %>
   </body>
 </html>
