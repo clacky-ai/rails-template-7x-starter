@@ -31,7 +31,7 @@ Prioritize developing beautiful UIs with appropriate animations that match user 
 
 When you need to user-side register/authentication system, don't write it yourself. Use `rails generate authentication` generate the initial code.
 
-Should prioritize creating a beautiful home page that does not require login, Use `rails g home` to generate controller and route, developing the view by yourself.
+Should prioritize creating a beautiful home page that does not require login, Use `rails g home` to generate controller and route, developing the view by yourself. Notice: navbar should be written in `app/views/shared/_navbar.html.erb` not view page.
 
 when developing order/payment system, don't write it yourself. Use `rails generate stripe_pay` to generate the initial code.
 
@@ -73,6 +73,8 @@ Every form should include error messages using the shared partial. Add `<%= rend
 
 Keep `rake test` all passed Before delivery feature to users.
 
+`rake test` is configured to only show 3 failed test cases at a time, so you should repeatedly run rake test (no less than 3 rounds, no more than 10 rounds) until all tests pass
+
 Double check `rake test` all passed at last when you finish the task.
 
 Use `curl -X POST localhost:3000/sign_in -H "Content-Type: application/json" -d '{"email":"user@example.com","password":"pass"}'` return session_token then `curl -H "Authorization: Bearer <session_token>" -s xxx` for page test. Use `rails runner "User.create(xxx)"` if need create user first.
@@ -87,7 +89,5 @@ Temporary files should be written in the `tmp` directory.
 ### Some files never edit
 
 Never edit `application.html.erb`, update `app/views/shared/_navbar.html.erb` instead if need add navbar.
-
-Never add navbar into `home/index.html.erb`, update `app/views/shared/_navbar.html.erb` instead.
 
 Never edit `admin/base_controller.rb`
