@@ -9,6 +9,10 @@ class Identity::EmailVerificationsController < ApplicationController
   end
 
   def create
+    if @user.email_was_generated?
+      Rails.logger.info("Email was generated for user #{@user.id}, will skip email verification")
+      redirect_to edit_identity_email_path, alert: "Your email was generated, you need to update it"
+    end
     send_email_verification
     redirect_to _strong_root_path, notice: "We sent a verification email to your email address"
   end
