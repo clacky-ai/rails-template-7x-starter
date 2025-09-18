@@ -6,9 +6,11 @@
           <h1 class="text-3xl font-bold text-gray-900">Your Orders</h1>
           <p class="text-gray-600 mt-2">Track and manage your orders</p>
         </div>
+        <% if @for_test %>
         <div>
           <%%= link_to "Create New Order", new_order_path, class: "btn-primary" %>
         </div>
+        <% end %>
       </div>
 
       <div class="space-y-6">
@@ -73,9 +75,15 @@
             </svg>
             <h3 class="mt-2 text-sm font-medium text-gray-900">No orders yet</h3>
             <p class="mt-1 text-sm text-gray-500">Get started by creating your first order.</p>
+            <% if @for_test %>
             <div class="mt-6">
               <%%= link_to "Create Your First Order", new_order_path, class: "btn-primary" %>
             </div>
+            <% else %>
+            <div class="mt-6">
+              <p class="text-sm text-gray-500">Orders will be created programmatically in your application.</p>
+            </div>
+            <% end %>
           </div>
         <%% end %>
       </div>

@@ -38,7 +38,11 @@
       <!-- Action Buttons -->
       <div class="space-y-3">
         <%%= link_to "View Order Details", @order, class: "w-full inline-flex justify-center items-center border border-blue-600 text-blue-600 hover:bg-blue-50 font-medium py-2 px-4 rounded-lg transition-colors duration-200" %>
+        <% if @for_test %>
         <%%= link_to "Create New Order", new_order_path, class: "btn-primary w-full" %>
+        <% else %>
+        <%%= link_to "Back to Orders", orders_path, class: "btn-primary w-full" %>
+        <% end %>
       </div>
 
       <!-- Additional Info -->

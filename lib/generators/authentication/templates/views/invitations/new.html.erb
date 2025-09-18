@@ -2,7 +2,7 @@
   <div class="bg-white shadow-xl rounded-lg w-full max-w-md p-8">
         <h1 class="text-3xl font-bold text-center">Send Invitation</h1>
 
-        <%= form_with url: invitations_path, local: true, class: "space-y-4 mt-6" do |form| %>
+        <%= form_with url: invitation_path, local: true, class: "space-y-4 mt-6" do |form| %>
           <div class="mb-4">
             <%= form.label :email, class: "block text-sm font-medium text-gray-700 mb-2" do %>
               Email Address

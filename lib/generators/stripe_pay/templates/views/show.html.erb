@@ -9,7 +9,7 @@
             <p class="text-gray-600 mt-2">Order details and payment information</p>
           </div>
           <div class="flex items-center space-x-4">
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium 
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
               <%%= case @order.status
                   when 'paid' then 'bg-green-100 text-green-800'
                   when 'failed' then 'bg-red-100 text-red-800'
@@ -25,33 +25,33 @@
         <div class="card">
           <div class="card-body">
             <h2 class="text-xl font-semibold text-gray-900 mb-6">Order Information</h2>
-            
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Product</label>
                 <p class="text-lg text-gray-900"><%%= @order.product_name %></p>
               </div>
-              
+
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Amount</label>
                 <p class="text-lg text-gray-900"><%%= number_to_currency(@order.amount, unit: @order.currency.upcase + ' ') %></p>
               </div>
-              
+
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
                 <p class="text-lg text-gray-900"><%%= @order.customer_name %></p>
               </div>
-              
+
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Customer Email</label>
                 <p class="text-lg text-gray-900"><%%= @order.customer_email %></p>
               </div>
-              
+
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Order Date</label>
                 <p class="text-lg text-gray-900"><%%= @order.created_at.strftime("%B %d, %Y at %l:%M %p") %></p>
               </div>
-              
+
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
                 <%% case @order.status %>
@@ -67,21 +67,46 @@
           </div>
         </div>
 
+        <%% if Rails.env.development? && @order.status == 'pending' %>
+        <!-- Development Testing Info -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div class="ml-3">
+              <h3 class="text-sm font-medium text-blue-800">Development Mode - Test Payment</h3>
+              <div class="mt-2 text-sm text-blue-700">
+                <p class="mb-2">Use these test card numbers for testing (no real charges will be made):</p>
+                <ul class="list-disc list-inside space-y-1">
+                  <li><strong>Successful payment:</strong> 4242424242424242</li>
+                  <li><strong>Declined payment:</strong> 4000000000000002</li>
+                  <li><strong>Expired card:</strong> 4000000000000069</li>
+                </ul>
+                <p class="mt-2"><strong>Expiry:</strong> Any future date | <strong>CVC:</strong> Any 3 digits | <strong>ZIP:</strong> Any 5 digits</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <%% end %>
+
         <!-- Actions -->
         <div class="flex justify-between">
           <div>
             <%%= link_to "← Back to Home", '/', class: "btn-ghost" %>
           </div>
-          
+
           <%% if @order.status == 'pending' %>
             <div class="space-x-3">
-              <%%= link_to "Complete Payment", 
-                  new_payment_path(order_id: @order.id),
+              <%%= link_to "Complete Payment",
+                  pay_order_path(@order),
                   class: "btn-primary px-6 py-3 text-lg",
                   method: :post %>
-              <%%= link_to "Cancel Order", 
+              <%%= link_to "Cancel Order",
                   order_path(@order),
-                  class: "btn-primary",
+                  class: "btn-error",
                   method: :delete,
                   data: { confirm: "Are you sure you want to cancel this order?" } %>
             </div>

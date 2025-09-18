@@ -72,6 +72,7 @@ class StripePayGenerator < Rails::Generators::Base
   end
 
   def generate_views
+    @for_test = options[:for_test]
     template "views/index.html.erb", "app/views/orders/index.html.erb"
     if options[:for_test]
       template "views/new.html.erb", "app/views/orders/new.html.erb"
