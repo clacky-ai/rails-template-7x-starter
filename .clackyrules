@@ -25,13 +25,15 @@ When project has been setup, call `run_project` tool immediately. ALWAYS keep pr
 Restarting project is unnecessary because Rails automatically hot-reloads code changes in most cases. Changes to files within the `config/` directory (except `config/routes.rb`), explicitly require a project restart.
 
 
-### Some important tips when Developing home page/user authentication/payment/LLM-calling(AI APP) system
+### Some important tips at the project begin
 
-Prioritize developing beautiful UIs with appropriate animations that match user needs, starting with Tailwind base styles at `app/assets/stylesheets/application.css` while ensuring easy global style customization for future modifications.
+Write new design system at `app/assets/stylesheets/application.css` with beautiful UIs and appropriate animations.
 
 When you need to user-side register/authentication system, don't write it yourself. Use `rails generate authentication` generate the initial code.
 
-Should prioritize creating a beautiful home page that does not require login, Use `rails g home` to generate controller and route, developing the view by yourself. Notice: navbar should be written in `app/views/shared/_navbar.html.erb` not view page.
+Use `rails g home` to generate home page initial code, then write the view by yourself.(notice: new navbar should be written in `app/views/shared/_navbar.html.erb`)
+
+### Some important tips when Developing user authentication/payment/LLM-calling(AI APP) system
 
 when developing order/payment system, don't write it yourself. Use `rails generate stripe_pay` to generate the initial code.
 
