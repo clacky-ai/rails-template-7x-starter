@@ -10,8 +10,16 @@ class User < ApplicationRecord
 
   has_many :sessions, dependent: :destroy
 
-  validates :name, presence: true, length: { minimum: 4 }
-  validates :email, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }
+  # Twitter2 does not provide email, so we allow blank
+  validate :email_or_name_present
+
+  with_options if: ->(u) { u.email.present? } do
+    validates :email, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }
+  end
+
+  with_options if: ->(u) { u.name.present? } do
+    validates :name, presence: true, length: { minimum: 4 }
+  end
   validates :password, allow_nil: true, length: { minimum: MIN_PASSWORD }, if: :password_required?
   validates :password, confirmation: true, if: :password_required?
 
@@ -27,8 +35,12 @@ class User < ApplicationRecord
 
   # OAuth methods
   def self.from_omniauth(auth)
-    find_or_create_by(email: auth.info.email) do |user|
-      user.name = auth.info.name
+    find_or_create_by(provider: auth.provider, uid: auth.uid) do |user|
+      name = auth.info.name
+      if name.blank?
+        name = auth.info.email.split('@').first
+      end
+      user.name = name
       user.email = auth.info.email
       user.provider = auth.provider
       user.uid = auth.uid
@@ -41,6 +53,12 @@ class User < ApplicationRecord
   end
 
   private
+
+  def email_or_name_present
+    if email.blank? && name.blank?
+      errors.add(:base, "Either email or name must be provided")
+    end
+  end
 
   def password_required?
     return false if oauth_user?

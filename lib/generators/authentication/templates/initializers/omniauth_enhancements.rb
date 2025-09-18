@@ -75,7 +75,6 @@ module OmniAuth
 
       opts = {
         client_options: {
-          site: clacky_auth_domain,
           authorize_url: "#{clacky_auth_domain}/oauth2/#{provider_path}/auth",
           token_url: "#{clacky_auth_domain}/oauth2/#{provider_path}/token"
         }

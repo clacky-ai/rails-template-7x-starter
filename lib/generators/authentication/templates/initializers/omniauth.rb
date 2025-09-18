@@ -19,7 +19,7 @@ Rails.application.config.middleware.use OmniAuth::Builder do
 
   if ENV['TWITTER_OAUTH_ENABLED'] == 'true'
     provider :twitter2, ENV['TWITTER_API_KEY'], ENV['TWITTER_API_SECRET'], {
-      secure_image_url: true
+      scope: "tweet.read users.read"
     }
   end
 
