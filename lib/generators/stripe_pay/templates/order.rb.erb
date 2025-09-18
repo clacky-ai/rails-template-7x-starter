@@ -85,15 +85,6 @@ class Order < ApplicationRecord
     "#{product_name} for #{customer_name} (#{formatted_amount})"
   end
 
-  # Search functionality for admin
-  scope :search, ->(query) {
-    return all if query.blank?
-
-    where(
-      "customer_name ILIKE :query OR customer_email ILIKE :query OR product_name ILIKE :query OR status ILIKE :query",
-      query: "%#{query}%"
-    )
-  }
 
   # Default ordering
   default_scope { order(created_at: :desc) }

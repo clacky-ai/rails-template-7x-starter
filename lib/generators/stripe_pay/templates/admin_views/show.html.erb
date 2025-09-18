@@ -32,18 +32,18 @@
     <!-- Customer Information -->
     <div class="card">
       <div class="card-body">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4">Customer Information</h2>
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Customer Information</h2>
         
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
-            <p class="text-lg text-gray-900"><%%= @order.customer_name %></p>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
+            <p class="text-lg text-gray-900 dark:text-white"><%%= @order.customer_name %></p>
           </div>
           
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <p class="text-lg text-gray-900">
-              <a href="mailto:<%%= @order.customer_email %>" class="text-blue-600 hover:text-blue-800">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+            <p class="text-lg text-gray-900 dark:text-white">
+              <a href="mailto:<%%= @order.customer_email %>" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
                 <%%= @order.customer_email %>
               </a>
             </p>
@@ -55,22 +55,22 @@
     <!-- Order Information -->
     <div class="card">
       <div class="card-body">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4">Order Information</h2>
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Order Information</h2>
         
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Product</label>
-            <p class="text-lg text-gray-900"><%%= @order.product_name %></p>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Product</label>
+            <p class="text-lg text-gray-900 dark:text-white"><%%= @order.product_name %></p>
           </div>
           
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Amount</label>
-            <p class="text-lg text-gray-900"><%%= number_to_currency(@order.amount, unit: @order.currency.upcase + ' ') %></p>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Amount</label>
+            <p class="text-lg text-gray-900 dark:text-white"><%%= number_to_currency(@order.amount, unit: @order.currency.upcase + ' ') %></p>
           </div>
           
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Currency</label>
-            <p class="text-lg text-gray-900"><%%= @order.currency.upcase %></p>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Currency</label>
+            <p class="text-lg text-gray-900 dark:text-white"><%%= @order.currency.upcase %></p>
           </div>
         </div>
       </div>
@@ -81,18 +81,18 @@
   <%% if @order.stripe_payment_intent_id %>
     <div class="card">
       <div class="card-body">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4">Payment Information</h2>
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Payment Information</h2>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Stripe Payment Intent ID</label>
-            <p class="text-lg font-mono text-gray-900"><%%= @order.stripe_payment_intent_id %></p>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Stripe Payment Intent ID</label>
+            <p class="text-sm font-mono text-gray-900 dark:text-white break-all bg-gray-50 dark:bg-gray-700 p-3 rounded-lg"><%%= @order.stripe_payment_intent_id %></p>
           </div>
           
-          <%% if @order.stripe_payment_method_id %>
+          <%% if @order.stripe_payment_intent_id %>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Payment Method ID</label>
-              <p class="text-lg font-mono text-gray-900"><%%= @order.stripe_payment_method_id %></p>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Payment Intent Status</label>
+              <p class="text-lg text-gray-900 dark:text-white">Active</p>
             </div>
           <%% end %>
         </div>
@@ -103,17 +103,17 @@
   <!-- Timestamps -->
   <div class="card">
     <div class="card-body">
-      <h2 class="text-xl font-semibold text-gray-900 mb-4">Timestamps</h2>
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Timestamps</h2>
       
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Created At</label>
-          <p class="text-lg text-gray-900"><%%= @order.created_at.strftime("%B %d, %Y at %l:%M %p") %></p>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Created At</label>
+          <p class="text-lg text-gray-900 dark:text-white"><%%= @order.created_at.strftime("%B %d, %Y at %l:%M %p") %></p>
         </div>
         
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Last Updated</label>
-          <p class="text-lg text-gray-900"><%%= @order.updated_at.strftime("%B %d, %Y at %l:%M %p") %></p>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Last Updated</label>
+          <p class="text-lg text-gray-900 dark:text-white"><%%= @order.updated_at.strftime("%B %d, %Y at %l:%M %p") %></p>
         </div>
       </div>
     </div>

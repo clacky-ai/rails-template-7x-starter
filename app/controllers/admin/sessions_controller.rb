@@ -1,5 +1,6 @@
 class Admin::SessionsController < Admin::BaseController
   skip_before_action :authenticate_admin!, only: [:new, :create]
+  skip_before_action :check_first_login_password_hint, raise: false
 
   before_action do
     @full_render = true

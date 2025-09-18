@@ -67,57 +67,6 @@
     </div>
   </div>
 
-  <!-- Filters -->
-  <div class="card">
-    <div class="card-body">
-      <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Filter Orders</h3>
-      
-      <%%= form_with url: admin_orders_path, method: :get, local: true, class: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" do |form| %>
-        <div>
-          <%%= form.label :customer_name, "Customer Name", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
-          <%%= form.text_field :customer_name, value: params[:customer_name], placeholder: "Search by name...",
-              class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 dark:text-white" %>
-        </div>
-
-        <div>
-          <%%= form.label :customer_email, "Customer Email", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
-          <%%= form.email_field :customer_email, value: params[:customer_email], placeholder: "Search by email...",
-              class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 dark:text-white" %>
-        </div>
-
-        <div>
-          <%%= form.label :status, "Status", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
-          <%%= form.select :status, 
-              options_for_select([['All Statuses', ''], ['Pending', 'pending'], ['Paid', 'paid'], ['Failed', 'failed']], params[:status]),
-              {},
-              { class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 dark:text-white" } %>
-        </div>
-
-        <div>
-          <%%= form.label :product_name, "Product", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
-          <%%= form.text_field :product_name, value: params[:product_name], placeholder: "Search by product...",
-              class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 dark:text-white" %>
-        </div>
-
-        <div>
-          <%%= form.label :date_from, "Date From", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
-          <%%= form.date_field :date_from, value: params[:date_from],
-              class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 dark:text-white" %>
-        </div>
-
-        <div>
-          <%%= form.label :date_to, "Date To", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
-          <%%= form.date_field :date_to, value: params[:date_to],
-              class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 dark:text-white" %>
-        </div>
-
-        <div class="flex items-end space-x-2">
-          <%%= form.submit "Filter", class: "btn-primary" %>
-          <%%= link_to "Clear", admin_orders_path, class: "btn-ghost" %>
-        </div>
-      <%% end %>
-    </div>
-  </div>
 
   <!-- Orders Table -->
   <div class="card">
@@ -142,7 +91,7 @@
                   <td class="px-6 py-4 whitespace-nowrap">
                     <div class="text-sm font-medium text-gray-900 dark:text-white">#<%%= order.id %></div>
                     <%% if order.stripe_payment_intent_id %>
-                      <div class="text-sm text-gray-500 dark:text-gray-400"><%%= order.stripe_payment_intent_id %></div>
+                      <div class="text-sm text-gray-500 dark:text-gray-400">Has Payment Intent</div>
                     <%% end %>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
@@ -195,7 +144,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
           </svg>
           <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No orders found</h3>
-          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">No orders match your current filters.</p>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">No orders have been created yet.</p>
         </div>
       <%% end %>
     </div>
