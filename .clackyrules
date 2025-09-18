@@ -5,7 +5,7 @@ bin/dev (Do not use `rails s` directly, as it may cause js/css loading issues)
 ### The project uses the following tech stack:
 
 Ruby on Rails 7.2
-daisyUI 4( with tailwind 3 )
+Tailwind v3
 Figaro
 PostgreSQL
 Active_Storage for upload file
@@ -52,9 +52,9 @@ Use `rails generate service xxx` to generate a service file, not generate by you
 
 When installing libraries, try to specify the version you are most familiar with (e.g., npm, bundle) instead of the latest version.
 
-Use `rails generate admin_crud xxx` (where xxx is your model name that you created before) to create the initial CRUD when developing the admin management page
+Use `rails generate admin_crud xxx` (where xxx is your model name that you created before) to create the initial CRUD when developing the admin management page, modify generated code for free.
 
-Use `rails generate crud xxx [action1] [action2] [--auth]` (where xxx is your model name that you created before, action is optional(all actions by default), --auth means need authenticate_user!) to create the initial CRUD when developing the user-side functionality
+Use `rails generate crud xxx [action1] [action2] [--auth]` (where xxx is your model name that you created before, action is optional(all actions by default), --auth means need authenticate_user!) to create the initial CRUD when developing the user-side functionality, modify generated code for free.
 
 Do not use `to_param` in model, no need friendly url.
 

@@ -1,6 +1,6 @@
 <% flash.each do |key, value| %>
   <div class="mx-1 my-2" x-data="{ show: true }" x-show="show" x-transition>
-    <div class="alert <%= flash_daisy_class(key) %>">
+    <div class="flex items-center p-4 rounded-lg <%= flash_alert_class(key) %>">
       <% if key.to_sym == :notice || key.to_sym == :success %>
         <svg class="w-6 h-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -23,7 +23,7 @@
         <div class="text-xs"><%= value %></div>
       </div>
 
-      <button class="btn btn-sm btn-circle btn-ghost" @click="show = false">
+      <button class="ml-auto p-1 rounded-full hover:bg-black/10 transition-colors" @click="show = false">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
         </svg>

@@ -1,95 +1,84 @@
-<div class="hero min-h-screen bg-base-200">
-  <div class="hero-content w-full max-w-6xl">
-    <div class="w-full">
-      <h1 class="text-4xl font-bold text-center mb-8">Orders</h1>
-
-      <div class="flex justify-between items-center mb-6">
-        <div class="text-lg">
-          Total Orders: <%%= @orders.total_count if @orders.respond_to?(:total_count) %>
-        </div>
-<% if options[:for_test] -%>
+<div class="min-h-screen bg-gray-100">
+  <div class="py-10">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center mb-8">
         <div>
-          <%%= link_to "Create New Order", new_order_path, class: "btn btn-primary" %>
+          <h1 class="text-3xl font-bold text-gray-900">Your Orders</h1>
+          <p class="text-gray-600 mt-2">Track and manage your orders</p>
         </div>
-<% end -%>
+        <div>
+          <%%= link_to "Create New Order", new_order_path, class: "btn-primary" %>
+        </div>
       </div>
 
-      <%% if @orders.any? %>
-        <div class="grid gap-4">
+      <div class="space-y-6">
+        <%% if @orders.any? %>
           <%% @orders.each do |order| %>
-            <div class="card bg-base-100 shadow-md">
+            <div class="card">
               <div class="card-body">
                 <div class="flex justify-between items-start">
                   <div class="flex-1">
-                    <h2 class="card-title">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-2">
                       Order #<%%= order.id %>
-                      <div class="badge <%%= case order.status
-                                          when 'paid' then 'badge-success'
-                                          when 'pending' then 'badge-warning'
-                                          when 'processing' then 'badge-info'
-                                          when 'failed' then 'badge-error'
-                                          else 'badge-ghost'
-                                          end %>">
-                        <%%= order.status.humanize %>
-                      </div>
                     </h2>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                       <div>
-                        <p class="text-sm text-gray-600">Customer</p>
-                        <p class="font-medium"><%%= order.customer_name %></p>
-                        <p class="text-sm text-gray-500"><%%= order.customer_email %></p>
+                        <span class="font-medium text-gray-700">Product:</span>
+                        <p class="text-gray-900"><%%= order.product_name %></p>
                       </div>
-
                       <div>
-                        <p class="text-sm text-gray-600">Product</p>
-                        <p class="font-medium"><%%= order.product_name %></p>
+                        <span class="font-medium text-gray-700">Amount:</span>
+                        <p class="text-gray-900"><%%= number_to_currency(order.amount, unit: order.currency.upcase + ' ') %></p>
                       </div>
-
                       <div>
-                        <p class="text-sm text-gray-600">Amount</p>
-                        <p class="font-medium text-lg">
-                          <%%= number_to_currency(order.amount, unit: order.currency.upcase == 'USD' ? '$' : order.currency.upcase) %>
-                        </p>
+                        <span class="font-medium text-gray-700">Status:</span>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                          <%%= case order.status
+                              when 'paid' then 'bg-green-100 text-green-800'
+                              when 'failed' then 'bg-red-100 text-red-800'
+                              when 'pending' then 'bg-yellow-100 text-yellow-800'
+                              else 'bg-gray-100 text-gray-800'
+                              end %>">
+                          <%%= order.display_status %>
+                        </span>
                       </div>
+                    </div>
 
-                      <div>
-                        <p class="text-sm text-gray-600">Created</p>
-                        <p class="font-medium"><%%= time_ago_in_words(order.created_at) %> ago</p>
-                        <p class="text-sm text-gray-500"><%%= order.created_at.strftime("%B %d, %Y") %></p>
-                      </div>
+                    <div class="mt-4 text-sm text-gray-600">
+                      <p>Customer: <%%= order.customer_name %> (<%%= order.customer_email %>)</p>
+                      <p>Created: <%%= order.created_at.strftime("%B %d, %Y at %l:%M %p") %></p>
                     </div>
                   </div>
 
-                  <div class="flex-shrink-0 ml-4">
-                    <%%= link_to "View Details", order_path(order), class: "btn btn-primary btn-sm" %>
+                  <div class="ml-6">
+                    <%%= link_to "View Details", order_path(order), class: "btn-primary text-sm py-1 px-3" %>
                   </div>
                 </div>
               </div>
             </div>
           <%% end %>
-        </div>
 
-        <!-- Pagination -->
-        <%% if @orders.respond_to?(:current_page) %>
-          <div class="flex justify-center mt-8">
-            <%%= paginate @orders %>
-          </div>
-        <%% end %>
-      <%% else %>
-        <div class="text-center py-12">
-          <div class="mb-4">
-            <svg class="w-16 h-16 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <!-- Pagination -->
+          <%% if @orders.respond_to?(:current_page) %>
+            <div class="flex justify-center mt-8">
+              <%%= paginate @orders %>
+            </div>
+          <%% end %>
+
+        <%% else %>
+          <div class="text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
             </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No orders yet</h3>
+            <p class="mt-1 text-sm text-gray-500">Get started by creating your first order.</p>
+            <div class="mt-6">
+              <%%= link_to "Create Your First Order", new_order_path, class: "btn-primary" %>
+            </div>
           </div>
-          <h3 class="text-xl font-semibold text-gray-700 mb-2">No orders found</h3>
-          <p class="text-gray-500 mb-6">You haven't created any orders yet.</p>
-<% if options[:for_test] -%>
-          <%%= link_to "Create Your First Order", new_order_path, class: "btn btn-primary" %>
-<% end -%>
-        </div>
-      <%% end %>
+        <%% end %>
+      </div>
     </div>
   </div>
 </div>

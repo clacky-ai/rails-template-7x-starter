@@ -1,80 +1,93 @@
-<div class="container mx-auto px-4 py-8 max-w-3xl">
-  <div class="bg-white shadow-xl rounded-lg overflow-hidden">
-    <div class="bg-gradient-to-r from-blue-500 to-purple-600 px-8 py-6">
-      <h1 class="text-3xl font-bold text-white">Order Details</h1>
-      <p class="text-blue-100 mt-2">Order #<%%= @order.id %></p>
-    </div>
+<div class="min-h-screen bg-gray-100">
+  <div class="py-10">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="space-y-6">
+        <!-- Header -->
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-3xl font-bold text-gray-900">Order #<%%= @order.id %></h1>
+            <p class="text-gray-600 mt-2">Order details and payment information</p>
+          </div>
+          <div class="flex items-center space-x-4">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium 
+              <%%= case @order.status
+                  when 'paid' then 'bg-green-100 text-green-800'
+                  when 'failed' then 'bg-red-100 text-red-800'
+                  when 'pending' then 'bg-yellow-100 text-yellow-800'
+                  else 'bg-gray-100 text-gray-800'
+                  end %>">
+              <%%= @order.display_status %>
+            </span>
+          </div>
+        </div>
 
-    <div class="px-8 py-6">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div>
-          <h3 class="text-xl font-semibold text-gray-900 mb-4">Customer Information</h3>
-          <div class="space-y-3">
-            <div>
-              <label class="block text-sm font-medium text-gray-500">Name</label>
-              <p class="text-lg text-gray-900"><%%= @order.customer_name %></p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-500">Email</label>
-              <p class="text-lg text-gray-900"><%%= @order.customer_email %></p>
+        <!-- Order Details -->
+        <div class="card">
+          <div class="card-body">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">Order Information</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Product</label>
+                <p class="text-lg text-gray-900"><%%= @order.product_name %></p>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                <p class="text-lg text-gray-900"><%%= number_to_currency(@order.amount, unit: @order.currency.upcase + ' ') %></p>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
+                <p class="text-lg text-gray-900"><%%= @order.customer_name %></p>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Customer Email</label>
+                <p class="text-lg text-gray-900"><%%= @order.customer_email %></p>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Order Date</label>
+                <p class="text-lg text-gray-900"><%%= @order.created_at.strftime("%B %d, %Y at %l:%M %p") %></p>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <%% case @order.status %>
+                <%% when 'paid' %>
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">Payment Completed</span>
+                <%% when 'pending' %>
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">Payment Processing</span>
+                <%% else %>
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">Payment Failed</span>
+                <%% end %>
+              </div>
             </div>
           </div>
         </div>
 
-        <div>
-          <h3 class="text-xl font-semibold text-gray-900 mb-4">Product & Payment</h3>
-          <div class="space-y-3">
-            <div>
-              <label class="block text-sm font-medium text-gray-500">Product</label>
-              <p class="text-lg text-gray-900"><%%= @order.product_name %></p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-500">Amount</label>
-              <p class="text-2xl font-bold text-green-600"><%%= @order.formatted_amount %></p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-500">Status</label>
-              <span class="badge badge-primary"><%%= @order.display_status %></span>
-            </div>
+        <!-- Actions -->
+        <div class="flex justify-between">
+          <div>
+            <%%= link_to "← Back to Home", '/', class: "btn-ghost" %>
           </div>
+          
+          <%% if @order.status == 'pending' %>
+            <div class="space-x-3">
+              <%%= link_to "Complete Payment", 
+                  new_payment_path(order_id: @order.id),
+                  class: "btn-primary px-6 py-3 text-lg",
+                  method: :post %>
+              <%%= link_to "Cancel Order", 
+                  order_path(@order),
+                  class: "btn-primary",
+                  method: :delete,
+                  data: { confirm: "Are you sure you want to cancel this order?" } %>
+            </div>
+          <%% end %>
         </div>
       </div>
-    </div>
-
-    <div class="px-8 py-6 bg-white border-t border-gray-200">
-      <div class="flex items-center justify-between">
-        <%%= link_to "← Back to Home", '/', class: "btn btn-ghost" %>
-        
-        <%% if @order.pending? %>
-          <%%= link_to "Proceed to Payment", pay_order_path(@order), 
-              method: :post,
-              class: "btn btn-primary btn-lg",
-              data: { 
-                confirm: "You will be redirected to Stripe's secure checkout page. Continue?",
-                disable_with: "Processing..." 
-              } %>
-        <%% elsif @order.failed? %>
-          <%%= link_to "Try Payment Again", pay_order_path(@order), 
-              method: :post,
-              class: "btn btn-primary",
-              data: { 
-                confirm: "You will be redirected to Stripe's secure checkout page. Continue?",
-                disable_with: "Processing..." 
-              } %>
-        <%% elsif @order.paid? %>
-          <span class="badge badge-success badge-lg">Payment Completed</span>
-        <%% elsif @order.processing? %>
-          <span class="badge badge-warning badge-lg">Payment Processing</span>
-        <%% end %>
-      </div>
-      
-      <%% if @order.pending? %>
-        <div class="mt-6 p-4 bg-green-50 rounded-lg">
-          <p class="text-sm text-green-700">
-            <strong>Ready for Payment:</strong> Your order has been created successfully. Click "Proceed to Payment" to complete your purchase securely through Stripe.
-          </p>
-        </div>
-      <%% end %>
     </div>
   </div>
 </div>
