@@ -24,16 +24,29 @@ When project has been setup, call `run_project` tool immediately. ALWAYS keep pr
 
 Restarting project is unnecessary because Rails automatically hot-reloads code changes in most cases. Changes to files within the `config/` directory (except `config/routes.rb`), explicitly require a project restart.
 
+## ⚠️ MANDATORY PROJECT WORKFLOW - FOLLOW EXACTLY IN THIS ORDER
 
-### Some important tips at the project begin
+**STOP! Before creating ANY models or controllers, you MUST complete these steps first:**
 
-Write new design system at `app/assets/stylesheets/application.css` with beautiful UIs and appropriate animations.
+### Step 1: REQUIRED - Design System First
+**ALWAYS start by writing a design system in `app/assets/stylesheets/application.css`** with beautiful UIs and appropriate animations( using `npm run build:css` to keep it right ). DO NOT create any models/controllers before this.
 
-When you need to user-side register/authentication system, don't write it yourself. Use `rails generate authentication` generate the initial code.
+Pay attention to contrast, color, and typography.
 
-Use `rails g home` to generate home page initial code, then write the view by yourself.(notice: new navbar should be written in `app/views/shared/_navbar.html.erb`)
+Always generate responsive designs.
 
-### Some important tips when Developing user authentication/payment/LLM-calling(AI APP) system
+CRITICAL: USE SEMANTIC TOKENS FOR COLORS, GRADIENTS, FONTS, ETC. It's important you follow best practices. DO NOT use direct colors like text-white, text-black, bg-white, bg-black, etc. Everything must be themed via the design system defined in the `app/assets/stylesheets/application.css` and `tailwind.config.js` files
+
+### Step 2: REQUIRED - Static Page for Design System
+**ALWAYS Write the view `app/views/shared/static.html.erb` with new design system**( Do not need add any routes for static page, the system already configured)
+
+### Step 3: REQUIRED - Testing visit '/'
+**ALWAYS run the project, then use `curl http://localhost:3000/` to ensure these is no error**
+
+### Step 4: Then proceed with other features
+Only after completing Steps 1-3, you can create other models and controllers.
+
+## Some important tips when Developing user authentication/payment/LLM-calling(AI APP) system
 
 when developing order/payment system, don't write it yourself. Use `rails generate stripe_pay` to generate the initial code.
 
@@ -44,11 +57,13 @@ Should only need to support Stripe payments by default.
 Do not recreate administrator functionality in User model. Administrator system already exists. Adding admin page low priority.
 
 
-### Some important tips when coding
+## Some important tips when coding
 
 Do not generate any fake data that should originally be in the database for users.
 
 Do not write any business logic in the admin backend that should only be for website management and maintenance.
+
+Create new home page, please write it in `app/views/home/index.html.erb` if need.
 
 Generate images using this placeholder website: https://images.unsplash.com/ and simultaneously verify accessibility with `curl` if you need static assets.
 
@@ -88,7 +103,7 @@ Use `bundle exec rspec spec/requests/xxx_spec.rb --format documentation`( not -v
 Temporary files should be written in the `tmp` directory.
 
 
-### Some files never edit
+## Some files never edit
 
 Never edit `application.html.erb`, update `app/views/shared/_navbar.html.erb` instead if need add navbar.
 

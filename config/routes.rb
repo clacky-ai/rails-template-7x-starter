@@ -10,6 +10,7 @@ end
 Rails.application.routes.draw do
   # write your business logic routes here
 
+  root 'home#index'
 
   # Do not write business logic at admin dashboard
   namespace :admin do
