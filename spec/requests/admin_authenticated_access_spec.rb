@@ -9,7 +9,7 @@ RSpec.describe "Admin Authenticated Access", type: :request do
 
       it "returns 200 status code for admin root path" do
         get admin_root_path
-        expect(response).to have_http_status(:success)
+        expect(response).to be_success_with_view_check('index')
       end
     end
 

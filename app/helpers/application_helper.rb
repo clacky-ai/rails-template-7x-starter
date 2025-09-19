@@ -33,15 +33,15 @@ module ApplicationHelper
   def flash_alert_class(level)
     case level.to_sym
     when :notice, :success
-      'bg-green-100 text-green-800 border border-green-200'
+      'alert-success dark:alert-success'
     when :info
-      'bg-blue-100 text-blue-800 border border-blue-200'
+      'alert-info dark:alert-info'
     when :warning
-      'bg-yellow-100 text-yellow-800 border border-yellow-200'
-    when :alert, :error
-      'bg-red-100 text-red-800 border border-red-200'
+      'alert-warning dark:alert-warning'
+    when :alert, :error, :danger
+      'alert-danger dark:alert-danger'
     else
-      'bg-blue-100 text-blue-800 border border-blue-200'
+      'alert-info dark:alert-info'
     end
   end
 
@@ -59,17 +59,17 @@ module ApplicationHelper
   def action_badge_class(action)
     case action
     when 'login'
-      'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800'
+      'badge-success dark:badge-success'
     when 'logout'
-      'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800'
+      'badge-secondary dark:badge-secondary'
     when 'create'
-      'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800'
+      'badge-secondary dark:badge-secondary'
     when 'update'
-      'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800'
+      'badge-warning dark:badge-warning'
     when 'destroy'
-      'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800'
+      'badge-danger dark:badge-danger'
     else
-      'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800'
+      'badge-neutral dark:badge-neutral'
     end
   end
 end

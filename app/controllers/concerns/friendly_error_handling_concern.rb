@@ -2,6 +2,7 @@ module FriendlyErrorHandlingConcern
   extend ActiveSupport::Concern
 
   included do
+    # Only handle errors in development environment, test environment should raise error
     if Rails.env.development?
       rescue_from NameError, with: :handle_friendly_error
       rescue_from StandardError, with: :handle_friendly_error

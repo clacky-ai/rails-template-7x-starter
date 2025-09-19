@@ -21,7 +21,7 @@ RSpec.describe "Authenticated Access", type: :request do
 
       it "allows access to profile page" do
         get profile_path
-        expect(response).to have_http_status(:success)
+        expect(response).to be_success_with_view_check('show')
       end
     end
 
@@ -52,7 +52,7 @@ RSpec.describe "Authenticated Access", type: :request do
 
       # Should be able to access protected resources immediately
       get profile_path
-      expect(response).to have_http_status(:success)
+      expect(response).to be_success_with_view_check('show')
     end
 
     it "complete sign in and access flow" do
@@ -70,7 +70,7 @@ RSpec.describe "Authenticated Access", type: :request do
 
       # Verify we can access other protected pages
       get profile_path
-      expect(response).to have_http_status(:success)
+      expect(response).to be_success_with_view_check('show')
     end
   end
 end

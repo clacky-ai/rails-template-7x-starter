@@ -101,6 +101,8 @@ Do not use `rails console`, use `rails runner` instead if you want insert or che
 
 Use `bundle exec rspec spec/requests/xxx_spec.rb --format documentation`( not -v or --version ) for single test.
 
+**When you see "Views for xxx are not yet developed" error during testing, immediately create the corresponding view file, then re-run the tests.**
+
 Temporary files should be written in the `tmp` directory.
 
 

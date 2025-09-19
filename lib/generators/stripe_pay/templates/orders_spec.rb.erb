@@ -13,14 +13,14 @@ RSpec.describe "Orders", type: :request do
   describe "GET /orders" do
     it "returns http success" do
       get orders_path
-      expect(response).to have_http_status(:success)
+      expect(response).to be_success_with_view_check('index')
     end
   end
 
   describe "GET /orders/:id" do
     it "returns http success" do
       get order_path(order)
-      expect(response).to have_http_status(:success)
+      expect(response).to be_success_with_view_check('show')
     end
   end
 end

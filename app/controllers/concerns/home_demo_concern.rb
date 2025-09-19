@@ -2,8 +2,11 @@ module HomeDemoConcern
   extend ActiveSupport::Concern
 
   included do
-    skip_before_action :check_pending_migrations, if: -> { should_render_demo? }, raise: false
-    before_action :check_demo_mode, only: [:index]
+    # Only handle demo page in development environment
+    if Rails.env.development?
+      skip_before_action :check_pending_migrations, if: -> { should_render_demo? }, raise: false
+      before_action :check_demo_mode, only: [:index]
+    end
   end
 
   private

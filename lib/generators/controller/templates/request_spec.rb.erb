@@ -13,7 +13,7 @@ RSpec.describe "<%= plural_name.humanize %>", type: :request do
   describe "GET /<%= plural_name %>" do
     it "returns http success" do
       get <%= plural_name %>_path
-      expect(response).to have_http_status(:success)
+      expect(response).to be_success_with_view_check('index')
     end
   end
   <%- end -%>
@@ -23,7 +23,7 @@ RSpec.describe "<%= plural_name.humanize %>", type: :request do
   describe "GET /<%= singular_name %>" do
     it "returns http success" do
       get <%= singular_name %>_path
-      expect(response).to have_http_status(:success)
+      expect(response).to be_success_with_view_check('show')
     end
   end
     <%- else -%>
@@ -32,7 +32,7 @@ RSpec.describe "<%= plural_name.humanize %>", type: :request do
 
     it "returns http success" do
       get <%= singular_name %>_path(<%= singular_name %>)
-      expect(response).to have_http_status(:success)
+      expect(response).to be_success_with_view_check('show')
     end
   end
     <%- end -%>
@@ -42,7 +42,7 @@ RSpec.describe "<%= plural_name.humanize %>", type: :request do
   describe "GET /<%= single_resource? ? singular_name : plural_name %>/new" do
     it "returns http success" do
       get new_<%= singular_name %>_path
-      expect(response).to have_http_status(:success)
+      expect(response).to be_success_with_view_check('new')
     end
   end
   <% end -%>
@@ -52,7 +52,7 @@ RSpec.describe "<%= plural_name.humanize %>", type: :request do
   describe "GET /<%= singular_name %>/edit" do
     it "returns http success" do
       get edit_<%= singular_name %>_path
-      expect(response).to have_http_status(:success)
+      expect(response).to be_success_with_view_check('edit')
     end
   end
     <%- else -%>
@@ -61,7 +61,7 @@ RSpec.describe "<%= plural_name.humanize %>", type: :request do
 
     it "returns http success" do
       get edit_<%= singular_name %>_path(<%= singular_name %>)
-      expect(response).to have_http_status(:success)
+      expect(response).to be_success_with_view_check('edit')
     end
   end
     <%- end -%>

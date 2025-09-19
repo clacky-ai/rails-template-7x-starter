@@ -62,73 +62,217 @@
 /* design system start */
 .btn {
   @apply inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  border-radius: var(--border-radius);
+  font-family: var(--font-family-sans);
 }
 
 .btn-primary {
-  @apply btn bg-primary hover:bg-primary-dark text-white focus:ring-primary focus:ring-offset-2 px-4 py-2 rounded-md text-sm;
+  @apply btn text-white px-4 py-2 text-sm;
+  background-color: hsl(var(--color-primary));
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: hsl(var(--color-primary-dark));
+  box-shadow: var(--shadow);
+}
+
+.btn-primary:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px hsl(var(--color-primary) / 0.3);
 }
 
 .btn-secondary {
-  @apply btn bg-secondary hover:bg-secondary-dark text-white focus:ring-secondary focus:ring-offset-2 px-4 py-2 rounded-md text-sm;
+  @apply btn text-white px-4 py-2 text-sm;
+  background-color: hsl(var(--color-secondary));
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: hsl(var(--color-secondary-dark));
+  box-shadow: var(--shadow);
+}
+
+.btn-secondary:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px hsl(var(--color-secondary) / 0.3);
 }
 
 .btn-neutral {
-  @apply btn bg-neutral-600 hover:bg-neutral-800 text-white focus:ring-neutral-600 focus:ring-offset-2 px-4 py-2 rounded-md text-sm;
+  @apply btn text-white px-4 py-2 text-sm;
+  background-color: hsl(var(--color-neutral-600));
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-neutral:hover:not(:disabled) {
+  background-color: hsl(var(--color-neutral-800));
+  box-shadow: var(--shadow);
+}
+
+.btn-neutral:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px hsl(var(--color-neutral-600) / 0.3);
 }
 
 .btn-success {
-  @apply btn bg-success hover:opacity-90 text-white focus:ring-success focus:ring-offset-2 px-4 py-2 rounded-md text-sm;
+  @apply btn text-white px-4 py-2 text-sm;
+  background-color: hsl(var(--color-success));
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-success:hover:not(:disabled) {
+  opacity: 0.9;
+  box-shadow: var(--shadow);
+}
+
+.btn-success:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px hsl(var(--color-success) / 0.3);
 }
 
 .btn-warning {
-  @apply btn bg-warning hover:opacity-90 text-white focus:ring-warning focus:ring-offset-2 px-4 py-2 rounded-md text-sm;
+  @apply btn text-white px-4 py-2 text-sm;
+  background-color: hsl(var(--color-warning));
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-warning:hover:not(:disabled) {
+  opacity: 0.9;
+  box-shadow: var(--shadow);
+}
+
+.btn-warning:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px hsl(var(--color-warning) / 0.3);
 }
 
 .btn-danger {
-  @apply btn bg-danger hover:opacity-90 text-white focus:ring-danger focus:ring-offset-2 px-4 py-2 rounded-md text-sm;
+  @apply btn text-white px-4 py-2 text-sm;
+  background-color: hsl(var(--color-danger));
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-danger:hover:not(:disabled) {
+  opacity: 0.9;
+  box-shadow: var(--shadow);
+}
+
+.btn-danger:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px hsl(var(--color-danger) / 0.3);
 }
 
 .btn-ghost {
-  @apply btn border border-neutral-200 dark:border-neutral-600 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 focus:ring-neutral-600 px-4 py-2 rounded-md text-sm;
+  @apply btn px-4 py-2 text-sm;
+  background-color: transparent;
+  border: 1px solid hsl(var(--color-neutral-200));
+  color: hsl(var(--color-neutral-600));
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background-color: hsl(var(--color-neutral-100));
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-ghost:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px hsl(var(--color-neutral-600) / 0.3);
+}
+
+.dark .btn-ghost {
+  border-color: hsl(var(--color-neutral-600));
+  color: hsl(var(--color-neutral-400));
+}
+
+.dark .btn-ghost:hover:not(:disabled) {
+  background-color: hsl(var(--color-neutral-800));
 }
 
 .btn-outline-primary {
-  @apply btn border border-primary text-primary hover:bg-primary-light hover:bg-opacity-10 focus:ring-primary px-4 py-2 rounded-md text-sm;
+  @apply btn px-4 py-2 text-sm;
+  background-color: transparent;
+  border: 1px solid hsl(var(--color-primary));
+  color: hsl(var(--color-primary));
+}
+
+.btn-outline-primary:hover:not(:disabled) {
+  background-color: hsl(var(--color-primary-light) / 0.1);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-outline-primary:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px hsl(var(--color-primary) / 0.3);
 }
 
 .btn-xs {
-  @apply text-xs px-2 py-1 rounded-sm;
+  @apply text-xs px-2 py-1;
+  border-radius: var(--border-radius-sm);
 }
 
 .btn-sm {
-  @apply text-sm px-3 py-1.5 rounded;
+  @apply text-sm px-3 py-1.5;
+  border-radius: var(--border-radius);
 }
 
 .btn-md {
-  @apply text-sm px-4 py-2 rounded-md;
+  @apply text-sm px-4 py-2;
+  border-radius: var(--border-radius);
 }
 
 .btn-lg {
-  @apply text-base px-6 py-3 rounded-lg;
+  @apply text-base px-6 py-3;
+  border-radius: var(--border-radius-lg);
 }
 
 .btn-xl {
-  @apply text-lg px-8 py-4 rounded-xl;
+  @apply text-lg px-8 py-4;
+  border-radius: var(--border-radius-xl);
 }
 .card {
-  @apply bg-white dark:bg-neutral-800 rounded-lg shadow-md border border-neutral-200 dark:border-neutral-700 overflow-hidden;
+  @apply px-0 py-0 overflow-hidden;
+  background-color: white;
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+  border: 1px solid hsl(var(--color-neutral-200));
+}
+
+.dark .card {
+  background-color: hsl(var(--color-neutral-800));
+  border-color: hsl(var(--color-neutral-700));
 }
 
 .card-elevated {
-  @apply card shadow-lg;
+  @apply card;
+  box-shadow: var(--shadow-lg);
 }
 
 .card-flat {
-  @apply card shadow-none border-0 bg-neutral-50 dark:bg-neutral-900;
+  @apply card;
+  box-shadow: none;
+  border: 0;
+  background-color: hsl(var(--color-neutral-50));
+}
+
+.dark .card-flat {
+  background-color: hsl(var(--color-neutral-900));
 }
 
 .card-header {
-  @apply px-6 py-4 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-700;
+  @apply px-6 py-4;
+  border-bottom: 1px solid hsl(var(--color-neutral-200));
+  background-color: hsl(var(--color-neutral-50));
+}
+
+.dark .card-header {
+  border-bottom-color: hsl(var(--color-neutral-700));
+  background-color: hsl(var(--color-neutral-700));
 }
 
 .card-body {
@@ -136,68 +280,174 @@
 }
 
 .card-footer {
-  @apply px-6 py-4 border-t border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-700;
+  @apply px-6 py-4;
+  border-top: 1px solid hsl(var(--color-neutral-200));
+  background-color: hsl(var(--color-neutral-50));
+}
+
+.dark .card-footer {
+  border-top-color: hsl(var(--color-neutral-700));
+  background-color: hsl(var(--color-neutral-700));
 }
 
 .alert {
-  @apply rounded-lg border p-4 text-sm font-medium;
+  @apply p-4 text-sm font-medium;
+  border-radius: var(--border-radius-lg);
+  border: 1px solid;
 }
 
 .alert a {
   text-decoration: underline;
 }
 
-
 .alert-success {
-  @apply alert bg-success-bg border-success text-neutral-800 dark:bg-success dark:bg-opacity-20 dark:border-success dark:text-success;
+  @apply alert;
+  background-color: hsl(var(--color-success-bg));
+  border-color: hsl(var(--color-success));
+  color: hsl(var(--color-neutral-800));
+}
+
+.dark .alert-success {
+  background-color: hsl(var(--color-success) / 0.2);
+  border-color: hsl(var(--color-success));
+  color: hsl(var(--color-success));
 }
 
 .alert-warning {
-  @apply alert bg-warning-bg border-warning text-neutral-800 dark:bg-warning dark:bg-opacity-20 dark:border-warning dark:text-warning;
+  @apply alert;
+  background-color: hsl(var(--color-warning-bg));
+  border-color: hsl(var(--color-warning));
+  color: hsl(var(--color-neutral-800));
+}
+
+.dark .alert-warning {
+  background-color: hsl(var(--color-warning) / 0.2);
+  border-color: hsl(var(--color-warning));
+  color: hsl(var(--color-warning));
 }
 
 .alert-danger {
-  @apply alert bg-danger-bg border-danger text-neutral-800 dark:bg-danger dark:bg-opacity-20 dark:border-danger dark:text-danger;
+  @apply alert;
+  background-color: hsl(var(--color-danger-bg));
+  border-color: hsl(var(--color-danger));
+  color: hsl(var(--color-neutral-800));
+}
+
+.dark .alert-danger {
+  background-color: hsl(var(--color-danger) / 0.2);
+  border-color: hsl(var(--color-danger));
+  color: hsl(var(--color-danger));
 }
 
 .alert-info {
-  @apply alert bg-info-bg border-info text-neutral-800 dark:bg-info dark:bg-opacity-20 dark:border-info dark:text-info;
+  @apply alert;
+  background-color: hsl(var(--color-info-bg));
+  border-color: hsl(var(--color-info));
+  color: hsl(var(--color-neutral-800));
+}
+
+.dark .alert-info {
+  background-color: hsl(var(--color-info) / 0.2);
+  border-color: hsl(var(--color-info));
+  color: hsl(var(--color-info));
 }
 
 .badge {
-  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  @apply inline-flex items-center px-2.5 py-0.5 text-xs font-medium;
+  border-radius: 9999px; /* full */
 }
 
 .badge-primary {
-  @apply badge bg-primary-light bg-opacity-20 text-primary dark:bg-primary dark:bg-opacity-30 dark:text-primary-light;
+  @apply badge;
+  background-color: hsl(var(--color-primary-light) / 0.2);
+  color: hsl(var(--color-primary));
+}
+
+.dark .badge-primary {
+  background-color: hsl(var(--color-primary) / 0.3);
+  color: hsl(var(--color-primary-light));
 }
 
 .badge-secondary {
-  @apply badge bg-secondary-light bg-opacity-20 text-secondary dark:bg-secondary dark:bg-opacity-30 dark:text-secondary-light;
+  @apply badge;
+  background-color: hsl(var(--color-secondary-light) / 0.2);
+  color: hsl(var(--color-secondary));
+}
+
+.dark .badge-secondary {
+  background-color: hsl(var(--color-secondary) / 0.3);
+  color: hsl(var(--color-secondary-light));
 }
 
 .badge-success {
-  @apply badge bg-success-bg text-success dark:bg-success dark:bg-opacity-30 dark:text-success;
+  @apply badge;
+  background-color: hsl(var(--color-success-bg));
+  color: hsl(var(--color-success));
+}
+
+.dark .badge-success {
+  background-color: hsl(var(--color-success) / 0.3);
+  color: hsl(var(--color-success));
 }
 
 .badge-warning {
-  @apply badge bg-warning-bg text-warning dark:bg-warning dark:bg-opacity-30 dark:text-warning;
+  @apply badge;
+  background-color: hsl(var(--color-warning-bg));
+  color: hsl(var(--color-warning));
+}
+
+.dark .badge-warning {
+  background-color: hsl(var(--color-warning) / 0.3);
+  color: hsl(var(--color-warning));
 }
 
 .badge-danger {
-  @apply badge bg-danger-bg text-danger dark:bg-danger dark:bg-opacity-30 dark:text-danger;
+  @apply badge;
+  background-color: hsl(var(--color-danger-bg));
+  color: hsl(var(--color-danger));
+}
+
+.dark .badge-danger {
+  background-color: hsl(var(--color-danger) / 0.3);
+  color: hsl(var(--color-danger));
 }
 
 .badge-neutral {
-  @apply badge bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200;
+  @apply badge;
+  background-color: hsl(var(--color-neutral-100));
+  color: hsl(var(--color-neutral-800));
+}
+
+.dark .badge-neutral {
+  background-color: hsl(var(--color-neutral-800));
+  color: hsl(var(--color-neutral-200));
 }
 .form-input {
-  @apply w-full px-3 py-2 border border-neutral-200 dark:border-neutral-600 rounded-md
-         bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100
-         placeholder-neutral-400 dark:placeholder-neutral-400
-         focus:ring-2 focus:ring-primary focus:border-primary
-         disabled:opacity-50 disabled:cursor-not-allowed
-         transition-colors duration-200;
+  @apply w-full px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200;
+  border: 1px solid hsl(var(--color-neutral-200));
+  border-radius: var(--border-radius);
+  background-color: white;
+  color: hsl(var(--color-neutral-800));
+}
+
+.form-input::placeholder {
+  color: hsl(var(--color-neutral-400));
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: hsl(var(--color-primary));
+  box-shadow: 0 0 0 3px hsl(var(--color-primary) / 0.1);
+}
+
+.dark .form-input {
+  border-color: hsl(var(--color-neutral-600));
+  background-color: hsl(var(--color-neutral-800));
+  color: hsl(var(--color-neutral-100));
+}
+
+.dark .form-input::placeholder {
+  color: hsl(var(--color-neutral-400));
 }
 
 .form-textarea {
@@ -209,27 +459,56 @@
 }
 
 .form-label {
-  @apply block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1;
+  @apply block text-sm font-medium mb-1;
+  color: hsl(var(--color-neutral-600));
+}
+
+.dark .form-label {
+  color: hsl(var(--color-neutral-400));
 }
 
 .form-error {
-  @apply text-sm text-danger dark:text-danger mt-1;
+  @apply text-sm mt-1;
+  color: hsl(var(--color-danger));
 }
 
 .form-help {
-  @apply text-sm text-neutral-400 dark:text-neutral-400 mt-1;
+  @apply text-sm mt-1;
+  color: hsl(var(--color-neutral-400));
 }
 
 .table {
-  @apply w-full text-sm text-left text-neutral-400 dark:text-neutral-400;
+  @apply w-full text-sm text-left;
+  color: hsl(var(--color-neutral-400));
 }
 
 .table-header {
-  @apply text-xs text-neutral-600 dark:text-neutral-400 uppercase bg-neutral-50 dark:bg-neutral-800;
+  @apply text-xs uppercase;
+  color: hsl(var(--color-neutral-600));
+  background-color: hsl(var(--color-neutral-50));
+}
+
+.dark .table-header {
+  color: hsl(var(--color-neutral-400));
+  background-color: hsl(var(--color-neutral-800));
 }
 
 .table-row {
-  @apply bg-white dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-600 hover:bg-neutral-50 dark:hover:bg-neutral-900;
+  background-color: white;
+  border-bottom: 1px solid hsl(var(--color-neutral-200));
+}
+
+.table-row:hover {
+  background-color: hsl(var(--color-neutral-50));
+}
+
+.dark .table-row {
+  background-color: hsl(var(--color-neutral-800));
+  border-bottom-color: hsl(var(--color-neutral-600));
+}
+
+.dark .table-row:hover {
+  background-color: hsl(var(--color-neutral-900));
 }
 
 .table-cell {
@@ -241,11 +520,19 @@
 }
 
 .loading-spinner {
-  @apply animate-spin rounded-full border-2 border-neutral-200 border-t-primary;
+  @apply animate-spin rounded-full border-2;
+  border-color: hsl(var(--color-neutral-200));
+  border-top-color: hsl(var(--color-primary));
 }
 
 .skeleton {
-  @apply animate-pulse bg-neutral-200 dark:bg-neutral-800 rounded;
+  @apply animate-pulse;
+  background-color: hsl(var(--color-neutral-200));
+  border-radius: var(--border-radius);
+}
+
+.dark .skeleton {
+  background-color: hsl(var(--color-neutral-800));
 }
 
 .field_with_errors {
@@ -255,7 +542,13 @@
 .field_with_errors input,
 .field_with_errors textarea,
 .field_with_errors select {
-  @apply border-danger dark:border-danger focus:ring-danger;
+  border-color: hsl(var(--color-danger)) !important;
+}
+
+.field_with_errors input:focus,
+.field_with_errors textarea:focus,
+.field_with_errors select:focus {
+  box-shadow: 0 0 0 3px hsl(var(--color-danger) / 0.1) !important;
 }
 
 .text-balance {
@@ -267,7 +560,11 @@
 }
 
 .focus-ring {
-  @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+  @apply focus:outline-none;
+}
+
+.focus-ring:focus {
+  box-shadow: 0 0 0 3px hsl(var(--color-primary) / 0.3);
 }
 
 .container-sm {
