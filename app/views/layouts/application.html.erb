@@ -24,7 +24,7 @@
     <%= favicon_link_tag asset_path("app-favicon.svg") unless Rails.env.test? %>
   </head>
   <body class="<%= body_class %>">
-    <main class="min-h-screen">
+    <main class="min-h-screen" style="background-color: hsl(var(--color-surface));">
       <%= render 'shared/navbar' unless @full_render %>
       <%= render 'shared/flash_messages' %>
       <%= yield %>

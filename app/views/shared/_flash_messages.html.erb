@@ -1,6 +1,6 @@
 <% flash.each do |key, value| %>
-  <div class="mx-1 my-2" x-data="{ show: true }" x-show="show" x-transition>
-    <div class="alert flex items-center p-3 rounded-lg <%= flash_alert_class(key) %>">
+  <div class="p-3" x-data="{ show: true }" x-show="show" x-transition>
+    <div class="flex items-center p-3 rounded-lg <%= flash_alert_class(key) %>">
 
       <div class="text-xs"><%= value %></div>
 

@@ -33,15 +33,15 @@ module ApplicationHelper
   def flash_alert_class(level)
     case level.to_sym
     when :notice, :success
-      'alert-success dark:alert-success'
+      'alert-success'
     when :info
-      'alert-info dark:alert-info'
+      'alert-info'
     when :warning
-      'alert-warning dark:alert-warning'
+      'alert-warning'
     when :alert, :error, :danger
-      'alert-danger dark:alert-danger'
+      'alert-danger'
     else
-      'alert-info dark:alert-info'
+      'alert-info'
     end
   end
 

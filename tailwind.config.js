@@ -20,17 +20,20 @@ module.exports = {
           light: 'hsl(var(--color-secondary-light) / <alpha-value>)',
           dark: 'hsl(var(--color-secondary-dark) / <alpha-value>)',
         },
+        text: {
+          primary: 'hsl(var(--color-text-primary) / <alpha-value>)',
+          secondary: 'hsl(var(--color-text-secondary) / <alpha-value>)',
+          muted: 'hsl(var(--color-text-muted) / <alpha-value>)',
+        },
+        surface: {
+          DEFAULT: 'hsl(var(--color-surface) / <alpha-value>)',
+          elevated: 'hsl(var(--color-surface-elevated) / <alpha-value>)',
+        },
+        border: {
+          DEFAULT: 'hsl(var(--color-border) / <alpha-value>)',
+        },
         neutral: {
-          50: 'hsl(var(--color-neutral-50) / <alpha-value>)',
-          100: 'hsl(var(--color-neutral-100) / <alpha-value>)',
-          200: 'hsl(var(--color-neutral-200) / <alpha-value>)',
-          300: 'hsl(var(--color-neutral-300) / <alpha-value>)',
-          400: 'hsl(var(--color-neutral-400) / <alpha-value>)',
-          500: 'hsl(var(--color-neutral-500) / <alpha-value>)',
-          600: 'hsl(var(--color-neutral-600) / <alpha-value>)',
-          700: 'hsl(var(--color-neutral-700) / <alpha-value>)',
-          800: 'hsl(var(--color-neutral-800) / <alpha-value>)',
-          900: 'hsl(var(--color-neutral-900) / <alpha-value>)',
+          DEFAULT: 'hsl(var(--color-neutral) / <alpha-value>)',
         },
         success: {
           DEFAULT: 'hsl(var(--color-success) / <alpha-value>)',
