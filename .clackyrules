@@ -78,7 +78,7 @@ Use `rails generate admin_crud xxx` (where xxx is your model name that you creat
 
 Use `rails generate controller xxx [action1] [action2] [--auth] [--single]` (where xxx is your controller name, action is optional(all actions by default), --auth means need authenticate_user!, --single generates singular resource without index action) to create controllers when developing the user-side functionality, modify generated code for free.
 
-Do not use `to_param` in model, no need friendly url.
+**URL Handling Policy:** Do not use `to_param` in model, no need friendly url, no need slug, always using `id: params[:id]`. *Explanation: Custom `to_param` methods add complexity and can cause routing errors. Use simple integer IDs to keep code straightforward.*
 
 Always keep UI responsiveness in mind when coding for user interfaces.
 

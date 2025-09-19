@@ -14,7 +14,7 @@ module HomeDemoConcern
   def check_demo_mode
     return unless should_render_demo?
     @full_render = true
-    flash.now[:warning] = 'This is a quick preview version. The actual functionality is under development. Please refresh and try again later'
+    flash.now[:tips] = 'This is a quick preview version. The actual functionality is under development. Please refresh and try again later'
     render 'shared/demo'
   end
 

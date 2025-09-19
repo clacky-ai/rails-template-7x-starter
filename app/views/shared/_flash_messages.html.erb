@@ -1,9 +1,27 @@
 <% flash.each do |key, value| %>
-  <div class="p-3" x-data="{ show: true }" x-show="show" x-transition>
-    <div class="flex items-center p-3 rounded-lg <%= flash_alert_class(key) %>">
-
-      <div class="text-xs"><%= value %></div>
-
+  <% 
+    # Determine if this is a tips message for special styling
+    is_tips = key.to_sym == :tips
+    container_class = is_tips ? "fixed top-4 left-1/2 z-50 w-auto max-w-md" : "p-3"
+    alert_class = is_tips ? "flex items-center p-3 rounded-lg shadow-lg #{flash_alert_class(key)}" : "flex items-center p-3 rounded-lg #{flash_alert_class(key)}"
+    text_class = is_tips ? "text-sm" : "text-xs"
+  %>
+  <div class="<%= container_class %>" 
+       x-data="{ show: true }" 
+       x-show="show" 
+       <% if is_tips %>
+       x-transition:enter="transition ease-out duration-300"
+       x-transition:enter-start="opacity-0 transform -translate-x-1/2 -translate-y-2 scale-95"
+       x-transition:enter-end="opacity-100 transform -translate-x-1/2 translate-y-0 scale-100"
+       x-transition:leave="transition ease-in duration-200"
+       x-transition:leave-start="opacity-100 transform -translate-x-1/2 translate-y-0 scale-100"
+       x-transition:leave-end="opacity-0 transform -translate-x-1/2 -translate-y-2 scale-95"
+       style="transform: translateX(-50%);"
+       <% else %>
+       x-transition
+       <% end %>>
+    <div class="<%= alert_class %>">
+      <div class="<%= text_class %>"><%= value %></div>
       <button class="ml-auto p-1 rounded-full hover:bg-black/10 transition-colors" @click="show = false">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>

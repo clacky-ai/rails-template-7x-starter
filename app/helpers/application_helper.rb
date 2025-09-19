@@ -40,6 +40,8 @@ module ApplicationHelper
       'alert-warning'
     when :alert, :error, :danger
       'alert-danger'
+    when :tips
+      'alert-warning'
     else
       'alert-info'
     end

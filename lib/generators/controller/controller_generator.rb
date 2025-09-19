@@ -8,7 +8,16 @@ class ControllerGenerator < Rails::Generators::NamedBase
 
   def check_controller_conflicts
     return if options[:force_override]
-    
+
+    # Special check for home controller
+    if singular_name == 'home' || plural_name == 'home'
+      say "Error: Cannot generate 'home' controller - it already exists in the system.", :red
+      say "💡 To add home page functionality:", :blue
+      say "   Create and edit app/views/home/index.html.erb directly", :blue
+      say "\n⚠️  Important: Write real business logic, do not reference any demo files", :yellow
+      exit(1)
+    end
+
     if protected_controller_names.include?(plural_name)
       say "Error: Cannot generate controller for '#{plural_name}' as it conflicts with authentication system.", :red
       say "The following controller names are protected:", :yellow
@@ -40,6 +49,11 @@ class ControllerGenerator < Rails::Generators::NamedBase
     template "request_spec.rb.erb", "spec/requests/#{plural_name}_spec.rb"
   end
 
+  def create_view_directories
+    # Create the view directory for the controller
+    empty_directory "app/views/#{plural_name}"
+  end
+
   def add_routes
     if options[:single]
       route "resource :#{singular_name}#{route_options}"
@@ -50,10 +64,11 @@ class ControllerGenerator < Rails::Generators::NamedBase
 
   def show_completion_message
     say "\n"
-    say "Controller and tests generated successfully!", :green
-    say "📄 No views generated - please create views manually:", :yellow
+    say "Controller, tests and view directory generated successfully!", :green
+    say "📁 View directory created: app/views/#{plural_name}/", :green
+    say "📄 Please create and edit view files manually as needed:", :yellow
     say "\n"
-    
+
     selected_actions.each do |action|
       case action
       when 'index'
@@ -70,7 +85,7 @@ class ControllerGenerator < Rails::Generators::NamedBase
         say "  app/views/#{plural_name}/edit.html.erb", :blue
       end
     end
-    
+
     say "\n"
     if options[:single]
       say "Tip: This is a singular resource - routes don't need :id parameter", :cyan
@@ -116,7 +131,7 @@ class ControllerGenerator < Rails::Generators::NamedBase
   def protected_controller_names
     %w[
       sessions
-      registrations 
+      registrations
       passwords
       profiles
       invitations
