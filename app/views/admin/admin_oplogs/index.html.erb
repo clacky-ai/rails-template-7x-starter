@@ -12,12 +12,12 @@
         <div class="flex flex-wrap gap-4 items-center">
           <div>
             <%= select_tag :action_filter, options_for_select([['All Actions', '']] + @actions.map { |a| [a.humanize, a] }, params[:action_filter]),
-                class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 dark:text-white" %>
+                class: "w-full pl-3 pr-8 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 dark:text-white" %>
           </div>
 
           <div>
             <%= select_tag :administrator_filter, options_from_collection_for_select([OpenStruct.new(id: '', name: 'All Administrators')] + @administrators, :id, :name, params[:administrator_filter]),
-                class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 dark:text-white" %>
+                class: "w-full pl-3 pr-8 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 dark:text-white" %>
           </div>
         </div>
 

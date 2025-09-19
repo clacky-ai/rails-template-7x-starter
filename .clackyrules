@@ -29,16 +29,17 @@ Restarting project is unnecessary because Rails automatically hot-reloads code c
 **STOP! Before creating ANY models or controllers, you MUST complete these steps first:**
 
 ### Step 1: REQUIRED - Design System First
-**ALWAYS start by writing a design system in `app/assets/stylesheets/application.css`** with beautiful UIs and appropriate animations( using `npm run build:css` to keep it right ). DO NOT create any models/controllers before this.
+**ALWAYS start by updating design system in `app/assets/stylesheets/application.css`** with beautiful UIs and appropriate animations( using `npm run build:css` to keep it right ). DO NOT create any models/controllers before this.
 
-Pay attention to contrast, color, and typography.
+**ALWAYS use HSL colors in application.css and tailwind.config.js**
 
-Always generate responsive designs.
+If there are rgb colors in index.css, make sure to not use them in tailwind.config.js wrapped in hsl functions as this will create wrong colors
 
-CRITICAL: USE SEMANTIC TOKENS FOR COLORS, GRADIENTS, FONTS, ETC. It's important you follow best practices. DO NOT use direct colors like text-white, text-black, bg-white, bg-black, etc. Everything must be themed via the design system defined in the `app/assets/stylesheets/application.css` and `tailwind.config.js` files
+The preset design system is a minimal collection that makes changing themes easy, only referencing CSS classes when they actually exist.
 
-### Step 2: REQUIRED - Static Page for Design System
-**ALWAYS Write the view `app/views/shared/static.html.erb` with new design system**( Do not need add any routes for static page, the system already configured)
+### Step 2: REQUIRED - Develop demo view based Design System and user requirements
+Develop a demo view based on the new design system and user requirements, allowing users to quickly see a UI effect. The view should be located at `app/views/shared/demo.html.erb` (Only write body content, The system has already completed route configuration - when there's no home/index.html.erb, the homepage will automatically render this view)
+
 
 ### Step 3: REQUIRED - Testing visit '/'
 **ALWAYS run the project, then use `curl http://localhost:3000/` to ensure these is no error**

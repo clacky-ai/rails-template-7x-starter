@@ -1,3 +1,287 @@
-@import 'base';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* customize your own style here for user-side page*/
+/* please modify variables as you need*/
+:root {
+  --color-primary: 217 91% 60%;
+  --color-primary-light: 213 93% 68%;
+  --color-primary-dark: 221 83% 53%;
+
+  --color-secondary: 262 83% 58%;
+  --color-secondary-light: 270 91% 85%;
+  --color-secondary-dark: 263 70% 50%;
+
+  --color-neutral-50: 0 0% 98%;
+  --color-neutral-100: 0 0% 96%;
+  --color-neutral-200: 0 0% 90%;
+  --color-neutral-300: 0 0% 83%;
+  --color-neutral-400: 0 0% 64%;
+  --color-neutral-500: 0 0% 45%;
+  --color-neutral-600: 0 0% 32%;
+  --color-neutral-700: 0 0% 25%;
+  --color-neutral-800: 0 0% 15%;
+  --color-neutral-900: 0 0% 9%;
+
+  --color-success: 142 76% 36%;
+  --color-warning: 38 92% 50%;
+  --color-danger: 0 84% 60%;
+  --color-info: 188 94% 42%;
+
+  --color-success-bg: 138 76% 97%;
+  --color-warning-bg: 48 100% 96%;
+  --color-danger-bg: 0 93% 97%;
+  --color-info-bg: 204 100% 97%;
+
+  --font-family-sans: 'Inter', 'Helvetica Neue', 'Arial', sans-serif;
+  --font-family-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+
+  --border-radius-sm: 0.375rem;
+  --border-radius: 0.5rem;
+  --border-radius-md: 0.75rem;
+  --border-radius-lg: 1rem;
+  --border-radius-xl: 1.5rem;
+
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+}
+
+.dark {
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
+  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.4);
+  --shadow-xl: 0 25px 50px -12px rgb(0 0 0 / 0.6);
+}
+
+/* design system start */
+.btn {
+  @apply inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-primary {
+  @apply btn bg-primary hover:bg-primary-dark text-white focus:ring-primary focus:ring-offset-2 px-4 py-2 rounded-md text-sm;
+}
+
+.btn-secondary {
+  @apply btn bg-secondary hover:bg-secondary-dark text-white focus:ring-secondary focus:ring-offset-2 px-4 py-2 rounded-md text-sm;
+}
+
+.btn-neutral {
+  @apply btn bg-neutral-600 hover:bg-neutral-800 text-white focus:ring-neutral-600 focus:ring-offset-2 px-4 py-2 rounded-md text-sm;
+}
+
+.btn-success {
+  @apply btn bg-success hover:opacity-90 text-white focus:ring-success focus:ring-offset-2 px-4 py-2 rounded-md text-sm;
+}
+
+.btn-warning {
+  @apply btn bg-warning hover:opacity-90 text-white focus:ring-warning focus:ring-offset-2 px-4 py-2 rounded-md text-sm;
+}
+
+.btn-danger {
+  @apply btn bg-danger hover:opacity-90 text-white focus:ring-danger focus:ring-offset-2 px-4 py-2 rounded-md text-sm;
+}
+
+.btn-ghost {
+  @apply btn border border-neutral-200 dark:border-neutral-600 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 focus:ring-neutral-600 px-4 py-2 rounded-md text-sm;
+}
+
+.btn-outline-primary {
+  @apply btn border border-primary text-primary hover:bg-primary-light hover:bg-opacity-10 focus:ring-primary px-4 py-2 rounded-md text-sm;
+}
+
+.btn-xs {
+  @apply text-xs px-2 py-1 rounded-sm;
+}
+
+.btn-sm {
+  @apply text-sm px-3 py-1.5 rounded;
+}
+
+.btn-md {
+  @apply text-sm px-4 py-2 rounded-md;
+}
+
+.btn-lg {
+  @apply text-base px-6 py-3 rounded-lg;
+}
+
+.btn-xl {
+  @apply text-lg px-8 py-4 rounded-xl;
+}
+.card {
+  @apply bg-white dark:bg-neutral-800 rounded-lg shadow-md border border-neutral-200 dark:border-neutral-700 overflow-hidden;
+}
+
+.card-elevated {
+  @apply card shadow-lg;
+}
+
+.card-flat {
+  @apply card shadow-none border-0 bg-neutral-50 dark:bg-neutral-900;
+}
+
+.card-header {
+  @apply px-6 py-4 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-700;
+}
+
+.card-body {
+  @apply px-6 py-4;
+}
+
+.card-footer {
+  @apply px-6 py-4 border-t border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-700;
+}
+
+.alert {
+  @apply rounded-lg border p-4 text-sm font-medium;
+}
+
+.alert a {
+  text-decoration: underline;
+}
+
+
+.alert-success {
+  @apply alert bg-success-bg border-success text-neutral-800 dark:bg-success dark:bg-opacity-20 dark:border-success dark:text-success;
+}
+
+.alert-warning {
+  @apply alert bg-warning-bg border-warning text-neutral-800 dark:bg-warning dark:bg-opacity-20 dark:border-warning dark:text-warning;
+}
+
+.alert-danger {
+  @apply alert bg-danger-bg border-danger text-neutral-800 dark:bg-danger dark:bg-opacity-20 dark:border-danger dark:text-danger;
+}
+
+.alert-info {
+  @apply alert bg-info-bg border-info text-neutral-800 dark:bg-info dark:bg-opacity-20 dark:border-info dark:text-info;
+}
+
+.badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.badge-primary {
+  @apply badge bg-primary-light bg-opacity-20 text-primary dark:bg-primary dark:bg-opacity-30 dark:text-primary-light;
+}
+
+.badge-secondary {
+  @apply badge bg-secondary-light bg-opacity-20 text-secondary dark:bg-secondary dark:bg-opacity-30 dark:text-secondary-light;
+}
+
+.badge-success {
+  @apply badge bg-success-bg text-success dark:bg-success dark:bg-opacity-30 dark:text-success;
+}
+
+.badge-warning {
+  @apply badge bg-warning-bg text-warning dark:bg-warning dark:bg-opacity-30 dark:text-warning;
+}
+
+.badge-danger {
+  @apply badge bg-danger-bg text-danger dark:bg-danger dark:bg-opacity-30 dark:text-danger;
+}
+
+.badge-neutral {
+  @apply badge bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200;
+}
+.form-input {
+  @apply w-full px-3 py-2 border border-neutral-200 dark:border-neutral-600 rounded-md
+         bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100
+         placeholder-neutral-400 dark:placeholder-neutral-400
+         focus:ring-2 focus:ring-primary focus:border-primary
+         disabled:opacity-50 disabled:cursor-not-allowed
+         transition-colors duration-200;
+}
+
+.form-textarea {
+  @apply form-input resize-y;
+}
+
+.form-select {
+  @apply form-input cursor-pointer;
+}
+
+.form-label {
+  @apply block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1;
+}
+
+.form-error {
+  @apply text-sm text-danger dark:text-danger mt-1;
+}
+
+.form-help {
+  @apply text-sm text-neutral-400 dark:text-neutral-400 mt-1;
+}
+
+.table {
+  @apply w-full text-sm text-left text-neutral-400 dark:text-neutral-400;
+}
+
+.table-header {
+  @apply text-xs text-neutral-600 dark:text-neutral-400 uppercase bg-neutral-50 dark:bg-neutral-800;
+}
+
+.table-row {
+  @apply bg-white dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-600 hover:bg-neutral-50 dark:hover:bg-neutral-900;
+}
+
+.table-cell {
+  @apply px-6 py-4;
+}
+
+.table-header-cell {
+  @apply table-cell font-medium;
+}
+
+.loading-spinner {
+  @apply animate-spin rounded-full border-2 border-neutral-200 border-t-primary;
+}
+
+.skeleton {
+  @apply animate-pulse bg-neutral-200 dark:bg-neutral-800 rounded;
+}
+
+.field_with_errors {
+  @apply inline-block w-full;
+}
+
+.field_with_errors input,
+.field_with_errors textarea,
+.field_with_errors select {
+  @apply border-danger dark:border-danger focus:ring-danger;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.transition-default {
+  @apply transition-all duration-200 ease-in-out;
+}
+
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+}
+
+.container-sm {
+  @apply max-w-2xl mx-auto px-4 sm:px-6;
+}
+
+.container-md {
+  @apply max-w-4xl mx-auto px-4 sm:px-6;
+}
+
+.container-lg {
+  @apply max-w-6xl mx-auto px-4 sm:px-6;
+}
+
+.container-xl {
+  @apply max-w-7xl mx-auto px-4 sm:px-6;
+}

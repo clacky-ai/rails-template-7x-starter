@@ -34,13 +34,13 @@
         <div class="relative">
           <button type="button" class="flex items-center p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors" onclick="toggleUserMenu()">
             <div class="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
-              <%= image_tag asset_path('admin-user.svg'), alt: current_admin.name, class: "w-8 h-8 rounded-full" unless Rails.env.test? %>
+              <%= image_tag asset_path('admin-user.svg'), alt: current_admin&.name, class: "w-8 h-8 rounded-full" unless Rails.env.test? %>
             </div>
           </button>
-          
+
           <div id="user-menu" class="hidden absolute right-0 mt-2 w-52 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50">
             <div class="p-3 border-b border-gray-200 dark:border-gray-700">
-              <p class="font-medium text-gray-900 dark:text-gray-100"><%= current_admin.name %></p>
+              <p class="font-medium text-gray-900 dark:text-gray-100"><%= current_admin&.name %></p>
               <p class="text-xs text-gray-500 dark:text-gray-400">Administrator</p>
             </div>
             <div class="py-1">
@@ -50,7 +50,7 @@
                 </svg>
                 Account Settings
               <% end %>
-              
+
               <%= form_with url: admin_logout_path, method: :delete, local: true, class: "w-full" do |form| %>
                 <%= form.button type: "submit", class: "flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left" do %>
                   <svg class="w-4 h-4 mr-3" fill="currentColor" viewBox="0 0 20 20">
@@ -77,7 +77,7 @@
   document.addEventListener('click', function(event) {
     const menu = document.getElementById('user-menu');
     const button = event.target.closest('button');
-    
+
     if (!button || !button.onclick) {
       menu.classList.add('hidden');
     }

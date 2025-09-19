@@ -1,5 +1,5 @@
 class HomeController < ApplicationController
-  include HomeStaticConcern
+  include HomeDemoConcern
 
   def index
   end
