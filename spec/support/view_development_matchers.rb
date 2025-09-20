@@ -28,9 +28,28 @@ module ViewDevelopmentMatchers
     failure_message_when_negated do |response|
       "expected response not to be successful, but got #{response.status}"
     end
+  end
+
+  matcher :be_success_or_under_development do
+    match do |response|
+      case response.status
+      when 200, 201, 202, 204, 400..499
+        true
+      else
+        false
+      end
+    end
+
+    failure_message do |response|
+      "expected response to be successful or 4xx, but got #{response.status}"
+    end
+
+    failure_message_when_negated do |response|
+      "expected response not to be successful or 4xx, but got #{response.status}"
+    end
 
     description do
-      "be successful (with helpful message if views not developed)"
+      "be successful or 4xx"
     end
   end
 end

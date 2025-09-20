@@ -17,13 +17,6 @@ module AuthenticationHelpers
     delete sign_out_path
   end
 
-  def expect_response_to_success_or_404
-    if respond_to?(:root_path)
-      expect(response).to have_http_status(:success)
-    else
-      expect(response).to have_http_status(:not_found)
-    end
-  end
 end
 
 RSpec.configure do |config|
