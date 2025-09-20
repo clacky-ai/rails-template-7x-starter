@@ -82,7 +82,7 @@ Use `rails generate controller xxx [action1] [action2] [--auth] [--single]` (whe
 
 Always keep UI responsiveness in mind when coding for user interfaces.
 
-ALWAYS prefer Tailwind CSS v3 syntax for implementing UI styles and simple UI components(tab/dropdown), Alpine.js for JavaScript functionality, and minimize writing native JavaScript as much as possible.
+ALWAYS prefer TailwindCSS v3 and pure CSS for UI components (e.g., tabs, dropdowns), recommend Alpine.js for other components, and minimize pure JavaScript usage.
 
 Every form should include error messages using the shared partial. Add `<%= render 'shared/error_messages', model: @your_model %>` at the beginning of every form for consistent error display. Never write nested form.
 
