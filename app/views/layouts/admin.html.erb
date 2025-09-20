@@ -17,6 +17,8 @@
     <%= action_cable_meta_tag %>
     <%= content_for?(:head) ? yield(:head) : '' %>
     <%= stylesheet_link_tag 'admin', media: 'all' %>
+    <!-- Load error handler early to catch all errors -->
+    <%= javascript_include_tag 'error_handler', defer: false %>
     <%= javascript_include_tag 'admin', type: "module" %>
     <%= favicon_link_tag asset_path("app-favicon.svg") unless Rails.env.test? %>
     <script>
