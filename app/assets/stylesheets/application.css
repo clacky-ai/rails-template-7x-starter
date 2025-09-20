@@ -1,799 +1,734 @@
 @tailwind base;
 @tailwind components;
+
+/* Design System Components - Place between components and utilities for proper cascade */
+@layer components {
+
+  /*
+   * Design System Variables - Semantic naming to guide AI color selection
+   *
+   * Usage Guidelines:
+   * - Text colors: Use text-* series for high contrast and readability
+   * - Surface colors: Use surface-* series for backgrounds
+   * - Brand colors: Use primary/secondary for brand elements
+   * - Status colors: Use success/warning/danger/info for feedback
+   *
+   * ⚠️ Avoid direct use of neutral, prefer semantic variables
+   */
+  :root {
+    --color-primary: 217 91% 60%;
+    --color-primary-light: 213 93% 68%;
+    --color-primary-dark: 221 83% 53%;
+
+    --color-secondary: 262 83% 58%;
+    --color-secondary-light: 270 91% 85%;
+    --color-secondary-dark: 263 70% 50%;
+
+    /* Text colors - high contrast for readability */
+    --color-text-primary: 0 0% 15%;    /* Main headings, important text */
+    --color-text-secondary: 0 0% 45%;  /* Body text, descriptions */
+    --color-text-muted: 0 0% 64%;      /* Captions, helper text */
+
+    /* Surface colors - for backgrounds and borders */
+    --color-surface: 0 0% 100%;        /* Main background (white) */
+    --color-surface-elevated: 0 0% 92%; /* Cards, elevated surfaces */
+    --color-border: 0 0% 90%;          /* Borders, dividers */
+
+    /*  Neutral color - use only in special cases, avoid for text */
+    --color-neutral: 0 0% 64%;
+
+    --color-success: 142 76% 36%;
+    --color-warning: 38 92% 50%;
+    --color-danger: 0 84% 60%;
+    --color-info: 188 94% 42%;
+
+    --color-success-bg: 138 76% 97%;
+    --color-warning-bg: 48 100% 96%;
+    --color-danger-bg: 0 93% 97%;
+    --color-info-bg: 204 100% 97%;
+
+    --font-family-sans: 'Inter', 'Helvetica Neue', 'Arial', sans-serif;
+    --font-family-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+
+    --border-radius-sm: 0.375rem;
+    --border-radius: 0.5rem;
+    --border-radius-md: 0.75rem;
+    --border-radius-lg: 1rem;
+    --border-radius-xl: 1.5rem;
+
+    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-md: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  }
+
+  /*
+   * Dark Mode - Comprehensive optimization for contrast and visual effects
+   * Follows WCAG AA standards with minimum 4.5:1 text contrast ratio
+   */
+  .dark {
+    /* Brand colors optimization for dark mode - increased brightness */
+    --color-primary: 220 100% 70%;     /* Brighter blue for dark backgrounds */
+    --color-primary-light: 218 100% 80%; /* Light variant */
+    --color-primary-dark: 222 90% 60%; /* Dark variant */
+
+    --color-secondary: 266 85% 70%;    /* Brighter purple */
+    --color-secondary-light: 270 90% 85%;
+    --color-secondary-dark: 264 75% 60%;
+
+    /* Text colors - high contrast for readability */
+    --color-text-primary: 0 0% 95%;    /* Near white, optimal contrast */
+    --color-text-secondary: 0 0% 80%;  /* Secondary text, still clear */
+    --color-text-muted: 0 0% 60%;      /* Muted text, moderate contrast */
+
+    /* Surface colors - layered dark system */
+    --color-surface: 0 0% 8%;          /* Very dark background, near black */
+    --color-surface-elevated: 0 0% 12%; /* Card background, slightly lighter */
+    --color-border: 0 0% 20%;          /* Borders, adequate contrast */
+
+    /* Status colors optimization for dark mode - brighter and more saturated */
+    --color-success: 145 80% 50%;      /* Brighter green */
+    --color-warning: 45 95% 60%;       /* Brighter yellow */
+    --color-danger: 0 85% 65%;         /* Brighter red */
+    --color-info: 200 95% 55%;         /* Brighter blue */
+
+    /* Status background colors - semi-transparent for dark mode */
+    --color-success-bg: 145 80% 50% / 0.15; /* Semi-transparent green background */
+    --color-warning-bg: 45 95% 60% / 0.15;  /* Semi-transparent yellow background */
+    --color-danger-bg: 0 85% 65% / 0.15;    /* Semi-transparent red background */
+    --color-info-bg: 200 95% 55% / 0.15;    /* Semi-transparent blue background */
+
+    /* Neutral color adjustment for dark mode */
+    --color-neutral: 0 0% 70%;         /* Brighter neutral for dark backgrounds */
+
+    /* Shadows for dark mode - softer to avoid being too heavy */
+    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.5), 0 1px 2px -1px rgb(0 0 0 / 0.5);
+    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.5);
+    --shadow-md: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.5);
+    --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.5);
+    --shadow-xl: 0 25px 50px -12px rgb(0 0 0 / 0.7);
+  }
+
+  /* Design System Components */
+  .btn {
+    @apply inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+    border-radius: var(--border-radius);
+    font-family: var(--font-family-sans);
+    cursor: pointer;
+    user-select: none;
+    text-decoration: none;
+    border: none;
+    outline: none;
+  }
+
+  /* Button disabled state */
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Button loading state */
+  .btn.loading {
+    cursor: wait;
+    pointer-events: none;
+    position: relative;
+  }
+
+  /* Button focus styles */
+  .btn:focus-visible {
+    outline: 2px solid hsl(var(--color-primary));
+    outline-offset: 2px;
+  }
+
+  /* Button active state */
+  .btn:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+
+  .btn-primary {
+    @apply btn px-4 py-2 text-sm text-white;
+    background-color: hsl(var(--color-primary));
+    box-shadow: var(--shadow-sm);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background-color: hsl(var(--color-primary-dark));
+    box-shadow: var(--shadow);
+  }
+
+  .btn-primary:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px hsl(var(--color-primary) / 0.3);
+  }
+
+  .btn-primary:disabled {
+    background-color: hsl(var(--color-primary) / 0.5);
+    color: hsl(0 0% 100% / 0.7);
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  .btn-secondary {
+    @apply btn px-4 py-2 text-sm text-white;
+    background-color: hsl(var(--color-secondary));
+    box-shadow: var(--shadow-sm);
+  }
+
+  .btn-secondary:hover:not(:disabled) {
+    background-color: hsl(var(--color-secondary-dark));
+    box-shadow: var(--shadow);
+  }
+
+  .btn-secondary:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px hsl(var(--color-secondary) / 0.3);
+  }
+
+  .btn-secondary:disabled {
+    background-color: hsl(var(--color-secondary) / 0.5);
+    color: hsl(0 0% 100% / 0.7);
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  .btn-neutral {
+    @apply btn px-4 py-2 text-sm text-white;
+    background-color: hsl(var(--color-neutral));
+    box-shadow: var(--shadow-sm);
+  }
+
+  .btn-neutral:hover:not(:disabled) {
+    background-color: hsl(var(--color-neutral));
+    box-shadow: var(--shadow);
+  }
+
+  .btn-neutral:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px hsl(var(--color-neutral) / 0.3);
+  }
+
+  .btn-neutral:disabled {
+    background-color: hsl(var(--color-neutral) / 0.5);
+    color: hsl(0 0% 100% / 0.7);
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  .btn-success {
+    @apply btn px-4 py-2 text-sm text-white;
+    background-color: hsl(var(--color-success));
+    box-shadow: var(--shadow-sm);
+  }
+
+  .btn-success:hover:not(:disabled) {
+    opacity: 0.9;
+    box-shadow: var(--shadow);
+  }
+
+  .btn-success:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px hsl(var(--color-success) / 0.3);
+  }
+
+  .btn-success:disabled {
+    background-color: hsl(var(--color-success) / 0.5);
+    color: hsl(0 0% 100% / 0.7);
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  .btn-warning {
+    @apply btn px-4 py-2 text-sm text-white;
+    background-color: hsl(var(--color-warning));
+    box-shadow: var(--shadow-sm);
+  }
+
+  .btn-warning:hover:not(:disabled) {
+    opacity: 0.9;
+    box-shadow: var(--shadow);
+  }
+
+  .btn-warning:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px hsl(var(--color-warning) / 0.3);
+  }
+
+  .btn-warning:disabled {
+    background-color: hsl(var(--color-warning) / 0.5);
+    color: hsl(0 0% 100% / 0.7);
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  .btn-danger {
+    @apply btn px-4 py-2 text-sm text-white;
+    background-color: hsl(var(--color-danger));
+    box-shadow: var(--shadow-sm);
+  }
+
+  .btn-danger:hover:not(:disabled) {
+    opacity: 0.9;
+    box-shadow: var(--shadow);
+  }
+
+  .btn-danger:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px hsl(var(--color-danger) / 0.3);
+  }
+
+  .btn-danger:disabled {
+    background-color: hsl(var(--color-danger) / 0.5);
+    color: hsl(0 0% 100% / 0.7);
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  .btn-ghost {
+    @apply btn px-4 py-2 text-sm text-text-secondary;
+    background-color: transparent;
+    border: 1px solid hsl(var(--color-border));
+  }
+
+  .btn-ghost:hover:not(:disabled) {
+    background-color: hsl(var(--color-surface-elevated));
+    box-shadow: var(--shadow-sm);
+  }
+
+  .btn-ghost:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px hsl(var(--color-text-secondary) / 0.3);
+  }
+
+  .btn-ghost:disabled {
+    border-color: hsl(var(--color-border) / 0.5);
+    opacity: 0.5;
+    background-color: transparent;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  .dark .btn-ghost {
+    border-color: hsl(var(--color-border));
+  }
+
+  .dark .btn-ghost:hover:not(:disabled) {
+    background-color: hsl(var(--color-surface-elevated));
+  }
+
+  .dark .btn-ghost:disabled {
+    border-color: hsl(var(--color-border) / 0.3);
+    background-color: transparent;
+  }
+
+  .btn-outline-primary {
+    @apply btn px-4 py-2 text-sm;
+    background-color: transparent;
+    border: 1px solid hsl(var(--color-primary));
+    color: hsl(var(--color-primary));
+  }
+
+  .btn-outline-primary:hover:not(:disabled) {
+    background-color: hsl(var(--color-primary-light) / 0.1);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .btn-outline-primary:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px hsl(var(--color-primary) / 0.3);
+  }
+
+  .btn-outline-primary:disabled {
+    border-color: hsl(var(--color-primary) / 0.3);
+    color: hsl(var(--color-primary) / 0.3);
+    background-color: transparent;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  .btn-xs {
+    @apply text-xs px-2 py-1;
+    border-radius: var(--border-radius-sm);
+  }
+
+  .btn-sm {
+    @apply text-sm px-3 py-1.5;
+    border-radius: var(--border-radius);
+  }
+
+  .btn-md {
+    @apply text-sm px-4 py-2;
+    border-radius: var(--border-radius);
+  }
+
+  .btn-lg {
+    @apply text-base px-6 py-3;
+    border-radius: var(--border-radius-lg);
+  }
+
+  .btn-xl {
+    @apply text-lg px-8 py-4;
+    border-radius: var(--border-radius-xl);
+  }
+  .card {
+    @apply px-8 py-8 overflow-hidden;
+    background-color: hsl(var(--color-surface));
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-md);
+    border: 1px solid hsl(var(--color-surface-elevated));
+  }
+
+  .dark .card {
+    background-color: hsl(var(--color-surface-elevated));
+    border-color: hsl(var(--color-border));
+  }
+
+  .card-elevated {
+    @apply card;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .card-flat {
+    @apply card;
+    box-shadow: none;
+    border: 0;
+    background-color: hsl(var(--color-surface-elevated));
+  }
+
+  .dark .card-flat {
+    background-color: hsl(var(--color-surface));
+  }
+
+  .card-header {
+    @apply px-6 py-4;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-md);
+    border-bottom: 1px solid hsl(var(--color-surface-elevated));
+    background-color: hsl(var(--color-surface-elevated));
+  }
+
+  .dark .card-header {
+    border-bottom-color: hsl(var(--color-border));
+    background-color: hsl(var(--color-surface));
+  }
+
+  .card-body {
+    @apply px-6 py-4;
+  }
+
+  .card-footer {
+    @apply px-6 py-4;
+    border-top: 1px solid hsl(var(--color-surface-elevated));
+    background-color: hsl(var(--color-surface-elevated));
+  }
+
+  .dark .card-footer {
+    border-top-color: hsl(var(--color-border));
+    background-color: hsl(var(--color-surface));
+  }
+
+  .alert {
+    @apply p-4 text-sm font-medium;
+    border-radius: var(--border-radius-lg);
+    border: 1px solid;
+  }
+
+  .alert a {
+    text-decoration: underline;
+  }
+
+  .alert-success {
+    @apply alert;
+    background-color: hsl(var(--color-success-bg));
+    border-color: hsl(var(--color-success));
+    color: hsl(var(--color-text-primary));
+  }
+
+  .dark .alert-success {
+    background-color: hsl(var(--color-success) / 0.2);
+    border-color: hsl(var(--color-success));
+    color: hsl(var(--color-success));
+  }
+
+  .alert-warning {
+    @apply alert;
+    background-color: hsl(var(--color-warning-bg));
+    border-color: hsl(var(--color-warning));
+    color: hsl(var(--color-text-primary));
+  }
+
+  .dark .alert-warning {
+    background-color: hsl(var(--color-warning) / 0.2);
+    border-color: hsl(var(--color-warning));
+    color: hsl(var(--color-warning));
+  }
+
+  .alert-danger {
+    @apply alert;
+    background-color: hsl(var(--color-danger-bg));
+    border-color: hsl(var(--color-danger));
+    color: hsl(var(--color-text-primary));
+  }
+
+  .dark .alert-danger {
+    background-color: hsl(var(--color-danger) / 0.2);
+    border-color: hsl(var(--color-danger));
+    color: hsl(var(--color-danger));
+  }
+
+  .alert-info {
+    @apply alert;
+    background-color: hsl(var(--color-info-bg));
+    border-color: hsl(var(--color-info));
+    color: hsl(var(--color-text-primary));
+  }
+
+  .dark .alert-info {
+    background-color: hsl(var(--color-info) / 0.2);
+    border-color: hsl(var(--color-info));
+    color: hsl(var(--color-info));
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 text-xs font-medium;
+    border-radius: 9999px; /* full */
+  }
+
+  .badge-primary {
+    @apply badge;
+    background-color: hsl(var(--color-primary-light) / 0.2);
+    color: hsl(var(--color-primary));
+  }
+
+  .dark .badge-primary {
+    background-color: hsl(var(--color-primary) / 0.3);
+    color: hsl(var(--color-primary-light));
+  }
+
+  .badge-secondary {
+    @apply badge;
+    background-color: hsl(var(--color-secondary-light) / 0.2);
+    color: hsl(var(--color-secondary));
+  }
+
+  .dark .badge-secondary {
+    background-color: hsl(var(--color-secondary) / 0.3);
+    color: hsl(var(--color-secondary-light));
+  }
+
+  .badge-success {
+    @apply badge;
+    background-color: hsl(var(--color-success-bg));
+    color: hsl(var(--color-success));
+  }
+
+  .dark .badge-success {
+    background-color: hsl(var(--color-success) / 0.3);
+    color: hsl(var(--color-success));
+  }
+
+  .badge-warning {
+    @apply badge;
+    background-color: hsl(var(--color-warning-bg));
+    color: hsl(var(--color-warning));
+  }
+
+  .dark .badge-warning {
+    background-color: hsl(var(--color-warning) / 0.3);
+    color: hsl(var(--color-warning));
+  }
+
+  .badge-danger {
+    @apply badge;
+    background-color: hsl(var(--color-danger-bg));
+    color: hsl(var(--color-danger));
+  }
+
+  .dark .badge-danger {
+    background-color: hsl(var(--color-danger) / 0.3);
+    color: hsl(var(--color-danger));
+  }
+
+  .badge-neutral {
+    @apply badge;
+    background-color: hsl(var(--color-surface-elevated));
+    color: hsl(var(--color-text-primary));
+  }
+
+  .dark .badge-neutral {
+    background-color: hsl(var(--color-surface-elevated));
+    color: hsl(var(--color-text-secondary));
+  }
+
+  .form-input {
+    @apply w-full px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200;
+    border: 1px solid hsl(var(--color-surface-elevated));
+    border-radius: var(--border-radius);
+    background-color: hsl(var(--color-surface));
+    color: hsl(var(--color-text-primary));
+  }
+
+  .form-input::placeholder {
+    color: hsl(var(--color-neutral));
+  }
+
+  .form-input:focus {
+    outline: none;
+    border-color: hsl(var(--color-primary));
+    box-shadow: 0 0 0 3px hsl(var(--color-primary) / 0.1);
+  }
+
+  .dark .form-input {
+    border-color: hsl(var(--color-border));
+    background-color: hsl(var(--color-surface-elevated));
+    color: hsl(var(--color-text-primary));
+  }
+
+  .dark .form-input::placeholder {
+    color: hsl(var(--color-text-muted));
+  }
+
+  .form-textarea {
+    @apply form-input resize-y;
+  }
+
+  .form-select {
+    @apply form-input cursor-pointer;
+  }
+
+  .form-label {
+    @apply block text-sm font-medium mb-1;
+    color: hsl(var(--color-text-primary));
+  }
+
+  .dark .form-label {
+    color: hsl(var(--color-text-secondary));
+  }
+
+  .form-error {
+    @apply text-sm mt-1;
+    color: hsl(var(--color-danger));
+  }
+
+  .form-help {
+    @apply text-sm mt-1;
+    color: hsl(var(--color-neutral));
+  }
+
+  .table {
+    @apply w-full text-sm text-left;
+    color: hsl(var(--color-neutral));
+  }
+
+  .table-header {
+    @apply text-xs uppercase;
+    color: hsl(var(--color-text-primary));
+    background-color: hsl(var(--color-surface-elevated));
+  }
+
+  .dark .table-header {
+    color: hsl(var(--color-text-secondary));
+    background-color: hsl(var(--color-surface-elevated));
+  }
+
+  .table-row {
+    background-color: hsl(var(--color-surface));
+    border-bottom: 1px solid hsl(var(--color-surface-elevated));
+  }
+
+  .table-row:hover {
+    background-color: hsl(var(--color-surface-elevated));
+  }
+
+  .dark .table-row {
+    background-color: hsl(var(--color-surface-elevated));
+    border-bottom-color: hsl(var(--color-border));
+  }
+
+  .dark .table-row:hover {
+    background-color: hsl(var(--color-surface));
+  }
+
+  .table-cell {
+    @apply px-6 py-4;
+  }
+
+  .table-header-cell {
+    @apply table-cell font-medium;
+  }
+
+  .loading-spinner {
+    @apply animate-spin rounded-full border-2;
+    border-color: hsl(var(--color-surface-elevated));
+    border-top-color: hsl(var(--color-primary));
+  }
+
+  .skeleton {
+    @apply animate-pulse;
+    background-color: hsl(var(--color-surface-elevated));
+    border-radius: var(--border-radius);
+  }
+
+  .dark .skeleton {
+    background-color: hsl(var(--color-surface-elevated));
+  }
+
+  .field_with_errors {
+    @apply inline-block w-full;
+  }
+
+  .field_with_errors input,
+  .field_with_errors textarea,
+  .field_with_errors select {
+    border-color: hsl(var(--color-danger)) !important;
+  }
+
+  .field_with_errors input:focus,
+  .field_with_errors textarea:focus,
+  .field_with_errors select:focus {
+    box-shadow: 0 0 0 3px hsl(var(--color-danger) / 0.1) !important;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .transition-default {
+    @apply transition-all duration-200 ease-in-out;
+  }
+
+  .focus-ring {
+    @apply focus:outline-none;
+  }
+
+  .focus-ring:focus {
+    box-shadow: 0 0 0 3px hsl(var(--color-primary) / 0.3);
+  }
+
+  .container-sm {
+    @apply max-w-2xl mx-auto px-4 sm:px-6;
+  }
+
+  .container-md {
+    @apply max-w-4xl mx-auto px-4 sm:px-6;
+  }
+
+  .container-lg {
+    @apply max-w-6xl mx-auto px-4 sm:px-6;
+  }
+
+  .container-xl {
+    @apply max-w-7xl mx-auto px-4 sm:px-6;
+  }
+
+  /* write your own components here */
+
+} /* End of @layer components */
+
 @tailwind utilities;
 
-/*
- * Design System Variables - Semantic naming to guide AI color selection
- *
- * Usage Guidelines:
- * - Text colors: Use text-* series for high contrast and readability
- * - Surface colors: Use surface-* series for backgrounds
- * - Brand colors: Use primary/secondary for brand elements
- * - Status colors: Use success/warning/danger/info for feedback
- *
- * ⚠️ Avoid direct use of neutral, prefer semantic variables
- */
-:root {
-  --color-primary: 217 91% 60%;
-  --color-primary-light: 213 93% 68%;
-  --color-primary-dark: 221 83% 53%;
-
-  --color-secondary: 262 83% 58%;
-  --color-secondary-light: 270 91% 85%;
-  --color-secondary-dark: 263 70% 50%;
-
-  /* Text colors - high contrast for readability */
-  --color-text-primary: 0 0% 15%;    /* Main headings, important text */
-  --color-text-secondary: 0 0% 45%;  /* Body text, descriptions */
-  --color-text-muted: 0 0% 64%;      /* Captions, helper text */
-
-  /* Surface colors - for backgrounds and borders */
-  --color-surface: 0 0% 100%;        /* Main background (white) */
-  --color-surface-elevated: 0 0% 92%; /* Cards, elevated surfaces */
-  --color-border: 0 0% 90%;          /* Borders, dividers */
-
-  /* ⚠️ Neutral color - use only in special cases, avoid for text */
-  --color-neutral: 0 0% 64%;
-
-  --color-success: 142 76% 36%;
-  --color-warning: 38 92% 50%;
-  --color-danger: 0 84% 60%;
-  --color-info: 188 94% 42%;
-
-  --color-success-bg: 138 76% 97%;
-  --color-warning-bg: 48 100% 96%;
-  --color-danger-bg: 0 93% 97%;
-  --color-info-bg: 204 100% 97%;
-
-  --font-family-sans: 'Inter', 'Helvetica Neue', 'Arial', sans-serif;
-  --font-family-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
-
-  --border-radius-sm: 0.375rem;
-  --border-radius: 0.5rem;
-  --border-radius-md: 0.75rem;
-  --border-radius-lg: 1rem;
-  --border-radius-xl: 1.5rem;
-
-  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-  --shadow-xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
-}
-
-/*
- * Dark Mode - Comprehensive optimization for contrast and visual effects
- * Follows WCAG AA standards with minimum 4.5:1 text contrast ratio
- */
-.dark {
-  /* Brand colors optimization for dark mode - increased brightness */
-  --color-primary: 220 100% 70%;     /* Brighter blue for dark backgrounds */
-  --color-primary-light: 218 100% 80%; /* Light variant */
-  --color-primary-dark: 222 90% 60%; /* Dark variant */
-
-  --color-secondary: 266 85% 70%;    /* Brighter purple */
-  --color-secondary-light: 270 90% 85%;
-  --color-secondary-dark: 264 75% 60%;
-
-  /* Text colors - high contrast for readability */
-  --color-text-primary: 0 0% 95%;    /* Near white, optimal contrast */
-  --color-text-secondary: 0 0% 80%;  /* Secondary text, still clear */
-  --color-text-muted: 0 0% 60%;      /* Muted text, moderate contrast */
-
-  /* Surface colors - layered dark system */
-  --color-surface: 0 0% 8%;          /* Very dark background, near black */
-  --color-surface-elevated: 0 0% 12%; /* Card background, slightly lighter */
-  --color-border: 0 0% 20%;          /* Borders, adequate contrast */
-
-  /* Status colors optimization for dark mode - brighter and more saturated */
-  --color-success: 145 80% 50%;      /* Brighter green */
-  --color-warning: 45 95% 60%;       /* Brighter yellow */
-  --color-danger: 0 85% 65%;         /* Brighter red */
-  --color-info: 200 95% 55%;         /* Brighter blue */
-
-  /* Status background colors - semi-transparent for dark mode */
-  --color-success-bg: 145 80% 50% / 0.15; /* Semi-transparent green background */
-  --color-warning-bg: 45 95% 60% / 0.15;  /* Semi-transparent yellow background */
-  --color-danger-bg: 0 85% 65% / 0.15;    /* Semi-transparent red background */
-  --color-info-bg: 200 95% 55% / 0.15;    /* Semi-transparent blue background */
-
-  /* Neutral color adjustment for dark mode */
-  --color-neutral: 0 0% 70%;         /* Brighter neutral for dark backgrounds */
-
-  /* Shadows for dark mode - softer to avoid being too heavy */
-  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.4);
-  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.5), 0 1px 2px -1px rgb(0 0 0 / 0.5);
-  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.5);
-  --shadow-md: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.5);
-  --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.5);
-  --shadow-xl: 0 25px 50px -12px rgb(0 0 0 / 0.7);
-}
-
-/* Design System Components */
-.btn {
-  @apply inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
-  border-radius: var(--border-radius);
-  font-family: var(--font-family-sans);
-  cursor: pointer;
-  user-select: none;
-  text-decoration: none;
-  border: none;
-  outline: none;
-}
-
-/* Button disabled state */
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  pointer-events: none;
-  transform: none !important;
-  box-shadow: none !important;
-}
-
-/* Button loading state */
-.btn.loading {
-  cursor: wait;
-  pointer-events: none;
-  position: relative;
-}
-
-/* Button focus styles */
-.btn:focus-visible {
-  outline: 2px solid hsl(var(--color-primary));
-  outline-offset: 2px;
-}
-
-/* Button active state */
-.btn:active:not(:disabled) {
-  transform: translateY(1px);
-}
-
-.btn-primary {
-  @apply btn text-white px-4 py-2 text-sm;
-  background-color: hsl(var(--color-primary));
-  color: white;
-  box-shadow: var(--shadow-sm);
-}
-
-.btn-primary:hover:not(:disabled) {
-  background-color: hsl(var(--color-primary-dark));
-  box-shadow: var(--shadow);
-}
-
-.btn-primary:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px hsl(var(--color-primary) / 0.3);
-}
-
-.btn-primary:disabled {
-  background-color: hsl(var(--color-primary) / 0.5);
-  color: hsl(0 0% 100% / 0.7);
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.btn-secondary {
-  @apply btn text-white px-4 py-2 text-sm;
-  background-color: hsl(var(--color-secondary));
-  color: white;
-  box-shadow: var(--shadow-sm);
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background-color: hsl(var(--color-secondary-dark));
-  box-shadow: var(--shadow);
-}
-
-.btn-secondary:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px hsl(var(--color-secondary) / 0.3);
-}
-
-.btn-secondary:disabled {
-  background-color: hsl(var(--color-secondary) / 0.5);
-  color: hsl(0 0% 100% / 0.7);
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.btn-neutral {
-  @apply btn text-white px-4 py-2 text-sm;
-  background-color: hsl(var(--color-neutral));
-  color: white;
-  box-shadow: var(--shadow-sm);
-}
-
-.btn-neutral:hover:not(:disabled) {
-  background-color: hsl(var(--color-neutral));
-  box-shadow: var(--shadow);
-}
-
-.btn-neutral:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px hsl(var(--color-neutral) / 0.3);
-}
-
-.btn-neutral:disabled {
-  background-color: hsl(var(--color-neutral) / 0.5);
-  color: hsl(0 0% 100% / 0.7);
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.btn-success {
-  @apply btn text-white px-4 py-2 text-sm;
-  background-color: hsl(var(--color-success));
-  color: white;
-  box-shadow: var(--shadow-sm);
-}
-
-.btn-success:hover:not(:disabled) {
-  opacity: 0.9;
-  box-shadow: var(--shadow);
-}
-
-.btn-success:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px hsl(var(--color-success) / 0.3);
-}
-
-.btn-success:disabled {
-  background-color: hsl(var(--color-success) / 0.5);
-  color: hsl(0 0% 100% / 0.7);
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.btn-warning {
-  @apply btn text-white px-4 py-2 text-sm;
-  background-color: hsl(var(--color-warning));
-  color: white;
-  box-shadow: var(--shadow-sm);
-}
-
-.btn-warning:hover:not(:disabled) {
-  opacity: 0.9;
-  box-shadow: var(--shadow);
-}
-
-.btn-warning:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px hsl(var(--color-warning) / 0.3);
-}
-
-.btn-warning:disabled {
-  background-color: hsl(var(--color-warning) / 0.5);
-  color: hsl(0 0% 100% / 0.7);
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.btn-danger {
-  @apply btn text-white px-4 py-2 text-sm;
-  background-color: hsl(var(--color-danger));
-  color: white;
-  box-shadow: var(--shadow-sm);
-}
-
-.btn-danger:hover:not(:disabled) {
-  opacity: 0.9;
-  box-shadow: var(--shadow);
-}
-
-.btn-danger:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px hsl(var(--color-danger) / 0.3);
-}
-
-.btn-danger:disabled {
-  background-color: hsl(var(--color-danger) / 0.5);
-  color: hsl(0 0% 100% / 0.7);
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.btn-ghost {
-  @apply btn px-4 py-2 text-sm;
-  background-color: transparent;
-  border: 1px solid hsl(var(--color-surface-elevated));
-  color: hsl(var(--color-text-primary));
-}
-
-.btn-ghost:hover:not(:disabled) {
-  background-color: hsl(var(--color-surface-elevated));
-  box-shadow: var(--shadow-sm);
-}
-
-.btn-ghost:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px hsl(var(--color-text-secondary) / 0.3);
-}
-
-.btn-ghost:disabled {
-  border-color: hsl(var(--color-border) / 0.5);
-  color: hsl(var(--color-text-secondary) / 0.5);
-  background-color: transparent;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.dark .btn-ghost {
-  border-color: hsl(var(--color-border));
-  color: hsl(var(--color-text-secondary));
-}
-
-.dark .btn-ghost:hover:not(:disabled) {
-  background-color: hsl(var(--color-surface-elevated));
-}
-
-.dark .btn-ghost:disabled {
-  border-color: hsl(var(--color-border) / 0.3);
-  color: hsl(var(--color-text-muted) / 0.5);
-  background-color: transparent;
-}
-
-.btn-outline-primary {
-  @apply btn px-4 py-2 text-sm;
-  background-color: transparent;
-  border: 1px solid hsl(var(--color-primary));
-  color: hsl(var(--color-primary));
-}
-
-.btn-outline-primary:hover:not(:disabled) {
-  background-color: hsl(var(--color-primary-light) / 0.1);
-  box-shadow: var(--shadow-sm);
-}
-
-.btn-outline-primary:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px hsl(var(--color-primary) / 0.3);
-}
-
-.btn-outline-primary:disabled {
-  border-color: hsl(var(--color-primary) / 0.3);
-  color: hsl(var(--color-primary) / 0.3);
-  background-color: transparent;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.btn-xs {
-  @apply text-xs px-2 py-1;
-  border-radius: var(--border-radius-sm);
-}
-
-.btn-sm {
-  @apply text-sm px-3 py-1.5;
-  border-radius: var(--border-radius);
-}
-
-.btn-md {
-  @apply text-sm px-4 py-2;
-  border-radius: var(--border-radius);
-}
-
-.btn-lg {
-  @apply text-base px-6 py-3;
-  border-radius: var(--border-radius-lg);
-}
-
-.btn-xl {
-  @apply text-lg px-8 py-4;
-  border-radius: var(--border-radius-xl);
-}
-.card {
-  @apply px-8 py-8 overflow-hidden;
-  background-color: hsl(var(--color-surface));
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--shadow-md);
-  border: 1px solid hsl(var(--color-surface-elevated));
-}
-
-.dark .card {
-  background-color: hsl(var(--color-surface-elevated));
-  border-color: hsl(var(--color-border));
-}
-
-.card-elevated {
-  @apply card;
-  box-shadow: var(--shadow-lg);
-}
-
-.card-flat {
-  @apply card;
-  box-shadow: none;
-  border: 0;
-  background-color: hsl(var(--color-surface-elevated));
-}
-
-.dark .card-flat {
-  background-color: hsl(var(--color-surface));
-}
-
-.card-header {
-  @apply px-6 py-4;
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--shadow-md);
-  border-bottom: 1px solid hsl(var(--color-surface-elevated));
-  background-color: hsl(var(--color-surface-elevated));
-}
-
-.dark .card-header {
-  border-bottom-color: hsl(var(--color-border));
-  background-color: hsl(var(--color-surface));
-}
-
-.card-body {
-  @apply px-6 py-4;
-}
-
-.card-footer {
-  @apply px-6 py-4;
-  border-top: 1px solid hsl(var(--color-surface-elevated));
-  background-color: hsl(var(--color-surface-elevated));
-}
-
-.dark .card-footer {
-  border-top-color: hsl(var(--color-border));
-  background-color: hsl(var(--color-surface));
-}
-
-.alert {
-  @apply p-4 text-sm font-medium;
-  border-radius: var(--border-radius-lg);
-  border: 1px solid;
-}
-
-.alert a {
-  text-decoration: underline;
-}
-
-.alert-success {
-  @apply alert;
-  background-color: hsl(var(--color-success-bg));
-  border-color: hsl(var(--color-success));
-  color: hsl(var(--color-text-primary));
-}
-
-.dark .alert-success {
-  background-color: hsl(var(--color-success) / 0.2);
-  border-color: hsl(var(--color-success));
-  color: hsl(var(--color-success));
-}
-
-.alert-warning {
-  @apply alert;
-  background-color: hsl(var(--color-warning-bg));
-  border-color: hsl(var(--color-warning));
-  color: hsl(var(--color-text-primary));
-}
-
-.dark .alert-warning {
-  background-color: hsl(var(--color-warning) / 0.2);
-  border-color: hsl(var(--color-warning));
-  color: hsl(var(--color-warning));
-}
-
-.alert-danger {
-  @apply alert;
-  background-color: hsl(var(--color-danger-bg));
-  border-color: hsl(var(--color-danger));
-  color: hsl(var(--color-text-primary));
-}
-
-.dark .alert-danger {
-  background-color: hsl(var(--color-danger) / 0.2);
-  border-color: hsl(var(--color-danger));
-  color: hsl(var(--color-danger));
-}
-
-.alert-info {
-  @apply alert;
-  background-color: hsl(var(--color-info-bg));
-  border-color: hsl(var(--color-info));
-  color: hsl(var(--color-text-primary));
-}
-
-.dark .alert-info {
-  background-color: hsl(var(--color-info) / 0.2);
-  border-color: hsl(var(--color-info));
-  color: hsl(var(--color-info));
-}
-
-.badge {
-  @apply inline-flex items-center px-2.5 py-0.5 text-xs font-medium;
-  border-radius: 9999px; /* full */
-}
-
-.badge-primary {
-  @apply badge;
-  background-color: hsl(var(--color-primary-light) / 0.2);
-  color: hsl(var(--color-primary));
-}
-
-.dark .badge-primary {
-  background-color: hsl(var(--color-primary) / 0.3);
-  color: hsl(var(--color-primary-light));
-}
-
-.badge-secondary {
-  @apply badge;
-  background-color: hsl(var(--color-secondary-light) / 0.2);
-  color: hsl(var(--color-secondary));
-}
-
-.dark .badge-secondary {
-  background-color: hsl(var(--color-secondary) / 0.3);
-  color: hsl(var(--color-secondary-light));
-}
-
-.badge-success {
-  @apply badge;
-  background-color: hsl(var(--color-success-bg));
-  color: hsl(var(--color-success));
-}
-
-.dark .badge-success {
-  background-color: hsl(var(--color-success) / 0.3);
-  color: hsl(var(--color-success));
-}
-
-.badge-warning {
-  @apply badge;
-  background-color: hsl(var(--color-warning-bg));
-  color: hsl(var(--color-warning));
-}
-
-.dark .badge-warning {
-  background-color: hsl(var(--color-warning) / 0.3);
-  color: hsl(var(--color-warning));
-}
-
-.badge-danger {
-  @apply badge;
-  background-color: hsl(var(--color-danger-bg));
-  color: hsl(var(--color-danger));
-}
-
-.dark .badge-danger {
-  background-color: hsl(var(--color-danger) / 0.3);
-  color: hsl(var(--color-danger));
-}
-
-.badge-neutral {
-  @apply badge;
-  background-color: hsl(var(--color-surface-elevated));
-  color: hsl(var(--color-text-primary));
-}
-
-.dark .badge-neutral {
-  background-color: hsl(var(--color-surface-elevated));
-  color: hsl(var(--color-text-secondary));
-}
-
-.form-input {
-  @apply w-full px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200;
-  border: 1px solid hsl(var(--color-surface-elevated));
-  border-radius: var(--border-radius);
-  background-color: hsl(var(--color-surface));
-  color: hsl(var(--color-text-primary));
-}
-
-.form-input::placeholder {
-  color: hsl(var(--color-neutral));
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: hsl(var(--color-primary));
-  box-shadow: 0 0 0 3px hsl(var(--color-primary) / 0.1);
-}
-
-.dark .form-input {
-  border-color: hsl(var(--color-border));
-  background-color: hsl(var(--color-surface-elevated));
-  color: hsl(var(--color-text-primary));
-}
-
-.dark .form-input::placeholder {
-  color: hsl(var(--color-text-muted));
-}
-
-.form-textarea {
-  @apply form-input resize-y;
-}
-
-.form-select {
-  @apply form-input cursor-pointer;
-}
-
-.form-label {
-  @apply block text-sm font-medium mb-1;
-  color: hsl(var(--color-text-primary));
-}
-
-.dark .form-label {
-  color: hsl(var(--color-text-secondary));
-}
-
-.form-error {
-  @apply text-sm mt-1;
-  color: hsl(var(--color-danger));
-}
-
-.form-help {
-  @apply text-sm mt-1;
-  color: hsl(var(--color-neutral));
-}
-
-.table {
-  @apply w-full text-sm text-left;
-  color: hsl(var(--color-neutral));
-}
-
-.table-header {
-  @apply text-xs uppercase;
-  color: hsl(var(--color-text-primary));
-  background-color: hsl(var(--color-surface-elevated));
-}
-
-.dark .table-header {
-  color: hsl(var(--color-text-secondary));
-  background-color: hsl(var(--color-surface-elevated));
-}
-
-.table-row {
-  background-color: hsl(var(--color-surface));
-  border-bottom: 1px solid hsl(var(--color-surface-elevated));
-}
-
-.table-row:hover {
-  background-color: hsl(var(--color-surface-elevated));
-}
-
-.dark .table-row {
-  background-color: hsl(var(--color-surface-elevated));
-  border-bottom-color: hsl(var(--color-border));
-}
-
-.dark .table-row:hover {
-  background-color: hsl(var(--color-surface));
-}
-
-.table-cell {
-  @apply px-6 py-4;
-}
-
-.table-header-cell {
-  @apply table-cell font-medium;
-}
-
-.loading-spinner {
-  @apply animate-spin rounded-full border-2;
-  border-color: hsl(var(--color-surface-elevated));
-  border-top-color: hsl(var(--color-primary));
-}
-
-.skeleton {
-  @apply animate-pulse;
-  background-color: hsl(var(--color-surface-elevated));
-  border-radius: var(--border-radius);
-}
-
-.dark .skeleton {
-  background-color: hsl(var(--color-surface-elevated));
-}
-
-.dark {
-  scrollbar-width: thin;
-  scrollbar-color: hsl(var(--color-surface-elevated)) hsl(var(--color-surface));
-}
-
-.dark ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-.dark ::-webkit-scrollbar-track {
-  background: hsl(var(--color-surface));
-}
-
-.dark ::-webkit-scrollbar-thumb {
-  background-color: hsl(var(--color-surface-elevated));
-  border-radius: 4px;
-  border: 2px solid hsl(var(--color-surface));
-}
-
-.dark ::-webkit-scrollbar-thumb:hover {
-  background-color: hsl(var(--color-border));
-}
-
-.dark ::selection {
-  background-color: hsl(var(--color-primary) / 0.3);
-  color: hsl(var(--color-text-primary));
-}
-
-.dark .focus-ring:focus {
-  box-shadow: 0 0 0 3px hsl(var(--color-primary) / 0.4);
-}
-
-.dark a {
-  color: hsl(var(--color-primary-light));
-}
-
-.dark a:hover {
-  color: hsl(var(--color-primary));
-  text-decoration: underline;
-}
-
-.dark code {
-  background-color: hsl(var(--color-surface-elevated));
-  color: hsl(var(--color-text-secondary));
-  padding: 0.125rem 0.25rem;
-  border-radius: var(--border-radius-sm);
-  font-family: var(--font-family-mono);
-  border: 1px solid hsl(var(--color-border));
-}
-
-.dark pre {
-  background-color: hsl(var(--color-surface-elevated));
-  border: 1px solid hsl(var(--color-border));
-  border-radius: var(--border-radius);
-  padding: 1rem;
-  overflow-x: auto;
-}
-
-.dark pre code {
-  background: none;
-  border: none;
-  padding: 0;
-}
-
-.field_with_errors {
-  @apply inline-block w-full;
-}
-
-.field_with_errors input,
-.field_with_errors textarea,
-.field_with_errors select {
-  border-color: hsl(var(--color-danger)) !important;
-}
-
-.field_with_errors input:focus,
-.field_with_errors textarea:focus,
-.field_with_errors select:focus {
-  box-shadow: 0 0 0 3px hsl(var(--color-danger) / 0.1) !important;
-}
-
-.text-balance {
-  text-wrap: balance;
-}
-
-.transition-default {
-  @apply transition-all duration-200 ease-in-out;
-}
-
-.focus-ring {
-  @apply focus:outline-none;
-}
-
-.focus-ring:focus {
-  box-shadow: 0 0 0 3px hsl(var(--color-primary) / 0.3);
-}
-
-.container-sm {
-  @apply max-w-2xl mx-auto px-4 sm:px-6;
-}
-
-.container-md {
-  @apply max-w-4xl mx-auto px-4 sm:px-6;
-}
-
-.container-lg {
-  @apply max-w-6xl mx-auto px-4 sm:px-6;
-}
-
-.container-xl {
-  @apply max-w-7xl mx-auto px-4 sm:px-6;
-}
