@@ -1,11 +1,10 @@
-<div class="min-h-screen bg-gray-100">
-  <div class="py-10">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between items-center mb-8">
-        <div>
-          <h1 class="text-3xl font-bold text-gray-900">Your Orders</h1>
-          <p class="text-gray-600 mt-2">Track and manage your orders</p>
-        </div>
+<div class="min-h-screen bg-surface">
+  <div class="container-md py-12">
+    <div class="flex justify-between items-center mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-text-primary">Your Orders</h1>
+        <p class="text-text-secondary mt-2">Track and manage your orders</p>
+      </div>
         <% if @for_test %>
         <div>
           <%%= link_to "Create New Order", new_order_path, class: "btn-primary" %>
@@ -23,38 +22,37 @@
                     <h2 class="text-lg font-semibold text-gray-900 mb-2">
                       Order #<%%= order.id %>
                     </h2>
-                    
+
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                       <div>
-                        <span class="font-medium text-gray-700">Product:</span>
-                        <p class="text-gray-900"><%%= order.product_name %></p>
+                        <span class="form-label">Product:</span>
+                        <p class="text-text-primary font-medium"><%%= order.product_name %></p>
                       </div>
                       <div>
-                        <span class="font-medium text-gray-700">Amount:</span>
-                        <p class="text-gray-900"><%%= number_to_currency(order.amount, unit: order.currency.upcase + ' ') %></p>
+                        <span class="form-label">Amount:</span>
+                        <p class="text-text-primary font-medium"><%%= number_to_currency(order.amount, unit: order.currency.upcase + ' ') %></p>
                       </div>
                       <div>
-                        <span class="font-medium text-gray-700">Status:</span>
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                          <%%= case order.status
-                              when 'paid' then 'bg-green-100 text-green-800'
-                              when 'failed' then 'bg-red-100 text-red-800'
-                              when 'pending' then 'bg-yellow-100 text-yellow-800'
-                              else 'bg-gray-100 text-gray-800'
+                        <span class="form-label">Status:</span>
+                        <span class="<%%= case order.status
+                              when 'paid' then 'badge-success'
+                              when 'failed' then 'badge-danger'
+                              when 'pending' then 'badge-warning'
+                              else 'badge-neutral'
                               end %>">
                           <%%= order.display_status %>
                         </span>
                       </div>
                     </div>
 
-                    <div class="mt-4 text-sm text-gray-600">
+                    <div class="mt-4 text-sm text-text-secondary">
                       <p>Customer: <%%= order.customer_name %> (<%%= order.customer_email %>)</p>
                       <p>Created: <%%= order.created_at.strftime("%B %d, %Y at %l:%M %p") %></p>
                     </div>
                   </div>
 
                   <div class="ml-6">
-                    <%%= link_to "View Details", order_path(order), class: "btn-primary text-sm py-1 px-3" %>
+                    <%%= link_to "View Details", order_path(order), class: "btn-primary btn-sm" %>
                   </div>
                 </div>
               </div>
@@ -70,18 +68,18 @@
 
         <%% else %>
           <div class="text-center py-12">
-            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg class="mx-auto h-12 w-12 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
             </svg>
-            <h3 class="mt-2 text-sm font-medium text-gray-900">No orders yet</h3>
-            <p class="mt-1 text-sm text-gray-500">Get started by creating your first order.</p>
+            <h3 class="mt-2 text-sm font-medium text-text-primary">No orders yet</h3>
+            <p class="mt-1 text-sm text-text-muted">Get started by creating your first order.</p>
             <% if @for_test %>
             <div class="mt-6">
               <%%= link_to "Create Your First Order", new_order_path, class: "btn-primary" %>
             </div>
             <% else %>
             <div class="mt-6">
-              <p class="text-sm text-gray-500">Orders will be created programmatically in your application.</p>
+              <p class="text-sm text-text-muted">Orders will be created programmatically in your application.</p>
             </div>
             <% end %>
           </div>

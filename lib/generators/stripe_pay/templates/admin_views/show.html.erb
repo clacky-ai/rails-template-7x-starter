@@ -3,7 +3,7 @@
   <div class="flex items-center justify-between">
     <div class="flex items-center space-x-4">
       <%%= link_to "← Back to Orders", admin_orders_path, class: "btn-ghost" %>
-      <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Order #<%%= @order.id %></h1>
+      <h1 class="text-3xl font-bold text-text-primary">Order #<%%= @order.id %></h1>
     </div>
 
     <div class="flex items-center space-x-3">
@@ -15,13 +15,12 @@
 
   <!-- Order Status -->
   <div class="flex items-center space-x-4">
-    <span class="text-lg font-medium text-gray-700 dark:text-gray-300">Status:</span>
-    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
-      <%%= case @order.status
-          when 'paid' then 'bg-green-100 text-green-800'
-          when 'failed' then 'bg-red-100 text-red-800'
-          when 'pending' then 'bg-yellow-100 text-yellow-800'
-          else 'bg-gray-100 text-gray-800'
+    <span class="text-lg font-medium text-text-primary">Status:</span>
+    <span class="<%%= case @order.status
+          when 'paid' then 'badge-success'
+          when 'failed' then 'badge-danger'
+          when 'pending' then 'badge-warning'
+          else 'badge-neutral'
           end %>">
       <%%= @order.display_status %>
     </span>
@@ -32,18 +31,18 @@
     <!-- Customer Information -->
     <div class="card">
       <div class="card-body">
-        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Customer Information</h2>
+        <h2 class="text-xl font-semibold text-text-primary mb-4">Customer Information</h2>
 
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
-            <p class="text-lg text-gray-900 dark:text-white"><%%= @order.customer_name %></p>
+            <label class="form-label">Name</label>
+            <p class="text-lg text-text-primary font-medium"><%%= @order.customer_name %></p>
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-            <p class="text-lg text-gray-900 dark:text-white">
-              <a href="mailto:<%%= @order.customer_email %>" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
+            <label class="form-label">Email</label>
+            <p class="text-lg text-text-primary font-medium">
+              <a href="mailto:<%%= @order.customer_email %>" class="text-primary hover:text-primary-dark">
                 <%%= @order.customer_email %>
               </a>
             </p>
@@ -55,22 +54,22 @@
     <!-- Order Information -->
     <div class="card">
       <div class="card-body">
-        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Order Information</h2>
+        <h2 class="text-xl font-semibold text-text-primary mb-4">Order Information</h2>
 
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Product</label>
-            <p class="text-lg text-gray-900 dark:text-white"><%%= @order.product_name %></p>
+            <label class="form-label">Product</label>
+            <p class="text-lg text-text-primary font-medium"><%%= @order.product_name %></p>
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Amount</label>
-            <p class="text-lg text-gray-900 dark:text-white"><%%= number_to_currency(@order.amount, unit: @order.currency.upcase + ' ') %></p>
+            <label class="form-label">Amount</label>
+            <p class="text-lg text-text-primary font-medium"><%%= number_to_currency(@order.amount, unit: @order.currency.upcase + ' ') %></p>
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Currency</label>
-            <p class="text-lg text-gray-900 dark:text-white"><%%= @order.currency.upcase %></p>
+            <label class="form-label">Currency</label>
+            <p class="text-lg text-text-primary font-medium"><%%= @order.currency.upcase %></p>
           </div>
         </div>
       </div>
@@ -81,18 +80,18 @@
   <%% if @order.stripe_payment_intent_id %>
     <div class="card">
       <div class="card-body">
-        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Payment Information</h2>
+        <h2 class="text-xl font-semibold text-text-primary mb-4">Payment Information</h2>
 
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Stripe Payment Intent ID</label>
-            <p class="text-sm font-mono text-gray-900 dark:text-white break-all bg-gray-50 dark:bg-gray-700 p-3 rounded-lg"><%%= @order.stripe_payment_intent_id %></p>
+            <label class="form-label">Stripe Payment Intent ID</label>
+            <p class="text-sm font-mono text-text-primary break-all bg-surface-muted p-3 rounded-lg"><%%= @order.stripe_payment_intent_id %></p>
           </div>
 
           <%% if @order.stripe_payment_intent_id %>
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Payment Intent Status</label>
-              <p class="text-lg text-gray-900 dark:text-white">Active</p>
+              <label class="form-label">Payment Intent Status</label>
+              <p class="text-lg text-text-primary font-medium">Active</p>
             </div>
           <%% end %>
         </div>
@@ -103,17 +102,17 @@
   <!-- Timestamps -->
   <div class="card">
     <div class="card-body">
-      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Timestamps</h2>
+      <h2 class="text-xl font-semibold text-text-primary mb-4">Timestamps</h2>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Created At</label>
-          <p class="text-lg text-gray-900 dark:text-white"><%%= @order.created_at.strftime("%B %d, %Y at %l:%M %p") %></p>
+          <label class="form-label">Created At</label>
+          <p class="text-lg text-text-primary font-medium"><%%= @order.created_at.strftime("%B %d, %Y at %l:%M %p") %></p>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Last Updated</label>
-          <p class="text-lg text-gray-900 dark:text-white"><%%= @order.updated_at.strftime("%B %d, %Y at %l:%M %p") %></p>
+          <label class="form-label">Last Updated</label>
+          <p class="text-lg text-text-primary font-medium"><%%= @order.updated_at.strftime("%B %d, %Y at %l:%M %p") %></p>
         </div>
       </div>
     </div>

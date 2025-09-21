@@ -1,43 +1,45 @@
-<div class="min-h-screen bg-gray-100 flex items-center justify-center">
-  <div class="max-w-md mx-auto bg-white shadow-xl rounded-lg overflow-hidden">
-    <div class="px-6 py-8 text-center">
+<div class="min-h-screen bg-surface flex items-center justify-center py-12 px-4">
+  <div class="card w-full max-w-md">
+    <div class="card-body text-center">
       <!-- Success Icon -->
-      <div class="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
-        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div class="w-16 h-16 mx-auto mb-4 bg-success/20 rounded-full flex items-center justify-center">
+        <svg class="w-8 h-8 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
         </svg>
       </div>
 
       <!-- Title -->
-      <h1 class="text-2xl font-bold text-gray-900 mb-2">Payment Successful!</h1>
-      <p class="text-gray-600 mb-6">Your payment has been processed successfully.</p>
+      <h1 class="text-2xl font-bold text-text-primary mb-2">Payment Successful!</h1>
+      <p class="text-text-secondary mb-6">Your payment has been processed successfully.</p>
 
       <!-- Order Details -->
-      <div class="bg-gray-50 rounded-lg p-4 mb-6 text-left">
-        <h3 class="font-semibold text-gray-900 mb-3">Order Summary</h3>
-        <div class="space-y-2 text-sm">
-          <div class="flex justify-between">
-            <span class="text-gray-600">Order ID:</span>
-            <span class="font-medium">#<%%= @order.id %></span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-gray-600">Product:</span>
-            <span class="font-medium"><%%= @order.product_name %></span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-gray-600">Amount:</span>
-            <span class="font-medium"><%%= number_to_currency(@order.amount, unit: @order.currency.upcase + ' ') %></span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-gray-600">Customer:</span>
-            <span class="font-medium"><%%= @order.customer_name %></span>
+      <div class="card-flat mb-6 text-left">
+        <div class="card-body">
+          <h3 class="font-semibold text-text-primary mb-3">Order Summary</h3>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between">
+              <span class="text-text-secondary">Order ID:</span>
+              <span class="font-medium text-text-primary">#<%%= @order.id %></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-text-secondary">Product:</span>
+              <span class="font-medium text-text-primary"><%%= @order.product_name %></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-text-secondary">Amount:</span>
+              <span class="font-medium text-text-primary"><%%= number_to_currency(@order.amount, unit: @order.currency.upcase + ' ') %></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-text-secondary">Customer:</span>
+              <span class="font-medium text-text-primary"><%%= @order.customer_name %></span>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- Action Buttons -->
       <div class="space-y-3">
-        <%%= link_to "View Order Details", @order, class: "w-full inline-flex justify-center items-center border border-blue-600 text-blue-600 hover:bg-blue-50 font-medium py-2 px-4 rounded-lg transition-colors duration-200" %>
+        <%%= link_to "View Order Details", @order, class: "btn-outline-primary w-full" %>
         <% if @for_test %>
         <%%= link_to "Create New Order", new_order_path, class: "btn-primary w-full" %>
         <% else %>
@@ -46,7 +48,7 @@
       </div>
 
       <!-- Additional Info -->
-      <div class="mt-6 text-xs text-gray-500">
+      <div class="mt-6 text-xs text-text-muted">
         <p>A confirmation email has been sent to <%%= @order.customer_email %></p>
       </div>
     </div>

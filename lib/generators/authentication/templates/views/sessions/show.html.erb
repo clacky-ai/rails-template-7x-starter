@@ -1,122 +1,124 @@
-<div class="min-h-screen bg-gray-100">
-  <div class="py-10">
-    <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-      <div class="bg-white overflow-hidden shadow-xl rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-          <div class="flex items-center justify-between mb-6">
-            <h1 class="text-2xl font-bold text-gray-900">Current Session Details</h1>
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-              <span class="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-              Active
-            </span>
-          </div>
+<div class="min-h-screen bg-surface">
+  <div class="container-md py-12">
+    <div class="card-elevated">
+      <div class="card-body">
+        <div class="flex items-center justify-between mb-8">
+          <h1 class="text-3xl font-bold text-text-primary">Current Session Details</h1>
+          <span class="badge-success flex items-center">
+            <span class="w-2 h-2 bg-success rounded-full mr-2"></span>
+            Active
+          </span>
+        </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <!-- User Information -->
-            <div class="bg-gray-50 rounded-lg p-4">
-              <h3 class="text-lg font-medium text-gray-900 mb-3 flex items-center">
-                <svg class="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <!-- User Information -->
+          <div class="card-flat">
+            <div class="card-body">
+              <h3 class="text-lg font-medium text-text-primary mb-4 flex items-center">
+                <svg class="w-5 h-5 text-text-muted mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                 </svg>
                 User Information
               </h3>
-              <dl class="space-y-2">
+              <dl class="space-y-3">
                 <div>
-                  <dt class="text-sm font-medium text-gray-500">Name</dt>
-                  <dd class="text-sm text-gray-900"><%= @user.name %></dd>
+                  <dt class="form-label">Name</dt>
+                  <dd class="text-text-primary font-medium"><%= @user.name %></dd>
                 </div>
                 <div>
-                  <dt class="text-sm font-medium text-gray-500">Email</dt>
-                  <dd class="text-sm text-gray-900"><%= @user.email %></dd>
+                  <dt class="form-label">Email</dt>
+                  <dd class="text-text-primary font-medium"><%= @user.email %></dd>
                 </div>
                 <div>
-                  <dt class="text-sm font-medium text-gray-500">Member since</dt>
-                  <dd class="text-sm text-gray-900"><%= @user.created_at.strftime("%B %d, %Y") %></dd>
-                </div>
-              </dl>
-            </div>
-
-            <!-- Session Information -->
-            <div class="bg-gray-50 rounded-lg p-4">
-              <h3 class="text-lg font-medium text-gray-900 mb-3 flex items-center">
-                <svg class="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                </svg>
-                Session Information
-              </h3>
-              <dl class="space-y-2">
-                <div>
-                  <dt class="text-sm font-medium text-gray-500">Session ID</dt>
-                  <dd class="text-sm text-gray-900 font-mono"><%= @session.id %></dd>
-                </div>
-                <div>
-                  <dt class="text-sm font-medium text-gray-500">Started</dt>
-                  <dd class="text-sm text-gray-900">
-                    <%= @session.created_at.strftime("%B %d, %Y at %l:%M %p") %>
-                    <span class="text-gray-400">(<%= time_ago_in_words(@session.created_at) %> ago)</span>
-                  </dd>
-                </div>
-                <div>
-                  <dt class="text-sm font-medium text-gray-500">Last Activity</dt>
-                  <dd class="text-sm text-gray-900">
-                    <%= @session.updated_at.strftime("%B %d, %Y at %l:%M %p") %>
-                    <span class="text-gray-400">(<%= time_ago_in_words(@session.updated_at) %> ago)</span>
-                  </dd>
+                  <dt class="form-label">Member since</dt>
+                  <dd class="text-text-secondary"><%= @user.created_at.strftime("%B %d, %Y") %></dd>
                 </div>
               </dl>
             </div>
           </div>
 
-          <!-- Device & Security Information -->
-          <div class="bg-gray-50 rounded-lg p-4 mb-6">
-            <h3 class="text-lg font-medium text-gray-900 mb-3 flex items-center">
-              <svg class="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <!-- Session Information -->
+          <div class="card-flat">
+            <div class="card-body">
+              <h3 class="text-lg font-medium text-text-primary mb-4 flex items-center">
+                <svg class="w-5 h-5 text-text-muted mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                </svg>
+                Session Information
+              </h3>
+              <dl class="space-y-3">
+                <div>
+                  <dt class="form-label">Session ID</dt>
+                  <dd class="text-text-primary font-mono text-sm"><%= @session.id %></dd>
+                </div>
+                <div>
+                  <dt class="form-label">Started</dt>
+                  <dd class="text-text-primary">
+                    <%= @session.created_at.strftime("%B %d, %Y at %l:%M %p") %>
+                    <span class="text-text-muted text-sm">(<%= time_ago_in_words(@session.created_at) %> ago)</span>
+                  </dd>
+                </div>
+                <div>
+                  <dt class="form-label">Last Activity</dt>
+                  <dd class="text-text-primary">
+                    <%= @session.updated_at.strftime("%B %d, %Y at %l:%M %p") %>
+                    <span class="text-text-muted text-sm">(<%= time_ago_in_words(@session.updated_at) %> ago)</span>
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+        </div>
+
+        <!-- Device & Security Information -->
+        <div class="card-flat mb-6">
+          <div class="card-body">
+            <h3 class="text-lg font-medium text-text-primary mb-4 flex items-center">
+              <svg class="w-5 h-5 text-text-muted mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
               </svg>
               Device & Security
             </h3>
-            <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <dl class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <dt class="text-sm font-medium text-gray-500">IP Address</dt>
-                <dd class="text-sm text-gray-900 font-mono"><%= @session.ip_address || 'Unknown' %></dd>
+                <dt class="form-label">IP Address</dt>
+                <dd class="text-text-primary font-mono"><%= @session.ip_address || 'Unknown' %></dd>
               </div>
               <div>
-                <dt class="text-sm font-medium text-gray-500">User Agent</dt>
-                <dd class="text-sm text-gray-900 break-words">
+                <dt class="form-label">User Agent</dt>
+                <dd class="text-text-primary break-words text-sm">
                   <%= @session.user_agent.present? ? @session.user_agent : 'Unknown Device' %>
                 </dd>
               </div>
             </dl>
           </div>
+        </div>
 
-          <!-- Security Notice -->
-          <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-            <div class="flex">
-              <div class="flex-shrink-0">
-                <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                </svg>
-              </div>
-              <div class="ml-3">
-                <h3 class="text-sm font-medium text-yellow-800">Security Notice</h3>
-                <p class="mt-1 text-sm text-yellow-700">
-                  If you don't recognize this session or believe your account has been compromised, 
-                  please sign out immediately and change your password.
-                </p>
-              </div>
+        <!-- Security Notice -->
+        <div class="alert-warning mb-6">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5 text-warning" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div class="ml-3">
+              <h3 class="text-sm font-medium">Security Notice</h3>
+              <p class="mt-1 text-sm">
+                If you don't recognize this session or believe your account has been compromised, 
+                please sign out immediately and change your password.
+              </p>
             </div>
           </div>
+        </div>
 
-          <!-- Action Buttons -->
-          <div class="flex flex-col sm:flex-row gap-3 pt-6 border-t border-gray-200">
-            <%= link_to "View All Sessions", devices_session_path, 
-                class: "inline-flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" %>
-            
-            <%= link_to "Edit Profile", profile_path, 
-                class: "inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" %>
-            
+        <!-- Action Buttons -->
+        <div class="card-footer">
+          <div class="flex flex-col sm:flex-row gap-3">
+            <%= link_to "View All Sessions", devices_session_path, class: "btn-ghost" %>
+            <%= link_to "Edit Profile", profile_path, class: "btn-primary" %>
             <%= button_to "Sign Out", sign_out_path, method: :delete, 
-                class: "inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500",
+                class: "btn-danger",
                 data: { confirm: "Are you sure you want to sign out?" } %>
           </div>
         </div>
