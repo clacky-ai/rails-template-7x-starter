@@ -25,6 +25,11 @@ document.addEventListener('DOMContentLoaded', () => {
     form.removeAttribute('data-remote');
   });
 
+  const submitButtons = document.querySelectorAll('form input[type="submit"], form button[type="submit"], form button:not([type])');
+  submitButtons.forEach(element => {
+    element.removeAttribute('data-disable-with');
+  });
+
   const turboElements = document.querySelectorAll('[data-turbo-method], [data-turbo-confirm]');
   turboElements.forEach(element => {
     if (element.hasAttribute('data-turbo-method')) {

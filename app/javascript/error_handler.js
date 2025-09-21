@@ -182,20 +182,60 @@ class ErrorHandler {
         const response = await originalFetch(...args);
 
         if (!response.ok) {
+          // Extract HTTP method from request options
+          const requestOptions = args[1] || {};
+          const method = (requestOptions.method || 'GET').toUpperCase();
+          
+          // Try to extract response body for detailed error information
+          let responseBody = null;
+          let jsonError = null;
+          
+          try {
+            // Clone the response to avoid consuming it
+            const responseClone = response.clone();
+            const contentType = response.headers.get('content-type');
+            
+            if (contentType && contentType.includes('application/json')) {
+              jsonError = await responseClone.json();
+              responseBody = JSON.stringify(jsonError, null, 2);
+            } else {
+              responseBody = await responseClone.text();
+            }
+          } catch (bodyError) {
+            // If we can't read the body, just note that
+            responseBody = 'Unable to read response body';
+          }
+
+          // Create detailed error message
+          let detailedMessage = `${method} ${args[0]} - HTTP ${response.status}`;
+          if (jsonError) {
+            // Extract meaningful error message from JSON
+            const errorMsg = jsonError.error || jsonError.message || jsonError.errors || 'Unknown error';
+            detailedMessage += ` - ${errorMsg}`;
+          }
+
           this.handleError({
-            message: `HTTP ${response.status}: ${response.statusText}`,
+            message: detailedMessage,
             url: args[0],
+            method: method,
             type: response.status >= 500 ? 'http' : 'network',
             status: response.status,
+            responseBody: responseBody,
+            jsonError: jsonError,
             timestamp: new Date().toISOString()
           });
         }
 
         return response;
       } catch (error) {
+        // Extract HTTP method for network errors too
+        const requestOptions = args[1] || {};
+        const method = (requestOptions.method || 'GET').toUpperCase();
+        
         this.handleError({
-          message: `Network Error: ${error.message}`,
+          message: `${method} ${args[0]} - Network Error: ${error.message}`,
           url: args[0],
+          method: method,
           error: error,
           type: 'network',
           timestamp: new Date().toISOString()
@@ -428,7 +468,29 @@ class ErrorHandler {
   formatTechnicalDetails(error) {
     const details = [];
 
-    details.push(`<div><strong>URL:</strong> ${window.location.href}</div>`);
+    details.push(`<div><strong>Page URL:</strong> ${window.location.href}</div>`);
+
+    // For fetch/network errors, show detailed HTTP information
+    if (error.type === 'http' || error.type === 'network') {
+      if (error.method) {
+        details.push(`<div><strong>Method:</strong> ${error.method}</div>`);
+      }
+      if (error.status) {
+        details.push(`<div><strong>Status Code:</strong> ${error.status}</div>`);
+      }
+      
+      // Show JSON error details if available
+      if (error.jsonError) {
+        details.push(`<div class="mb-1"><strong>JSON Error Details:</strong></div>`);
+        details.push(`<pre class="text-xs bg-gray-800 p-2 rounded overflow-x-auto whitespace-pre-wrap">${JSON.stringify(error.jsonError, null, 2)}</pre>`);
+      }
+      
+      // Show response body if available and different from JSON error
+      if (error.responseBody && (!error.jsonError || error.responseBody !== JSON.stringify(error.jsonError, null, 2))) {
+        details.push(`<div class="mb-1"><strong>Response Body:</strong></div>`);
+        details.push(`<pre class="text-xs bg-gray-800 p-2 rounded overflow-x-auto whitespace-pre-wrap">${error.responseBody}</pre>`);
+      }
+    }
 
     if (error.lineno) {
       details.push(`<div><strong>Line:</strong> ${error.lineno}</div>`);
@@ -467,18 +529,45 @@ class ErrorHandler {
   }
 
   generateErrorReport(error) {
-    return `Frontend Error Report
+    let report = `Frontend Error Report
 ─────────────
 Time: ${new Date(error.timestamp).toLocaleString()}
-URL: ${window.location.href}
+Page URL: ${window.location.href}
 
 Technical Details:
-${error.message}
-${error.filename ? `File: ${error.filename}` : ''}
-${error.lineno ? `Line: ${error.lineno}` : ''}
-${error.error && error.error.stack ? `\nStack Trace:\n${error.error.stack}` : ''}
+${error.message}`;
 
-Please help me analyze and fix this issue.`;
+    // Add HTTP-specific details for fetch/network errors
+    if (error.type === 'http' || error.type === 'network') {
+      if (error.method) {
+        report += `\nMethod: ${error.method}`;
+      }
+      if (error.status) {
+        report += `\nStatus Code: ${error.status}`;
+      }
+      if (error.jsonError) {
+        report += `\nJSON Error Details:\n${JSON.stringify(error.jsonError, null, 2)}`;
+      }
+      if (error.responseBody && (!error.jsonError || error.responseBody !== JSON.stringify(error.jsonError, null, 2))) {
+        report += `\nResponse Body:\n${error.responseBody}`;
+      }
+    }
+
+    // Add file and line info for JavaScript errors
+    if (error.filename) {
+      report += `\nFile: ${error.filename}`;
+    }
+    if (error.lineno) {
+      report += `\nLine: ${error.lineno}`;
+    }
+
+    // Add stack trace if available
+    if (error.error && error.error.stack) {
+      report += `\n\nStack Trace:\n${error.error.stack}`;
+    }
+
+    report += `\n\nPlease help me analyze and fix this issue.`;
+    return report;
   }
 
   removeError(errorId) {
