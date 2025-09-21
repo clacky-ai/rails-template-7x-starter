@@ -14,7 +14,8 @@ class ErrorHandler {
       interaction: 0,
       network: 0,
       promise: 0,
-      http: 0
+      http: 0,
+      actioncable: 0
     };
     this.recentErrorsDebounce = new Map(); // For debouncing similar errors
     this.debounceTime = 1000; // 1 second debounce
@@ -705,6 +706,24 @@ ${error.message}`;
       timestamp: new Date().toISOString(),
       ...context
     });
+  }
+
+  // ActionCable specific error handling
+  handleActionCableError(errorData) {
+    this.errorCounts.actioncable++;
+    
+    const errorInfo = {
+      type: 'actioncable',
+      message: errorData.message || 'ActionCable error occurred',
+      timestamp: new Date().toISOString(),
+      channel: errorData.channel || 'unknown',
+      action: errorData.action || 'unknown',
+      filename: `channel: ${errorData.channel}`,
+      lineno: 0,
+      details: errorData
+    };
+    
+    this.handleError(errorInfo);
   }
 }
 
