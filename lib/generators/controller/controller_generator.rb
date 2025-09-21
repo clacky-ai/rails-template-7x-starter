@@ -94,19 +94,22 @@ class ControllerGenerator < Rails::Generators::NamedBase
 
   private
 
+  def base_name_without_controller
+    # Remove '_controller' or '_controllers' suffix if present (case insensitive)
+    name.gsub(/_?controllers?$/i, '')
+  end
 
   def singular_name
-    name.underscore.singularize
+    base_name_without_controller.underscore.singularize
   end
 
   def plural_name
-    name.underscore.pluralize
+    base_name_without_controller.underscore.pluralize
   end
 
   def class_name
-    name.classify
+    base_name_without_controller.classify
   end
-
 
   def selected_actions
     if actions.empty?
