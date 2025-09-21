@@ -1,6 +1,6 @@
 module ApplicationCable
   class Channel < ActionCable::Channel::Base
-    rescue_from StandardError, with: :handle_channel_error
+    rescue_from Exception, with: :handle_channel_error
 
     private
 

@@ -1,5 +1,10 @@
 class SessionsController < ApplicationController
-  before_action :authenticate_user!, only: [:devices, :destroy_one]
+  before_action :authenticate_user!, only: [:show, :devices, :destroy_one]
+
+  def show
+    @session = Current.session
+    @user = current_user
+  end
 
   def devices
     @sessions = current_user.sessions.order(created_at: :desc)

@@ -14,10 +14,11 @@ Puma
 RSpec
 RailsUjs( no turo/turbolinks )
 Alpine
+ActionCable( solid_queue, no redis )
 
 Do not add or remove any components and avoid upgrading or downgrading components.
 
-Use simple, clear language and avoid technical jargon.
+Use simple, clear language and avoid technical jargon to user.
 
 ## What time you should run/stop project
 
