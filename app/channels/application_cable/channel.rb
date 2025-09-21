@@ -7,13 +7,13 @@ module ApplicationCable
     def handle_channel_error(e)
       Rails.logger.error "Channel Error in #{self.class.name}: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
-      
+
       # Send error to client via transmit (direct to this connection)
       transmit({
         type: 'error',
         message: production? ? 'An error occurred' : e.message,
         channel: self.class.name,  # Channel name from backend
-        action: action_name,
+        action: extract_action_from_backtrace(e.backtrace),
         success: false,
       })
     end
@@ -22,14 +22,24 @@ module ApplicationCable
       Rails.env.production?
     end
 
-    def action_name
-      @_action_name || 'unknown'
-    end
-
-    # Override perform_action to track current action
-    def perform_action(data)
-      @_action_name = data['action'] || caller_locations(1, 1)[0].label
-      super
+    def extract_action_from_backtrace(backtrace)
+      # Look through the backtrace to find the channel action method
+      backtrace.each do |line|
+        # Look for lines that contain our channel files and method names
+        if line.include?('app/channels/') && line.include?("in `")
+          # Extract method name from backtrace line like:
+          # "/path/to/app/channels/alert_channel.rb:15:in `send_alert'"
+          method_match = line.match(/in `([^']+)'/)
+          if method_match
+            method_name = method_match[1]
+            # Skip internal methods and return the actual action
+            unless method_name.in?(['rescue_from', 'handle_channel_error', 'transmit'])
+              return method_name
+            end
+          end
+        end
+      end
+      'unknown'
     end
   end
 end

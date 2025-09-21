@@ -1,5 +1,5 @@
 <div class="min-h-screen bg-gray-100 flex items-center justify-center">
-  <div class="max-w-2xl w-full mx-auto text-center px-4">
+  <div class="container-md w-full mx-auto text-center py-2">
     <!-- Dynamic Icon -->
     <div class="mx-auto mb-8 w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center">
       <svg class="w-12 h-12 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -68,7 +68,7 @@
     <% end %>
 
     <!-- Action Buttons -->
-    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+    <div class="flex flex-col sm:flex-row gap-4 justify-center mb-4">
       <%= link_to "Back to Home", '/', class: "btn-primary" %>
       <button type="button" onclick="developPage()" class="border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-2 px-4 rounded-lg transition-colors duration-200">
         Fix in Chatbox

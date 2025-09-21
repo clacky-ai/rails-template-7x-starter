@@ -462,6 +462,7 @@ class ErrorHandler {
       case 'network': return '📡';
       case 'http': return '🌐';
       case 'promise': return '⚡';
+      case 'actioncable': return '🔌';
       default: return '❌';
     }
   }
@@ -470,6 +471,22 @@ class ErrorHandler {
     const details = [];
 
     details.push(`<div><strong>Page URL:</strong> ${window.location.href}</div>`);
+
+    // For ActionCable errors, show channel-specific information
+    if (error.type === 'actioncable') {
+      if (error.channel) {
+        details.push(`<div><strong>Channel:</strong> ${error.channel}</div>`);
+      }
+      if (error.action) {
+        details.push(`<div><strong>Action:</strong> ${error.action}</div>`);
+      }
+      
+      // Show detailed ActionCable error data
+      if (error.details) {
+        details.push(`<div class="mb-1"><strong>Channel Error Details:</strong></div>`);
+        details.push(`<pre class="text-xs bg-gray-800 p-2 rounded overflow-x-auto whitespace-pre-wrap">${JSON.stringify(error.details, null, 2)}</pre>`);
+      }
+    }
 
     // For fetch/network errors, show detailed HTTP information
     if (error.type === 'http' || error.type === 'network') {
