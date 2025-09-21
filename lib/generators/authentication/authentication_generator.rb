@@ -46,6 +46,11 @@ class AuthenticationGenerator < Rails::Generators::Base
     copy_file 'controllers/api/v1/sessions_controller.rb', 'app/controllers/api/v1/sessions_controller.rb'
   end
 
+  def create_actioncable_authentication
+    say "Creating ActionCable authentication...", :green
+    copy_file 'channels/application_cable/connection.rb', 'app/channels/application_cable/connection.rb'
+  end
+
   def create_views
     say "Creating views...", :green
 

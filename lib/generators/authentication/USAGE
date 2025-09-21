@@ -19,6 +19,7 @@ Generated Features:
     - Password reset via email (unless skipped)
     - Omniauth integration (unless skipped)
     - User invitation system
+    - ActionCable authentication for WebSocket connections
     - Mailer templates with HTML formatting
     - Modern UI using DaisyUI/Tailwind CSS
 
@@ -46,6 +47,11 @@ Files Generated:
         app/controllers/identity/email_verifications_controller.rb
         app/controllers/identity/password_resets_controller.rb
         app/controllers/sessions/omniauth_controller.rb
+
+    ActionCable:
+        app/channels/application_cable/connection.rb (authenticated connection)
+        app/channels/room_channel.rb (example authenticated channel)
+        app/javascript/channels/room_channel.js (frontend example)
 
     Views:
         Multiple view files for authentication forms and email templates

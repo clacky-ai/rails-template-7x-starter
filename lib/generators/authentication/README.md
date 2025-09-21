@@ -11,6 +11,7 @@ This is a Rails generator that creates a complete user authentication system. Bu
 - ✅ Password reset (optional)
 - ✅ OAuth integration (optional)
 - ✅ User invitation system
+- ✅ ActionCable authentication (WebSocket support)
 - ✅ Modern UI (DaisyUI + Tailwind CSS)
 - ✅ Email templates
 - ✅ Security best practices
@@ -52,6 +53,11 @@ This generator creates a complete authentication system with all features. If yo
 
 5. **Customize styles**
    Adjust view files as needed to match your application design.
+
+6. **ActionCable Auth
+   The generator creates authenticated ActionCable connection
+   `app/channels/application_cable/connection.rb` - Handles user authentication for WebSocket connections
+   ```
 
 ## Generated File Structure
 
