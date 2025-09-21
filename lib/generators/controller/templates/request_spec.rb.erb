@@ -3,10 +3,12 @@ require 'rails_helper'
 RSpec.describe "<%= plural_name.humanize %>", type: :request do
 
   <%- if requires_authentication? -%>
-  before { sign_in_as(create(:user)) }
+  let(:user) { create(:user) }
+  before { sign_in_as(user) }
   <%- else -%>
   # Uncomment this if controller need authentication
-  # before { sign_in_as(create(:user)) }
+  # let(:user) { create(:user) }
+  # before { sign_in_as(user) }
   <%- end -%>
 
   <%- if selected_actions.include?('index') -%>
@@ -28,7 +30,11 @@ RSpec.describe "<%= plural_name.humanize %>", type: :request do
   end
     <%- else -%>
   describe "GET /<%= plural_name %>/:id" do
+    <%- if requires_authentication? -%>
+    let(:<%= singular_name %>) { create(:<%= singular_name %>, :user) }
+    <%- else -%>
     let(:<%= singular_name %>) { create(:<%= singular_name %>) }
+    <%- end %>
 
     it "returns http success" do
       get <%= singular_name %>_path(<%= singular_name %>)
@@ -57,7 +63,11 @@ RSpec.describe "<%= plural_name.humanize %>", type: :request do
   end
     <%- else -%>
   describe "GET /<%= plural_name %>/:id/edit" do
+    <%- if requires_authentication? -%>
+    let(:<%= singular_name %>) { create(:<%= singular_name %>, :user) }
+    <%- else -%>
     let(:<%= singular_name %>) { create(:<%= singular_name %>) }
+    <%- end %>
 
     it "returns http success" do
       get edit_<%= singular_name %>_path(<%= singular_name %>)

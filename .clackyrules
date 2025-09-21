@@ -70,13 +70,15 @@ Generate images using this placeholder website: https://images.unsplash.com/ and
 
 Use Unsplash images instead of self-generated icons if you need placeholder images with ActiveStorage.
 
-Use `rails generate service xxx` to generate a service file, not generate by yourself.
+When installing any new gem or npm packages, always specify a version you are most familiar with and suitable for the project. Do not use the latest version directly.
 
-When installing libraries, try to specify the version you are most familiar with (e.g., npm, bundle) instead of the latest version.
+Use `rails generate service xxx` to generate a service file, not generate by yourself.
 
 Use `rails generate admin_crud xxx` (where xxx is your model name that you created before) to create the initial CRUD when developing the admin management page, modify generated code for free.
 
 Use `rails generate controller xxx [action1] [action2] [--auth] [--single]` (where xxx is your controller name, action is optional(all actions by default), --auth means need authenticate_user!, --single generates singular resource without index action) to create controllers when developing the user-side functionality, modify generated code for free.
+
+Use `rails generate channel xxx [action1] [action2] [--auth]` to create ActionCable channels. --auth option adds user authentication support (enables current_user method, adds authentication tests). Without --auth, current_user method is commented out.
 
 **URL Handling Policy:** Do not use `to_param` in model, no need friendly url, no need slug, always using `id: params[:id]`. *Explanation: Custom `to_param` methods add complexity and can cause routing errors. Use simple integer IDs to keep code straightforward.*
 
