@@ -13,6 +13,7 @@ Kaminari
 Puma
 RSpec
 RailsUjs( no turo/turbolinks )
+Alpine
 
 Do not add or remove any components and avoid upgrading or downgrading components.
 
@@ -35,17 +36,21 @@ Restarting project is unnecessary because Rails automatically hot-reloads code c
 
 If there are rgb colors in index.css, make sure to not use them in tailwind.config.js wrapped in hsl functions as this will create wrong colors
 
-The preset design system is a minimal collection that makes changing themes easy, only referencing CSS classes when they actually exist.
+CRITICAL: USE SEMANTIC TOKENS FOR COLORS, GRADIENTS, FONTS, ETC. It's important you follow best practices. DO NOT use direct colors like text-white, text-black, bg-white, bg-black, etc. Everything must be themed via the design system defined in the `application.css` and `tailwind.config.js` files!
+
+Pay attention to contrast, color, and typography.
 
 ### Step 2: REQUIRED - Develop demo view based Design System and user requirements
 Develop a demo view based on the new design system and user requirements, allowing users to quickly see a UI effect. The view should be located at `app/views/shared/demo.html.erb` (Only write body content, The system has already completed route configuration - when there's no home/index.html.erb, the homepage will automatically render this view)
 
+**IMPORTANT**: Once you create `app/views/home/index.html.erb` or any real homepage, you MUST delete `app/views/shared/demo.html.erb` immediately. Demo is only for early development preview and contains fake data that should not be used in production features.
 
 ### Step 3: REQUIRED - Testing visit '/'
 **ALWAYS run the project, then use `curl http://localhost:3000/` to ensure these is no error**
 
 ### Step 4: Then proceed with other features
 Only after completing Steps 1-3, you can create other models and controllers.
+
 
 ## Some important tips when Developing user authentication/payment/LLM-calling(AI APP) system
 
@@ -59,6 +64,12 @@ Do not recreate administrator functionality in User model. Administrator system 
 
 
 ## Some important tips when coding
+
+**CRITICAL: Demo File Management**
+- `app/views/shared/demo.html.erb` is ONLY for early development preview with fake data
+- Once ANY real homepage exists (like `app/views/home/index.html.erb`), you MUST delete demo.html.erb
+- NEVER reference or link to demo.html.erb in production features
+- Demo serves as temporary placeholder until real pages are developed
 
 Do not generate any fake data that should originally be in the database for users.
 
@@ -84,7 +95,7 @@ Use `rails generate channel xxx [action1] [action2] [--auth]` to create ActionCa
 
 Always keep UI responsiveness in mind when coding for user interfaces.
 
-ALWAYS prefer TailwindCSS v3 and pure CSS for UI components (e.g., tabs, dropdowns), recommend Alpine.js for other components, and minimize pure JavaScript usage.
+ALWAYS prefer TailwindCSS v3 and pure CSS for UI components (e.g., tabs, dropdowns), Alpine( already setup ) for other components, and minimize pure JavaScript usage.
 
 Every form should include error messages using the shared partial. Add `<%= render 'shared/error_messages', model: @your_model %>` at the beginning of every form for consistent error display. Never write nested form.
 

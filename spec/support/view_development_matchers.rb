@@ -10,7 +10,11 @@ module ViewDevelopmentMatchers
       when 406
         action_info = action_name ? "##{action_name}" : ""
         controller_name = response.request.params[:controller]
-        @view_not_developed_message = "Views for #{controller_name}#{action_info} are not yet developed"
+        @view_not_developed_message = if controller_name == "home" && action_name == "index"
+          "Views for #{controller_name}#{action_info} are not yet developed. After developing index.html.erb, remember to remove demo.html.erb"
+        else
+          "Views for #{controller_name}#{action_info} are not yet developed"
+        end
         false
       else
         false
