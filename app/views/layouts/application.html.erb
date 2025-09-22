@@ -20,7 +20,7 @@
     <%= content_for?(:head) ? yield(:head) : '' %>
     <%= stylesheet_link_tag 'application', media: 'all' %>
     <!-- Load error handler early to catch all errors -->
-    <%= javascript_include_tag 'error_handler', defer: false unless Rails.env.test? %>
+    <%= javascript_include_tag 'error_handler', as: 'script', defer: false unless Rails.env.test? %>
     <%= javascript_include_tag 'application', type: "module" %>
     <!-- Generate new favicon at `images/app-favicon.svg` at the first time, remove this line after generated  -->
     <%= favicon_link_tag asset_path("app-favicon.svg") unless Rails.env.test? %>
