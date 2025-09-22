@@ -45,12 +45,24 @@
                       </div>
                     </div>
 
-                    <% if @original_exception.backtrace %>
+                    <% if @filtered_backtrace&.any? %>
                       <div class="mb-2">
-                        <span class="font-semibold text-yellow-400">Stack Trace (First 10 lines):</span>
+                        <span class="font-semibold text-yellow-400">User Code Stack Trace:</span>
                       </div>
                       <div class="bg-gray-900 rounded p-2 text-xs overflow-x-auto">
-                        <% @original_exception.backtrace.first(10).each_with_index do |line, index| %>
+                        <% @filtered_backtrace.each_with_index do |line, index| %>
+                          <div class="mb-1">
+                            <span class="text-blue-400 font-semibold"><%= index + 1 %>:</span>
+                            <span class="text-gray-300"><%= line %></span>
+                          </div>
+                        <% end %>
+                      </div>
+                    <% elsif @original_exception&.backtrace %>
+                      <div class="mb-2">
+                        <span class="font-semibold text-yellow-400">Stack Trace (First 3 lines):</span>
+                      </div>
+                      <div class="bg-gray-900 rounded p-2 text-xs overflow-x-auto">
+                        <% @original_exception.backtrace.first(3).each_with_index do |line, index| %>
                           <div class="mb-1">
                             <span class="text-blue-400 font-semibold"><%= index + 1 %>:</span>
                             <span class="text-gray-300"><%= line %></span>
