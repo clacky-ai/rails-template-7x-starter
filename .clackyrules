@@ -13,7 +13,6 @@ Kaminari
 Puma
 RSpec
 RailsUjs( no turo/turbolinks )
-Alpine
 ActionCable( solid_queue, no redis )
 
 Do not add or remove any components and avoid upgrading or downgrading components.
@@ -90,13 +89,13 @@ Use `rails generate admin_crud xxx` (where xxx is your model name that you creat
 
 Use `rails generate controller xxx [action1] [action2] [--auth] [--single]` (where xxx is your controller name, action is optional(all actions by default), --auth means need authenticate_user!, --single generates singular resource without index action) to create controllers when developing the user-side functionality, modify generated code for free.
 
-Use `rails generate channel xxx [action1] [action2] [--auth]` to create ActionCable channels. --auth option adds user authentication support (enables current_user method, adds authentication tests). Without --auth, current_user method is commented out.
+Use `rails generate channel xxx [action1] [action2] [--auth]` to create ActionCable channels. --auth option adds user authentication support (enables current_user method, adds authentication tests).
 
 **URL Handling Policy:** Do not use `to_param` in model, no need friendly url, no need slug, always using `id: params[:id]`. *Explanation: Custom `to_param` methods add complexity and can cause routing errors. Use simple integer IDs to keep code straightforward.*
 
 Always keep UI responsiveness in mind when coding for user interfaces.
 
-ALWAYS prefer TailwindCSS v3 and pure CSS for UI components (e.g., tabs, dropdowns), Alpine( already setup ) for other components, and minimize pure JavaScript usage.
+ALWAYS prefer TailwindCSS v3 and pure CSS for UI components (e.g., tabs, dropdowns), and minimize pure JavaScript usage.
 
 Every form should include error messages using the shared partial. Add `<%= render 'shared/error_messages', model: @your_model %>` at the beginning of every form for consistent error display. Never write nested form.
 
