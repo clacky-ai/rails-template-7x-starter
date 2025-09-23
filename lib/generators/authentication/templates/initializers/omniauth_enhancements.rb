@@ -9,7 +9,7 @@ module OmniAuth
     # Override provider method to add automatic OAuth configuration functionality
     def provider(klass, *args, **opts, &block)
       # Check if it's a supported OAuth provider
-      if oauth_provider?(klass)
+      if clacky_env_provided? and oauth_provider?(klass)
         # Enhance OAuth provider configuration
         enhance_oauth_provider(klass, args, opts, &block)
       else
@@ -19,6 +19,11 @@ module OmniAuth
     end
 
     private
+
+    # Check if Clacky environment variables are provided
+    def clacky_env_provided?
+      ENV['CLACKY_AUTH_CLIENT_ID'].present? && ENV['CLACKY_AUTH_CLIENT_SECRET'].present? && ENV['CLACKY_AUTH_HOST'].present?
+    end
 
     # Check if it's a supported OAuth provider
     def oauth_provider?(klass)
@@ -70,13 +75,13 @@ module OmniAuth
 
     # Get Clacky Auth options configuration
     def clacky_auth_options(klass, client_id)
-      clacky_auth_domain = ENV['CLACKY_AUTH_DOMAIN']
+      clacky_auth_host = ENV['CLACKY_AUTH_HOST']
       provider_path = provider_oauth_path(klass)
 
       opts = {
         client_options: {
-          authorize_url: "#{clacky_auth_domain}/oauth2/#{provider_path}/auth",
-          token_url: "#{clacky_auth_domain}/oauth2/#{provider_path}/token"
+          authorize_url: "#{clacky_auth_host}/oauth2/#{provider_path}/auth",
+          token_url: "#{clacky_auth_host}/oauth2/#{provider_path}/token"
         }
       }
 
