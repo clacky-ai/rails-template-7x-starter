@@ -2,8 +2,10 @@
   "name": "app",
   "private": true,
   "scripts": {
-    "build": "esbuild app/javascript/*.* --bundle --sourcemap=inline --format=esm --outdir=app/assets/builds --public-path=/assets",
-    "watch:js": "esbuild app/javascript/*.* --bundle --sourcemap=inline --format=esm --outdir=app/assets/builds --public-path=/assets --watch",
+    "build": "esbuild app/javascript/*.* --bundle --sourcemap=inline --format=esm --outdir=app/assets/builds --public-path=/assets --loader:.ts=ts --loader:.tsx=tsx",
+    "watch:js": "esbuild app/javascript/*.* --bundle --sourcemap=inline --format=esm --outdir=app/assets/builds --public-path=/assets --watch --loader:.ts=ts --loader:.tsx=tsx",
+    "type-check": "tsc --noEmit",
+    "type-check:watch": "tsc --noEmit --watch",
     "build:css": "run-p build:css:*",
     "build:css:app": "postcss ./app/assets/stylesheets/application.css -o ./app/assets/builds/application.css",
     "build:css:admin": "postcss ./app/assets/stylesheets/admin.css -o ./app/assets/builds/admin.css",
@@ -12,11 +14,16 @@
     "watch:css:admin": "postcss ./app/assets/stylesheets/admin.css -o ./app/assets/builds/admin.css --map --watch"
   },
   "dependencies": {
+    "@hotwired/stimulus": "^3.2.2",
     "@rails/actioncable": "^8.0.201",
     "@rails/activestorage": "^8.0.200",
     "@rails/ujs": "^7.1.3-4",
     "@tailwindcss/forms": "^0.5.10",
     "@tailwindcss/typography": "^0.5.16",
+    "@types/alpinejs": "^3.13.11",
+    "@types/rails__actioncable": "^6.1.11",
+    "@types/rails__activestorage": "^8.0.1",
+    "@types/rails__ujs": "^6.0.4",
     "alpinejs": "^3.14.9",
     "autoprefixer": "^10.4.21",
     "esbuild": "^0.25.5",
@@ -29,5 +36,9 @@
   },
   "browserslist": [
     "defaults"
-  ]
+  ],
+  "devDependencies": {
+    "@types/node": "^24.5.2",
+    "typescript": "^5.9.2"
+  }
 }

@@ -1,5 +1,5 @@
 (function() {
-  window.App = window.App || {}
+  window.App = window.App || { cable: null }
   window.App.adminSidebar = {
     saveSidebarScrollPosition: function() {
       var adminPage = this.page();
@@ -7,7 +7,7 @@
         var sidebar = adminPage.querySelector('.sidebar');
         if (sidebar) {
           var sidebarScrollTop = sidebar.scrollTop;
-          localStorage.setItem('admin-SidebarScrollTop', sidebarScrollTop);
+          localStorage.setItem('admin-SidebarScrollTop', sidebarScrollTop.toString());
         }
       }
     },
@@ -24,7 +24,7 @@
     },
 
     clearSidebarScrollPosition: function() {
-      localStorage.setItem('admin-SidebarScrollTop', 0);
+      localStorage.setItem('admin-SidebarScrollTop', '0');
     },
 
     page: function() {
