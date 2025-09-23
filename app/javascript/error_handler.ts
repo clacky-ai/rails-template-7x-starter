@@ -2,27 +2,28 @@
 // Provides user-friendly error monitoring with permanent visibility
 
 class ErrorHandler {
+  private errors: any[] = [];
+  private maxErrors: number = 50;
+  private isExpanded: boolean = false;
+  private statusBar: HTMLElement | null = null;
+  private errorList: HTMLElement | null = null;
+  private isInteractionError: boolean = false;
+  private errorCounts: any = {
+    javascript: 0,
+    interaction: 0,
+    network: 0,
+    promise: 0,
+    http: 0,
+    actioncable: 0
+  };
+  private recentErrorsDebounce: Map<string, number> = new Map();
+  private debounceTime: number = 1000;
+  private uiReady: boolean = false;
+  private pendingUIUpdates: boolean = false;
+  private hasShownFirstError: boolean = false;
+  private lastInteractionTime: number = 0;
+
   constructor() {
-    this.errors = [];
-    this.maxErrors = 50;
-    this.isExpanded = false;
-    this.statusBar = null;
-    this.errorList = null;
-    this.isInteractionError = false;
-    this.errorCounts = {
-      javascript: 0,
-      interaction: 0,
-      network: 0,
-      promise: 0,
-      http: 0,
-      actioncable: 0
-    };
-    this.recentErrorsDebounce = new Map(); // For debouncing similar errors
-    this.debounceTime = 1000; // 1 second debounce
-    this.uiReady = false; // Track if UI is ready
-    this.pendingUIUpdates = false; // Track if we need to update UI when ready
-    this.hasShownFirstError = false; // Track if we've shown first error
-    this.lastInteractionTime = 0; // Track last user interaction
     this.init();
   }
 
@@ -112,17 +113,17 @@ class ErrorHandler {
 
   setupStatusBarEvents() {
     // Toggle expand/collapse
-    document.getElementById('toggle-errors').addEventListener('click', () => {
+    document.getElementById('toggle-errors')?.addEventListener('click', () => {
       this.toggleErrorDetails();
     });
 
     // Copy all errors
-    document.getElementById('copy-all-errors').addEventListener('click', () => {
+    document.getElementById('copy-all-errors')?.addEventListener('click', () => {
       this.copyAllErrorsToClipboard();
     });
 
     // Clear all errors
-    document.getElementById('clear-all-errors').addEventListener('click', () => {
+    document.getElementById('clear-all-errors')?.addEventListener('click', () => {
       this.clearAllErrors();
     });
 
@@ -156,6 +157,8 @@ class ErrorHandler {
     const details = document.getElementById('error-details');
     const toggleText = document.getElementById('toggle-text');
     const toggleIcon = document.getElementById('toggle-icon');
+
+    if (!details || !toggleText || !toggleIcon) return;
 
     this.isExpanded = !this.isExpanded;
 
@@ -269,7 +272,7 @@ class ErrorHandler {
         const method = (requestOptions.method || 'GET').toUpperCase();
         
         this.handleError({
-          message: `${method} ${args[0]} - Network Error: ${error.message}`,
+          message: `${method} ${args[0]} - Network Error: ${(error as Error).message}`,
           url: args[0],
           method: method,
           error: error,
@@ -281,7 +284,7 @@ class ErrorHandler {
     };
   }
 
-  handleError(errorInfo) {
+  handleError(errorInfo: any): void {
     console.log('handleError called with:', errorInfo.message, errorInfo.type);
     // Filter out browser-specific errors we can't control
     if (this.shouldIgnoreError(errorInfo)) {
@@ -295,7 +298,7 @@ class ErrorHandler {
     // Check if this error was recently processed (debouncing)
     if (this.recentErrorsDebounce.has(debounceKey)) {
       const lastTime = this.recentErrorsDebounce.get(debounceKey);
-      if (Date.now() - lastTime < this.debounceTime) {
+      if (lastTime && Date.now() - lastTime < this.debounceTime) {
         // Update existing error count instead of creating new one
         const existingError = this.findDuplicateError(errorInfo);
         if (existingError) {
@@ -357,7 +360,7 @@ class ErrorHandler {
     console.error('Captured Error:', errorInfo);
   }
 
-  shouldIgnoreError(errorInfo) {
+  shouldIgnoreError(errorInfo: any): boolean {
     const ignoredPatterns = [
       // Browser extension errors
       /chrome-extension:/,
@@ -388,7 +391,7 @@ class ErrorHandler {
     );
   }
 
-  findDuplicateError(errorInfo) {
+  findDuplicateError(errorInfo: any): any {
     return this.errors.find(error =>
       error.message === errorInfo.message &&
       error.type === errorInfo.type &&
@@ -432,7 +435,7 @@ class ErrorHandler {
     this.attachErrorItemListeners();
   }
 
-  createErrorItemHTML(error) {
+  createErrorItemHTML(error: any): string {
     const icon = this.getErrorIcon(error.type);
     const countText = error.count > 1 ? ` (${error.count}x)` : '';
     const timeStr = new Date(error.timestamp).toLocaleTimeString();
@@ -470,33 +473,33 @@ class ErrorHandler {
     // Copy error buttons
     document.querySelectorAll('.copy-error').forEach(button => {
       button.addEventListener('click', (e) => {
-        const errorId = e.target.closest('.error-item').dataset.errorId;
-        this.copyErrorToClipboard(errorId);
+        const errorId = ((e.target as HTMLElement).closest('.error-item') as HTMLElement)?.dataset.errorId;
+        if (errorId) this.copyErrorToClipboard(errorId);
       });
     });
 
     // Toggle details buttons
     document.querySelectorAll('.toggle-details').forEach(button => {
       button.addEventListener('click', (e) => {
-        const errorItem = e.target.closest('.error-item');
-        const details = errorItem.querySelector('.technical-details');
-        const isVisible = details.style.display !== 'none';
+        const errorItem = (e.target as HTMLElement).closest('.error-item');
+        const details = errorItem?.querySelector('.technical-details') as HTMLElement;
+        const isVisible = details?.style.display !== 'none';
 
-        details.style.display = isVisible ? 'none' : 'block';
-        e.target.textContent = isVisible ? 'Details' : 'Hide';
+        if (details) details.style.display = isVisible ? 'none' : 'block';
+        (e.target as HTMLElement).textContent = isVisible ? 'Details' : 'Hide';
       });
     });
 
     // Close error buttons
     document.querySelectorAll('.close-error').forEach(button => {
       button.addEventListener('click', (e) => {
-        const errorId = e.target.closest('.error-item').dataset.errorId;
-        this.removeError(errorId);
+        const errorId = ((e.target as HTMLElement).closest('.error-item') as HTMLElement)?.dataset.errorId;
+        if (errorId) this.removeError(errorId);
       });
     });
   }
 
-  getErrorIcon(type) {
+  getErrorIcon(type: string): string {
     switch (type) {
       case 'interaction': return '🔴';
       case 'javascript': return '⚠️';
@@ -508,7 +511,7 @@ class ErrorHandler {
     }
   }
 
-  formatTechnicalDetails(error) {
+  formatTechnicalDetails(error: any): string {
     const details = [];
 
     details.push(`<div><strong>Page URL:</strong> ${window.location.href}</div>`);
@@ -563,14 +566,15 @@ class ErrorHandler {
     return details.join('');
   }
 
-  copyErrorToClipboard(errorId) {
+  copyErrorToClipboard(errorId: string): void {
     const error = this.errors.find(e => e.id === errorId);
     if (!error) return;
 
     const errorReport = this.generateErrorReport(error);
-    const button = document.querySelector(`[data-error-id="${errorId}"] .copy-error`);
+    const button = document.querySelector(`[data-error-id="${errorId}"] .copy-error`) as HTMLElement;
 
     copyToClipboard(errorReport).then(() => {
+      if (!button) return;
       // Show success feedback
       const originalText = button.textContent;
       button.textContent = 'Copied';
@@ -587,13 +591,14 @@ class ErrorHandler {
     });
   }
 
-  copyAllErrorsToClipboard() {
+  copyAllErrorsToClipboard(): void {
     if (this.errors.length === 0) return;
 
     const allErrorsReport = this.generateAllErrorsReport();
-    const button = document.getElementById('copy-all-errors');
+    const button = document.getElementById('copy-all-errors') as HTMLElement;
 
     copyToClipboard(allErrorsReport).then(() => {
+      if (!button) return;
       // Show success feedback
       const originalText = button.textContent;
       button.textContent = 'Copied';
@@ -610,7 +615,7 @@ class ErrorHandler {
     });
   }
 
-  generateAllErrorsReport() {
+  generateAllErrorsReport(): string {
     const maxErrors = 3; // Show only latest 3 errors
     const maxResponseBodyLength = 400; // Limit response body length
     const maxTotalLength = 2000; // Total character limit
@@ -703,7 +708,7 @@ Technical Details:`;
     return report;
   }
 
-  generateErrorReport(error) {
+  generateErrorReport(error: any): string {
     let report = `Frontend Error Report
 ─────────────
 Time: ${new Date(error.timestamp).toLocaleString()}
@@ -758,7 +763,7 @@ ${error.message}`;
     return report;
   }
 
-  removeError(errorId) {
+  removeError(errorId: string): void {
     const errorIndex = this.errors.findIndex(e => e.id === errorId);
     if (errorIndex === -1) return;
 
@@ -791,7 +796,7 @@ ${error.message}`;
     this.hideStatusBar();
   }
 
-  showStatusBar() {
+  showStatusBar(): void {
     if (this.statusBar) {
       this.statusBar.style.display = 'block';
       console.log('Status bar shown');
@@ -800,7 +805,7 @@ ${error.message}`;
     }
   }
 
-  hideStatusBar() {
+  hideStatusBar(): void {
     if (this.statusBar) {
       this.statusBar.style.display = 'none';
       this.isExpanded = false;
@@ -814,20 +819,22 @@ ${error.message}`;
     }
   }
 
-  flashNewError() {
+  flashNewError(): void {
     // Flash the status bar to indicate new error
     if (this.statusBar) {
       this.statusBar.style.borderTopColor = '#ef4444';
       this.statusBar.style.borderTopWidth = '2px';
 
       setTimeout(() => {
-        this.statusBar.style.borderTopColor = '#374151';
-        this.statusBar.style.borderTopWidth = '1px';
+        if (this.statusBar) {
+          this.statusBar.style.borderTopColor = '#374151';
+          this.statusBar.style.borderTopWidth = '1px';
+        }
       }, 1000);
     }
   }
 
-  checkAutoExpand(errorInfo) {
+  checkAutoExpand(errorInfo: any): void {
     // Auto-expand logic disabled
     // Auto-expand if this is the first error ever
     // if (!this.hasShownFirstError) {
@@ -856,7 +863,7 @@ ${error.message}`;
     // }
   }
 
-  sanitizeMessage(message) {
+  sanitizeMessage(message: string): string {
     if (!message) return 'Unknown error';
 
     const cleanMessage = message
@@ -869,13 +876,13 @@ ${error.message}`;
       : cleanMessage;
   }
 
-  truncateText(text, maxLength) {
+  truncateText(text: string, maxLength: number): string {
     if (!text) return '';
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '... [truncated]';
   }
 
-  extractFilename(filepath) {
+  extractFilename(filepath: string): string {
     if (!filepath) return '';
     return filepath.split('/').pop() || filepath;
   }
@@ -895,7 +902,7 @@ ${error.message}`;
     return this.errors;
   }
 
-  reportError(message, context = {}) {
+  reportError(message: string, context: any = {}): void {
     this.handleError({
       message: message,
       type: 'manual',
@@ -905,7 +912,7 @@ ${error.message}`;
   }
 
   // ActionCable specific error handling
-  handleActionCableError(errorData) {
+  handleActionCableError(errorData: any): void {
     this.errorCounts.actioncable++;
     
     const errorInfo = {

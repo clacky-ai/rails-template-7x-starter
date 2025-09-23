@@ -2,6 +2,8 @@
 // Handles chatbox SDK detection and message sending
 
 class SDKUtils {
+  private isAvailable: boolean;
+
   constructor() {
     this.isAvailable = this.checkSDKAvailability();
   }
@@ -9,7 +11,7 @@ class SDKUtils {
   /**
    * Check if SDK is available in current context
    */
-  checkSDKAvailability() {
+  checkSDKAvailability(): boolean {
     return typeof window.sdk !== 'undefined' && 
            window.sdk && 
            typeof window.sdk.send === 'function';
@@ -20,10 +22,10 @@ class SDKUtils {
    * @param {string} message - Message to send
    * @returns {boolean} - Whether message was sent successfully
    */
-  sendMessage(message) {
+  sendMessage(message: string): boolean {
     if (this.isAvailable) {
       try {
-        window.sdk.send(message);
+        window.sdk!.send(message);
         console.log('Message sent to chatbox:', message);
         return true;
       } catch (error) {
@@ -40,7 +42,7 @@ class SDKUtils {
    * Send error details to chatbox for fixing
    * @param {Object} errorInfo - Error information object
    */
-  sendErrorForFix(errorInfo = {}) {
+  sendErrorForFix(errorInfo: any = {}): boolean {
     const {
       url = window.location.href,
       path = window.location.pathname.substring(1),
@@ -61,7 +63,7 @@ Please help me fix this issue.`;
   /**
    * Refresh SDK availability status
    */
-  refresh() {
+  refresh(): boolean {
     this.isAvailable = this.checkSDKAvailability();
     return this.isAvailable;
   }
@@ -69,7 +71,7 @@ Please help me fix this issue.`;
   /**
    * Get current SDK status
    */
-  getStatus() {
+  getStatus(): { isAvailable: boolean; hasSDK: boolean; hasSendMethod: boolean } {
     return {
       isAvailable: this.isAvailable,
       hasSDK: typeof window.sdk !== 'undefined',
@@ -84,7 +86,7 @@ const sdkUtils = new SDKUtils();
 // Global function for backward compatibility
 window.sendToSDK = (message) => sdkUtils.sendMessage(message);
 window.sendErrorToSDK = (errorInfo) => sdkUtils.sendErrorForFix(errorInfo);
-window.isSDKAvailable = () => sdkUtils.isAvailable;
+window.isSDKAvailable = () => sdkUtils.getStatus().isAvailable;
 
 // Export globally
 window.sdkUtils = sdkUtils;

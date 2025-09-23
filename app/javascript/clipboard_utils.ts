@@ -1,8 +1,8 @@
 // Simple Clipboard Utility
 // Copy to clipboard with fallback support for iframe and older browsers
 
-function copyToClipboard(text) {
-  return new Promise((resolve, reject) => {
+function copyToClipboard(text: string): Promise<boolean> {
+  return new Promise<boolean>((resolve, reject) => {
     // Try modern Clipboard API first
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(text)
@@ -18,7 +18,7 @@ function copyToClipboard(text) {
   });
 }
 
-function fallbackCopy(text) {
+function fallbackCopy(text: string): boolean {
   const textArea = document.createElement('textarea');
   textArea.value = text;
   textArea.style.position = 'fixed';
