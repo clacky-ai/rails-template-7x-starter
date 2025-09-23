@@ -568,10 +568,10 @@ class ErrorHandler {
     if (!error) return;
 
     const errorReport = this.generateErrorReport(error);
+    const button = document.querySelector(`[data-error-id="${errorId}"] .copy-error`);
 
-    navigator.clipboard.writeText(errorReport).then(() => {
+    copyToClipboard(errorReport).then(() => {
       // Show success feedback
-      const button = document.querySelector(`[data-error-id="${errorId}"] .copy-error`);
       const originalText = button.textContent;
       button.textContent = 'Copied';
       button.className = button.className.replace('text-blue-400', 'text-green-400');
@@ -591,10 +591,10 @@ class ErrorHandler {
     if (this.errors.length === 0) return;
 
     const allErrorsReport = this.generateAllErrorsReport();
+    const button = document.getElementById('copy-all-errors');
 
-    navigator.clipboard.writeText(allErrorsReport).then(() => {
+    copyToClipboard(allErrorsReport).then(() => {
       // Show success feedback
-      const button = document.getElementById('copy-all-errors');
       const originalText = button.textContent;
       button.textContent = 'Copied';
       button.className = button.className.replace('text-yellow-400', 'text-green-400');
@@ -611,20 +611,43 @@ class ErrorHandler {
   }
 
   generateAllErrorsReport() {
+    const maxErrors = 3; // Show only latest 3 errors
+    const maxResponseBodyLength = 400; // Limit response body length
+    const maxTotalLength = 2000; // Total character limit
+    
+    const recentErrors = this.errors.slice(0, maxErrors);
     const totalErrors = this.errors.reduce((sum, error) => sum + error.count, 0);
-    let report = `Frontend Error Report - All Errors
-═══════════════════════════════════
+    
+    let report = `Frontend Error Report - Recent Errors
+════════════════════════════════════
 Time: ${new Date().toLocaleString()}
 Page URL: ${window.location.href}
-Total Errors: ${totalErrors} (${this.errors.length} unique)
+Total Errors: ${totalErrors} (showing latest ${recentErrors.length})
 
 `;
 
-    this.errors.forEach((error, index) => {
+    for (let index = 0; index < recentErrors.length; index++) {
+      const error = recentErrors[index];
       const countText = error.count > 1 ? ` (${error.count}x)` : '';
       report += `Error ${index + 1}${countText}:
 ─────────────
-${error.message}`;
+${error.message}
+
+Technical Details:`;
+
+      // Add ActionCable specific details
+      if (error.type === 'actioncable') {
+        if (error.channel) {
+          report += `\nChannel: ${error.channel}`;
+        }
+        if (error.action) {
+          report += `\nAction: ${error.action}`;
+        }
+        if (error.details) {
+          const detailsStr = JSON.stringify(error.details, null, 2);
+          report += `\nChannel Error Details:\n${this.truncateText(detailsStr, maxResponseBodyLength)}`;
+        }
+      }
 
       // Add HTTP-specific details for fetch/network errors
       if (error.type === 'http' || error.type === 'network') {
@@ -635,7 +658,11 @@ ${error.message}`;
           report += `\nStatus Code: ${error.status}`;
         }
         if (error.jsonError) {
-          report += `\nJSON Error Details:\n${JSON.stringify(error.jsonError, null, 2)}`;
+          const jsonStr = JSON.stringify(error.jsonError, null, 2);
+          report += `\nJSON Error Details:\n${this.truncateText(jsonStr, maxResponseBodyLength)}`;
+        }
+        if (error.responseBody && (!error.jsonError || error.responseBody !== JSON.stringify(error.jsonError, null, 2))) {
+          report += `\nResponse Body:\n${this.truncateText(error.responseBody, maxResponseBodyLength)}`;
         }
       }
 
@@ -647,6 +674,11 @@ ${error.message}`;
         report += `\nLine: ${error.lineno}`;
       }
 
+      // Add stack trace if available (truncated)
+      if (error.error && error.error.stack) {
+        report += `\nStack Trace:\n${this.truncateText(error.error.stack, maxResponseBodyLength)}`;
+      }
+
       // Add timestamp
       report += `\nFirst occurred: ${new Date(error.timestamp).toLocaleString()}`;
       if (error.lastOccurred && error.lastOccurred !== error.timestamp) {
@@ -654,7 +686,18 @@ ${error.message}`;
       }
 
       report += '\n\n';
-    });
+      
+      // Check if exceeding total character limit
+      if (report.length > maxTotalLength - 100) { // Reserve 100 chars for ending
+        report += `[Report truncated due to length limit]`;
+        break;
+      }
+    }
+
+    // Ensure total length doesn't exceed limit
+    if (report.length > maxTotalLength - 50) {
+      report = report.substring(0, maxTotalLength - 50) + '...\n\n';
+    }
 
     report += 'Please help me analyze and fix these issues.';
     return report;
@@ -668,6 +711,19 @@ Page URL: ${window.location.href}
 
 Technical Details:
 ${error.message}`;
+
+    // Add ActionCable specific details
+    if (error.type === 'actioncable') {
+      if (error.channel) {
+        report += `\nChannel: ${error.channel}`;
+      }
+      if (error.action) {
+        report += `\nAction: ${error.action}`;
+      }
+      if (error.details) {
+        report += `\nChannel Error Details:\n${JSON.stringify(error.details, null, 2)}`;
+      }
+    }
 
     // Add HTTP-specific details for fetch/network errors
     if (error.type === 'http' || error.type === 'network') {
@@ -726,7 +782,8 @@ ${error.message}`;
       interaction: 0,
       network: 0,
       promise: 0,
-      http: 0
+      http: 0,
+      actioncable: 0
     };
 
     this.updateStatusBar();
@@ -810,6 +867,12 @@ ${error.message}`;
     return cleanMessage.length > 100
       ? cleanMessage.substring(0, 100) + '...'
       : cleanMessage;
+  }
+
+  truncateText(text, maxLength) {
+    if (!text) return '';
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '... [truncated]';
   }
 
   extractFilename(filepath) {

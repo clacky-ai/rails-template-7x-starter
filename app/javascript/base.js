@@ -5,6 +5,8 @@ import * as ActiveStorage from '@rails/activestorage'
 import Alpine from 'alpinejs'
 import * as ActionCable from "@rails/actioncable"
 import { createConsumer } from "@rails/actioncable"
+import './clipboard_utils'
+import './sdk_utils'
 import './channels'
 
 RailsUjs.start()

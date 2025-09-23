@@ -82,7 +82,7 @@
     <!-- Action Buttons -->
     <div class="flex flex-col sm:flex-row gap-4 justify-center mb-4">
       <%= link_to "Back to Home", '/', class: "btn-primary" %>
-      <button type="button" onclick="developPage()" class="border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-2 px-4 rounded-lg transition-colors duration-200">
+      <button type="button" onclick="sendErrorToChatbox()" id="chatbox-fix-btn" class="border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-2 px-4 rounded-lg transition-colors duration-200" style="display: none;">
         Fix in Chatbox
       </button>
     </div>
@@ -94,7 +94,7 @@
     const errorDetails = document.getElementById('error-details');
     if (errorDetails) {
       const text = errorDetails.innerText;
-      navigator.clipboard.writeText(text).then(() => {
+      copyToClipboard(text).then(() => {
         const btn = document.getElementById('copy-btn');
         const originalText = btn.innerHTML;
         btn.innerHTML = '<svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Copied!';
@@ -105,26 +105,39 @@
         }, 2000);
       }).catch(err => {
         console.error('Failed to copy: ', err);
+        alert('Copy failed. Error details:\n' + text);
       });
     }
   }
 
-  function developPage() {
-    const url = window.location.pathname.substring(1);
+  function sendErrorToChatbox() {
     const errorMessage = '<%= j @original_exception&.message || @error_description %>';
-    const fullUrl = window.location.href;
-
-    const message = `Fix this error:
-URL: ${fullUrl}
-Error: ${errorMessage}
-Path: ${url}
-
-Please help me fix this issue.`;
-
-    if (typeof this.sdk !== 'undefined' && this.sdk.send) {
-      this.sdk.send(message);
-    } else {
-      console.log('SDK not available. Would send message:', message);
-    }
+    
+    window.sdkUtils.sendErrorForFix({
+      errorMessage: errorMessage
+    });
   }
+
+  // Check SDK availability and show/hide button accordingly
+  document.addEventListener('DOMContentLoaded', function() {
+    const chatboxBtn = document.getElementById('chatbox-fix-btn');
+    if (chatboxBtn) {
+      // Check periodically for SDK availability (in case it loads later)
+      function checkSDKAndShowButton() {
+        if (window.isSDKAvailable && window.isSDKAvailable()) {
+          chatboxBtn.style.display = 'block';
+          return true;
+        }
+        return false;
+      }
+
+      // Initial check
+      if (!checkSDKAndShowButton()) {
+        // Retry after 1 second (in case SDK is loading)
+        setTimeout(checkSDKAndShowButton, 1000);
+        // Final retry after 3 seconds
+        setTimeout(checkSDKAndShowButton, 3000);
+      }
+    }
+  });
 </script>
