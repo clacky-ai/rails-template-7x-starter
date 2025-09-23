@@ -5,7 +5,7 @@ class Identity::EmailVerificationsController < ApplicationController
 
   def show
     @user.update! verified: true
-    redirect_to _strong_root_path, notice: "Thank you for verifying your email address"
+    redirect_to root_path, notice: "Thank you for verifying your email address"
   end
 
   def create
@@ -14,7 +14,7 @@ class Identity::EmailVerificationsController < ApplicationController
       redirect_to edit_identity_email_path, alert: "Your email was generated, you need to update it"
     end
     send_email_verification
-    redirect_to _strong_root_path, notice: "We sent a verification email to your email address"
+    redirect_to root_path, notice: "We sent a verification email to your email address"
   end
 
   private
