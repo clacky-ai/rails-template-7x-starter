@@ -93,8 +93,6 @@ Use `rails generate channel xxx [action1] [action2] [--auth]` to create ActionCa
 
 **URL Handling Policy:** Do not use `to_param` in model, no need friendly url, no need slug, always using `id: params[:id]`. *Explanation: Custom `to_param` methods add complexity and can cause routing errors. Use simple integer IDs to keep code straightforward.*
 
-Always keep UI responsiveness in mind when coding for user interfaces.
-
 ALWAYS prefer TailwindCSS v3 and pure CSS for UI components (e.g., tabs, dropdowns), and minimize pure JavaScript usage.
 
 Every form should include error messages using the shared partial. Add `<%= render 'shared/error_messages', model: @your_model %>` at the beginning of every form for consistent error display. Never write nested form.
