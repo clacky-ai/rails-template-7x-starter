@@ -1,5 +1,4 @@
-<div class="min-h-screen bg-surface">
-  <div class="container-lg py-12">
+<div class="container-lg py-12">
       <div class="space-y-6">
         <!-- Header -->
         <div class="flex items-center justify-between">
@@ -101,6 +100,7 @@
               <%%= link_to "Complete Payment",
                   pay_order_path(@order),
                   class: "btn-primary px-6 py-3 text-lg",
+                  data: { disable_with: 'Complete Payment...' },
                   method: :post %>
               <%%= link_to "Cancel Order",
                   order_path(@order),
@@ -110,7 +110,6 @@
             </div>
           <%% end %>
         </div>
-      </div>
     </div>
   </div>
 </div>

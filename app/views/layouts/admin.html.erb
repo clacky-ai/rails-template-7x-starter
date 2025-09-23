@@ -98,11 +98,9 @@
           <%= render 'shared/admin/header' %>
 
           <main class="flex-1 relative overflow-y-auto focus:outline-none">
-            <div class="py-3">
-              <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-                <%= render 'shared/flash_messages' %>
-                <%= yield %>
-              </div>
+            <div class="py-6">
+              <%= render 'shared/flash_messages' %>
+              <%= yield %>
             </div>
           </main>
         </div>
