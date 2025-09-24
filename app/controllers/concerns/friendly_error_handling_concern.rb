@@ -41,11 +41,12 @@ module FriendlyErrorHandlingConcern
   def handle_migration_error(exception)
     Rails.logger.error("Migration Error: #{exception.class.name}")
     Rails.logger.error("Message: #{exception.message}")
-    Rails.logger.error(exception.backtrace.join("\n"))
+    Rails.logger.error(filter_user_backtrace(exception.backtrace).join("\n"))
 
     if request.format.html?
       @error_url = request.path
-      @original_exception = exception if Rails.env.development?
+      @original_exception = exception
+      @filtered_backtrace = filter_user_backtrace(exception.backtrace)
       @error_title = "System Under Development"
       @error_description = "The system needs to be updated. Please refresh the page or try again later."
       render "shared/friendly_error", status: :service_unavailable
@@ -59,6 +60,11 @@ module FriendlyErrorHandlingConcern
   end
 
   def handle_friendly_error(exception)
+    # Skip friendly error handling for curl requests - let them see raw errors for debugging
+    if curl_request?
+      raise exception
+    end
+
     if exception.is_a?(ActiveRecord::PendingMigrationError)
       handle_migration_error(exception)
       return
@@ -66,11 +72,12 @@ module FriendlyErrorHandlingConcern
 
     Rails.logger.error("Application Error: #{exception.class.name}")
     Rails.logger.error("Message: #{exception.message}")
-    Rails.logger.error(exception.backtrace.join("\n"))
+    Rails.logger.error(filter_user_backtrace(exception.backtrace).join("\n"))
 
     if request.format.html?
       @error_url = request.path
-      @original_exception = exception if Rails.env.development?
+      @original_exception = exception
+      @filtered_backtrace = filter_user_backtrace(exception.backtrace)
       @error_title = "Something Went Wrong"
       @error_description = "Please copy error details and send it to chatbox"
       render "shared/friendly_error", status: :internal_server_error
@@ -79,6 +86,35 @@ module FriendlyErrorHandlingConcern
         error: 'An error occurred',
         message: Rails.env.development? ? exception.message : 'Please try again later'
       }, status: :internal_server_error
+    end
+  end
+
+  # Check if the request is from curl
+  def curl_request?
+    user_agent = request.headers['User-Agent'].to_s.downcase
+    user_agent.include?('curl') || 
+    user_agent.include?('httpie') ||
+    user_agent.include?('wget')
+  end
+
+  # Filter backtrace to show only user code, excluding framework and gem traces
+  def filter_user_backtrace(backtrace)
+    return [] unless backtrace
+
+    # Use Rails built-in backtrace cleaner to filter framework/gem traces
+    cleaned_backtrace = Rails.backtrace_cleaner.clean(backtrace)
+
+    # Further filter out internal concern methods
+    filtered_backtrace = cleaned_backtrace.reject do |line|
+      line.include?('check_pending_migrations') ||
+      line.include?('friendly_error_handling_concern.rb')
+    end
+
+    # If filtered backtrace is empty, fall back to cleaned backtrace, then original
+    if filtered_backtrace.empty?
+      cleaned_backtrace.empty? ? backtrace.first(3) : cleaned_backtrace.first(10)
+    else
+      filtered_backtrace.first(10)
     end
   end
 end

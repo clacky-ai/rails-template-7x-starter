@@ -2,11 +2,11 @@
   <%
     # Determine if this is a tips message for special styling
     is_tips = key.to_sym == :tips
-    container_class = is_tips ? "fixed top-4 left-1/2 z-50 w-auto max-w-md" : "px-1 py-3"
+    klass = is_tips ? "fixed top-4 left-1/2 z-50 w-auto max-w-md" : "px-1 py-3"
     alert_class = is_tips ? "flex items-center p-3 rounded-lg shadow-lg #{flash_alert_class(key)}" : "flex items-center p-3 rounded-lg #{flash_alert_class(key)}"
     text_class = is_tips ? "text-sm" : "text-xs"
   %>
-  <div class="<%= container_class %>"
+  <div class="<%= klass %>"
        x-data="{ show: true }"
        x-show="show"
        <% if is_tips %>

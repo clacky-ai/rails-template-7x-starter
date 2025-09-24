@@ -5,6 +5,8 @@ import * as ActiveStorage from '@rails/activestorage'
 import Alpine from 'alpinejs'
 import * as ActionCable from "@rails/actioncable"
 import { createConsumer } from "@rails/actioncable"
+import './clipboard_utils'
+import './sdk_utils'
 import './channels'
 
 RailsUjs.start()
@@ -18,16 +20,27 @@ window.Alpine = Alpine
 window.App ||= {}
 window.App.cable = createConsumer()
 
+// Global function to restore disabled buttons (for ActionCable callbacks)
+window.restoreButtonStates = function() {
+  const disabledButtons = document.querySelectorAll('input[type="submit"][disabled], button[type="submit"][disabled], button:not([type])[disabled]');
+  disabledButtons.forEach(button => {
+    button.disabled = false;
+    // Restore original text if data-disable-with was used
+    const originalText = button.dataset.originalText;
+    if (originalText) {
+      button.textContent = originalText;
+      delete button.dataset.originalText;
+    }
+    // Remove loading class if present
+    button.classList.remove('loading');
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const disableRemoteForms = document.querySelectorAll('form[data-remote="true"]');
 
   disableRemoteForms.forEach(form => {
     form.removeAttribute('data-remote');
-  });
-
-  const submitButtons = document.querySelectorAll('form input[type="submit"], form button[type="submit"], form button:not([type])');
-  submitButtons.forEach(element => {
-    element.removeAttribute('data-disable-with');
   });
 
   const turboElements = document.querySelectorAll('[data-turbo-method], [data-turbo-confirm]');

@@ -376,10 +376,6 @@ class AuthenticationGenerator < Rails::Generators::Base
     return error_messages.first
   end
 
-  # Just used by registeration/authentication controller
-  def _strong_root_path
-    respond_to?(:root_path) ? root_path : '/'
-  end
   # Authentication private methods end
 #{match}
       RUBY

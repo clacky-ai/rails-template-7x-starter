@@ -51,11 +51,11 @@ class ErrorHandler {
       this.showStatusBar();
       this.pendingUIUpdates = false;
       
-      // Check if we need to auto-expand for first error
-      if (!this.hasShownFirstError && this.errors.length > 0) {
-        this.hasShownFirstError = true;
-        this.autoExpandErrorDetails();
-      }
+      // Auto-expand logic disabled
+      // if (!this.hasShownFirstError && this.errors.length > 0) {
+      //   this.hasShownFirstError = true;
+      //   this.autoExpandErrorDetails();
+      // }
     }
     console.log('UI initialization complete.');
   }
@@ -74,8 +74,18 @@ class ErrorHandler {
           <div id="error-summary" class="flex items-center space-x-3 text-sm">
             <!-- Error counts will be inserted here -->
           </div>
+          <div id="error-tips" class="relative" style="display: none;">
+            <span class="cursor-help text-gray-500 hover:text-gray-300 transition-colors duration-200 text-sm opacity-60 hover:opacity-100">💡</span>
+            <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg shadow-lg border border-gray-600 whitespace-nowrap opacity-0 pointer-events-none transition-opacity duration-200 tooltip">
+              Send to chatbox for repair (90% cases) or ignore if browser extension (10% cases)
+              <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+            </div>
+          </div>
         </div>
         <div class="flex items-center space-x-2">
+          <button id="copy-all-errors" class="text-yellow-400 hover:text-yellow-300 text-sm px-2 py-1 rounded" style="display: none;">
+            Copy Error
+          </button>
           <button id="toggle-errors" class="text-blue-400 hover:text-blue-300 text-sm px-2 py-1 rounded">
             <span id="toggle-text">Show</span>
             <span id="toggle-icon">↑</span>
@@ -86,11 +96,6 @@ class ErrorHandler {
         </div>
       </div>
       <div id="error-details" class="border-t border-gray-700 bg-gray-800 max-h-64 overflow-y-auto" style="display: none;">
-        <div class="px-4 py-2 border-b border-gray-600 bg-gray-750">
-          <p class="text-xs text-gray-300">
-            💡 Send to chatbox for repair (90% cases) or ignore if browser extension (10% cases)
-          </p>
-        </div>
         <div id="error-list" class="p-4 space-y-2">
           <!-- Error list will be inserted here -->
         </div>
@@ -111,10 +116,40 @@ class ErrorHandler {
       this.toggleErrorDetails();
     });
 
+    // Copy all errors
+    document.getElementById('copy-all-errors').addEventListener('click', () => {
+      this.copyAllErrorsToClipboard();
+    });
+
     // Clear all errors
     document.getElementById('clear-all-errors').addEventListener('click', () => {
       this.clearAllErrors();
     });
+
+    // Setup tooltip hover events
+    this.setupTooltipEvents();
+  }
+
+  setupTooltipEvents() {
+    const tipsContainer = document.getElementById('error-tips');
+    if (!tipsContainer) return;
+
+    const icon = tipsContainer.querySelector('span');
+    const tooltip = tipsContainer.querySelector('.tooltip');
+
+    if (icon && tooltip) {
+      // Show tooltip on hover
+      icon.addEventListener('mouseenter', () => {
+        tooltip.classList.remove('opacity-0', 'pointer-events-none');
+        tooltip.classList.add('opacity-100');
+      });
+
+      // Hide tooltip when not hovering
+      icon.addEventListener('mouseleave', () => {
+        tooltip.classList.remove('opacity-100');
+        tooltip.classList.add('opacity-0', 'pointer-events-none');
+      });
+    }
   }
 
   toggleErrorDetails() {
@@ -308,8 +343,8 @@ class ErrorHandler {
       this.showStatusBar();
       this.flashNewError();
       
-      // Auto-expand for first error or interaction errors
-      this.checkAutoExpand(errorInfo);
+      // Auto-expand logic disabled
+      // this.checkAutoExpand(errorInfo);
     } else {
       console.log('UI not ready, marking for later update');
       this.pendingUIUpdates = true;
@@ -368,17 +403,23 @@ class ErrorHandler {
 
   updateStatusBar() {
     const summary = document.getElementById('error-summary');
+    const copyButton = document.getElementById('copy-all-errors');
+    const tipsElement = document.getElementById('error-tips');
     if (!summary) return; // UI not ready yet
 
     const totalErrors = this.errors.reduce((sum, error) => sum + error.count, 0);
 
     if (totalErrors === 0) {
       summary.innerHTML = '<span class="text-green-400">✓ No Errors</span>';
+      if (copyButton) copyButton.style.display = 'none';
+      if (tipsElement) tipsElement.style.display = 'none';
       return;
     }
 
     // Unified error display without type distinction
     summary.innerHTML = `<span class="text-red-400">🔴 Frontend code error detected (${totalErrors})</span>`;
+    if (copyButton) copyButton.style.display = 'block';
+    if (tipsElement) tipsElement.style.display = 'block';
   }
 
   updateErrorList() {
@@ -527,10 +568,10 @@ class ErrorHandler {
     if (!error) return;
 
     const errorReport = this.generateErrorReport(error);
+    const button = document.querySelector(`[data-error-id="${errorId}"] .copy-error`);
 
-    navigator.clipboard.writeText(errorReport).then(() => {
+    copyToClipboard(errorReport).then(() => {
       // Show success feedback
-      const button = document.querySelector(`[data-error-id="${errorId}"] .copy-error`);
       const originalText = button.textContent;
       button.textContent = 'Copied';
       button.className = button.className.replace('text-blue-400', 'text-green-400');
@@ -546,6 +587,122 @@ class ErrorHandler {
     });
   }
 
+  copyAllErrorsToClipboard() {
+    if (this.errors.length === 0) return;
+
+    const allErrorsReport = this.generateAllErrorsReport();
+    const button = document.getElementById('copy-all-errors');
+
+    copyToClipboard(allErrorsReport).then(() => {
+      // Show success feedback
+      const originalText = button.textContent;
+      button.textContent = 'Copied';
+      button.className = button.className.replace('text-yellow-400', 'text-green-400');
+
+      setTimeout(() => {
+        button.textContent = originalText;
+        button.className = button.className.replace('text-green-400', 'text-yellow-400');
+      }, 2000);
+    }).catch(err => {
+      console.error('Failed to copy all errors:', err);
+      // Fallback: show error details in a modal or alert
+      alert('Copy failed. Error details:\n' + allErrorsReport);
+    });
+  }
+
+  generateAllErrorsReport() {
+    const maxErrors = 3; // Show only latest 3 errors
+    const maxResponseBodyLength = 400; // Limit response body length
+    const maxTotalLength = 2000; // Total character limit
+    
+    const recentErrors = this.errors.slice(0, maxErrors);
+    const totalErrors = this.errors.reduce((sum, error) => sum + error.count, 0);
+    
+    let report = `Frontend Error Report - Recent Errors
+════════════════════════════════════
+Time: ${new Date().toLocaleString()}
+Page URL: ${window.location.href}
+Total Errors: ${totalErrors} (showing latest ${recentErrors.length})
+
+`;
+
+    for (let index = 0; index < recentErrors.length; index++) {
+      const error = recentErrors[index];
+      const countText = error.count > 1 ? ` (${error.count}x)` : '';
+      report += `Error ${index + 1}${countText}:
+─────────────
+${error.message}
+
+Technical Details:`;
+
+      // Add ActionCable specific details
+      if (error.type === 'actioncable') {
+        if (error.channel) {
+          report += `\nChannel: ${error.channel}`;
+        }
+        if (error.action) {
+          report += `\nAction: ${error.action}`;
+        }
+        if (error.details) {
+          const detailsStr = JSON.stringify(error.details, null, 2);
+          report += `\nChannel Error Details:\n${this.truncateText(detailsStr, maxResponseBodyLength)}`;
+        }
+      }
+
+      // Add HTTP-specific details for fetch/network errors
+      if (error.type === 'http' || error.type === 'network') {
+        if (error.method) {
+          report += `\nMethod: ${error.method}`;
+        }
+        if (error.status) {
+          report += `\nStatus Code: ${error.status}`;
+        }
+        if (error.jsonError) {
+          const jsonStr = JSON.stringify(error.jsonError, null, 2);
+          report += `\nJSON Error Details:\n${this.truncateText(jsonStr, maxResponseBodyLength)}`;
+        }
+        if (error.responseBody && (!error.jsonError || error.responseBody !== JSON.stringify(error.jsonError, null, 2))) {
+          report += `\nResponse Body:\n${this.truncateText(error.responseBody, maxResponseBodyLength)}`;
+        }
+      }
+
+      // Add file and line info for JavaScript errors
+      if (error.filename) {
+        report += `\nFile: ${error.filename}`;
+      }
+      if (error.lineno) {
+        report += `\nLine: ${error.lineno}`;
+      }
+
+      // Add stack trace if available (truncated)
+      if (error.error && error.error.stack) {
+        report += `\nStack Trace:\n${this.truncateText(error.error.stack, maxResponseBodyLength)}`;
+      }
+
+      // Add timestamp
+      report += `\nFirst occurred: ${new Date(error.timestamp).toLocaleString()}`;
+      if (error.lastOccurred && error.lastOccurred !== error.timestamp) {
+        report += `\nLast occurred: ${new Date(error.lastOccurred).toLocaleString()}`;
+      }
+
+      report += '\n\n';
+      
+      // Check if exceeding total character limit
+      if (report.length > maxTotalLength - 100) { // Reserve 100 chars for ending
+        report += `[Report truncated due to length limit]`;
+        break;
+      }
+    }
+
+    // Ensure total length doesn't exceed limit
+    if (report.length > maxTotalLength - 50) {
+      report = report.substring(0, maxTotalLength - 50) + '...\n\n';
+    }
+
+    report += 'Please help me analyze and fix these issues.';
+    return report;
+  }
+
   generateErrorReport(error) {
     let report = `Frontend Error Report
 ─────────────
@@ -554,6 +711,19 @@ Page URL: ${window.location.href}
 
 Technical Details:
 ${error.message}`;
+
+    // Add ActionCable specific details
+    if (error.type === 'actioncable') {
+      if (error.channel) {
+        report += `\nChannel: ${error.channel}`;
+      }
+      if (error.action) {
+        report += `\nAction: ${error.action}`;
+      }
+      if (error.details) {
+        report += `\nChannel Error Details:\n${JSON.stringify(error.details, null, 2)}`;
+      }
+    }
 
     // Add HTTP-specific details for fetch/network errors
     if (error.type === 'http' || error.type === 'network') {
@@ -612,7 +782,8 @@ ${error.message}`;
       interaction: 0,
       network: 0,
       promise: 0,
-      http: 0
+      http: 0,
+      actioncable: 0
     };
 
     this.updateStatusBar();
@@ -657,30 +828,32 @@ ${error.message}`;
   }
 
   checkAutoExpand(errorInfo) {
+    // Auto-expand logic disabled
     // Auto-expand if this is the first error ever
-    if (!this.hasShownFirstError) {
-      this.hasShownFirstError = true;
-      this.autoExpandErrorDetails();
-      return;
-    }
+    // if (!this.hasShownFirstError) {
+    //   this.hasShownFirstError = true;
+    //   this.autoExpandErrorDetails();
+    //   return;
+    // }
     
     // Auto-expand if this is an interaction error (user just performed an action)
-    if (errorInfo.type === 'interaction' || 
-        (this.lastInteractionTime && Date.now() - this.lastInteractionTime < 3000)) {
-      this.autoExpandErrorDetails();
-      return;
-    }
+    // if (errorInfo.type === 'interaction' || 
+    //     (this.lastInteractionTime && Date.now() - this.lastInteractionTime < 3000)) {
+    //   this.autoExpandErrorDetails();
+    //   return;
+    // }
   }
   
   autoExpandErrorDetails() {
-    if (!this.isExpanded) {
-      setTimeout(() => {
-        const toggleButton = document.getElementById('toggle-errors');
-        if (toggleButton) {
-          toggleButton.click();
-        }
-      }, 100); // Small delay to ensure UI is ready
-    }
+    // Auto-expand logic disabled
+    // if (!this.isExpanded) {
+    //   setTimeout(() => {
+    //     const toggleButton = document.getElementById('toggle-errors');
+    //     if (toggleButton) {
+    //       toggleButton.click();
+    //     }
+    //   }, 100); // Small delay to ensure UI is ready
+    // }
   }
 
   sanitizeMessage(message) {
@@ -694,6 +867,12 @@ ${error.message}`;
     return cleanMessage.length > 100
       ? cleanMessage.substring(0, 100) + '...'
       : cleanMessage;
+  }
+
+  truncateText(text, maxLength) {
+    if (!text) return '';
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '... [truncated]';
   }
 
   extractFilename(filepath) {

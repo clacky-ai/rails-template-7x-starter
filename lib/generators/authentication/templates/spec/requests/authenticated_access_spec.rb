@@ -8,12 +8,12 @@ RSpec.describe "Authenticated Access", type: :request do
       before { sign_in_as(user) }
 
       it "returns 200 or under development code for root path" do
-        get '/'
+        get root_path
         expect(response).to be_success_or_under_development
       end
 
       it "displays user-specific content" do
-        get '/'
+        get root_path
         # This test assumes the home page shows some user info or login-specific content
         # Adjust the expectation based on your actual home page implementation
         expect(response.body).not_to include('Sign in')
@@ -28,7 +28,7 @@ RSpec.describe "Authenticated Access", type: :request do
     context "when user is not logged in" do
       it "allows access to public home page" do
         # Assuming the home page is public and doesn't require authentication
-        get '/'
+        get root_path
         expect(response).to be_success_or_under_development
       end
     end
@@ -44,7 +44,7 @@ RSpec.describe "Authenticated Access", type: :request do
         password_confirmation: 'password123'
       }
 
-      expect(response).to redirect_to('/')
+      expect(response).to redirect_to(root_path)
 
       # Follow redirect and verify access
       follow_redirect!
@@ -62,7 +62,7 @@ RSpec.describe "Authenticated Access", type: :request do
         password: user.password
       }
 
-      expect(response).to redirect_to('/')
+      expect(response).to redirect_to(root_path)
 
       # Follow redirect and verify access
       follow_redirect!

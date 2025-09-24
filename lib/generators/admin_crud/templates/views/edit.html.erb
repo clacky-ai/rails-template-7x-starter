@@ -1,6 +1,6 @@
 <%% content_for :title, "Edit <%= humanized_name %>" %>
 
-<div class="max-w-2xl mx-auto">
+<div class="container-md">
   <!-- Page Title -->
   <div class="flex items-center space-x-4 mb-6">
     <%%= link_to admin_<%= singular_name %>_path(@<%= singular_name %>.id), class: "btn-ghost text-sm py-1 px-3" do %>

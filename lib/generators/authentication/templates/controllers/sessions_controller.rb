@@ -20,7 +20,7 @@ class SessionsController < ApplicationController
       respond_to do |format|
         format.html do
           cookies.signed.permanent[:session_token] = { value: @session.id, httponly: true }
-          redirect_to _strong_root_path, notice: "Signed in successfully"
+          redirect_to root_path, notice: "Signed in successfully"
         end
         format.json do
           render json: {
