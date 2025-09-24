@@ -1,10 +1,7 @@
 # Use `rake secret` to generate one key, Only needed in production environment
 SECRET_KEY_BASE: ''
 
-# Your published app's HOST, Used by emailer/payment in production environment
-DOMAIN: ''
-# Your published app's PROTOCOL, Used by emailer/payment in production environment
-PROTOCOL: 'https'
+PORT: '3000'
 
 # Browser base title
 APPNAME: 'ClackyAI APP'

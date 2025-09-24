@@ -96,6 +96,9 @@
                   </svg>
                   <p class="text-sm text-blue-700">Please verify your email address to secure your account.</p>
                 </div>
+                <div class="mt-3">
+                  <%= button_to "Resend Verification Email", identity_email_verification_path, method: :post, class: "btn-ghost text-sm", form: { data: { turbo: "true" } } %>
+                </div>
               </div>
             <% end %>
 
