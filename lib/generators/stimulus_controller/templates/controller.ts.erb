@@ -1,9 +1,21 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller<HTMLElement> {
-  static targets = [] as string[]
-  static values = {}
-  static classes = [] as string[]
+  static targets = [
+    // Add your targets here, e.g.:
+    // "messageInput", "messagesContainer", "sendButton"
+  ] as const
+
+  static values = {
+    // Add your values here, e.g.:
+    // roomId: String,
+    // userId: String
+  }
+
+  // Declare your targets and values
+  // declare readonly messageInputTarget: HTMLInputElement
+  // declare readonly messagesContainerTarget: HTMLElement
+  // declare readonly roomIdValue: string
 
   connect(): void {
     console.log("<%= class_name.camelize %> connected")

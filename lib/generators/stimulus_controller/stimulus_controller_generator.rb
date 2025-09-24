@@ -49,13 +49,11 @@ class StimulusControllerGenerator < Rails::Generators::NamedBase
 
 
   def base_name_without_controller
-    # Remove '_controller' or '_controllers' suffix if present (case insensitive)
     name.gsub(/_?controllers?$/i, '')
   end
 
   def file_name_without_controller
     base_name_without_controller.underscore
-  end    # 插入到 index.ts
   end
 
   def insert_into_index_ts(controller_name, class_name)

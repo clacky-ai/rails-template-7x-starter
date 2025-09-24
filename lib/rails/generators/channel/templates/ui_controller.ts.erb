@@ -1,0 +1,180 @@
+import { Controller } from "@hotwired/stimulus"
+import consumer from "../channels/consumer"
+
+export default class extends Controller<HTMLElement> {
+  static targets = [
+    // Add your targets here, e.g.:
+    // "messageInput", "messagesContainer", "sendButton"
+  ] as const
+
+  static values = {
+    // Add your values here, e.g.:
+    // roomId: String,
+    // userId: String
+  }
+
+  // Declare your targets and values
+  // declare readonly messageInputTarget: HTMLInputElement
+  // declare readonly messagesContainerTarget: HTMLElement
+  // declare readonly roomIdValue: string
+
+  private subscription: any = null
+  private isConnected: boolean = false
+
+  connect(): void {
+    console.log("<%= file_name.camelize %> controller connected")
+    this.createSubscription()
+  }
+
+  disconnect(): void {
+    console.log("<%= file_name.camelize %> controller disconnected")
+    this.destroySubscription()
+  }
+
+  // WebSocket subscription management
+  private createSubscription(): void {
+    if (this.subscription) return
+
+    this.subscription = consumer.subscriptions.create(
+      {
+        channel: "<%= channel_name %>",
+        // Add subscription parameters here, e.g.:
+        // room_id: this.roomIdValue
+      },
+      {
+        connected: this.channelConnected.bind(this),
+        disconnected: this.channelDisconnected.bind(this),
+        received: this.channelReceived.bind(this)
+      }
+    )
+  }
+
+  private destroySubscription(): void {
+    if (this.subscription) {
+      this.subscription.unsubscribe()
+      this.subscription = null
+      this.isConnected = false
+    }
+  }
+
+  // WebSocket event handlers
+  private channelConnected(): void {
+    console.log("Connected to <%= channel_name %>")
+    this.isConnected = true
+
+    // Restore any disabled buttons when connecting
+    if (typeof window.restoreButtonStates === 'function') {
+      window.restoreButtonStates()
+    }
+
+    // Add your connection logic here
+    this.onConnected()
+  }
+
+  private channelDisconnected(): void {
+    console.log("Disconnected from <%= channel_name %>")
+    this.isConnected = false
+
+    // Create detailed disconnection error information
+    const disconnectionError = {
+      type: 'error',
+      message: '<%= channel_name %> connection was disconnected',
+      channel: '<%= channel_name %>',
+      details: {
+        connectionType: 'ActionCable WebSocket',
+        event: 'disconnected',
+        suggestion: 'Connection lost - check network or server status'
+      }
+    }
+    this.handleGlobalError(disconnectionError)
+
+    // Add your disconnection logic here
+    this.onDisconnected()
+  }
+
+  private channelReceived(data: any): void {
+    console.log("Received data:", data)
+
+    // Restore any disabled buttons when receiving ActionCable messages
+    if (typeof window.restoreButtonStates === 'function') {
+      window.restoreButtonStates()
+    }
+
+    // Global error handling
+    if (data.type === 'error' && data.success === false) {
+      this.handleGlobalError(data)
+      return
+    }
+
+    // Handle different types of messages
+    switch(data.type) {
+<% actions.each do |action| %>
+      case '<%= action %>':
+        this.handle<%= action.camelize %>(data)
+        break
+<% end %>
+      default:
+        console.warn("Unknown message type:", data.type)
+        this.handleUnknownMessage(data)
+    }
+  }
+
+  // Override these methods in your implementation
+  protected onConnected(): void {
+    // Add your connection logic here
+  }
+
+  protected onDisconnected(): void {
+    // Add your disconnection logic here
+  }
+
+  protected handleUnknownMessage(data: any): void {
+    // Handle unknown message types
+  }
+
+<% actions.each do |action| %>
+  // Send <%= action %> to server
+  <%= action.camelize(:lower) %>(data: any = {}): void {
+    if (!this.isConnected) {
+      console.warn("<%= channel_name %> not connected, cannot perform <%= action %>")
+      return
+    }
+
+    if (this.subscription) {
+      this.subscription.perform('<%= action %>', data)
+    }
+  }
+
+  // Handle <%= action %> message from server
+  private handle<%= action.camelize %>(data: any): void {
+    console.log('<%= action.camelize %> received:', data)
+    this.on<%= action.camelize %>Received(data)
+    this.dispatch('<%= action.dasherize %>-received', { detail: data })
+  }
+
+  // Override this method to handle <%= action %> messages from server
+  protected on<%= action.camelize %>Received(data: any): void {
+    // Add your <%= action %> handling logic here
+  }
+
+<% end %>
+  // Global error handling for this channel
+  private handleGlobalError(errorData: any): void {
+    // Send to global error handler
+    if (window.errorHandler && window.errorHandler.handleActionCableError) {
+      window.errorHandler.handleActionCableError({
+        ...errorData,
+      })
+    } else {
+      // Fallback error handling
+      console.error('Channel Error:', {
+        ...errorData
+      })
+    }
+  }
+
+  // Check if WebSocket is connected
+  get connected(): boolean {
+    return this.isConnected
+  }
+}
