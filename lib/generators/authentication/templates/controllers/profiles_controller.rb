@@ -13,7 +13,12 @@ class ProfilesController < ApplicationController
     @user = current_user
 
     if @user.update(user_params)
-      redirect_to profile_path, notice: "Profile updated"
+      need_email_verification = @user.previous_changes.include?(:email)
+      if need_email_verification
+        send_email_verification
+        additional_notice = "and sent a verification email to your new email address"
+      end
+      redirect_to profile_path, notice: "Profile updated #{additional_notice}"
     else
       render :edit, status: :unprocessable_entity
     end

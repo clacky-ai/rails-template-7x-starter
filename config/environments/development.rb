@@ -41,20 +41,21 @@ Rails.application.configure do
   config.active_storage.service = :local
 
   # Don't care if the mailer can't send.
-  config.action_mailer.raise_delivery_errors = false
+  config.action_mailer.raise_delivery_errors = true
 
   # Disable caching for Action Mailer templates even if Action Controller
   # caching is enabled.
   config.action_mailer.perform_caching = false
 
-  config.action_mailer.default_url_options = { host: ENV.fetch("PUBLIC_HOST"), port: 443 }
+  config.action_mailer.default_url_options = { host: ENV.fetch("PUBLIC_HOST", "localhost"), port: "443", protocol: "https" }
 
   config.action_mailer.smtp_settings = {
     address: ENV.fetch("SMTP_ADDRESS"),
     port: ENV.fetch("SMTP_PORT"),
     user_name: ENV.fetch("SMTP_USERNAME"),
     password: ENV.fetch("SMTP_PASSWORD"),
-    domain: ENV.fetch("SMTP_DOMAIN")
+    domain: ENV.fetch("SMTP_DOMAIN"),
+    tls: true
   }
   config.action_mailer.delivery_method = :smtp
 

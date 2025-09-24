@@ -167,7 +167,6 @@ class StripePayGenerator < Rails::Generators::Base
       # Stripe Configuration
       STRIPE_PUBLISHABLE_KEY: <%= ENV.fetch("CLACKY_TEST_STRIPE_PUBLISHABLE_KEY") %>
       STRIPE_SECRET_KEY: <%= ENV.fetch("CLACKY_TEST_STRIPE_SECRET_KEY") %>
-      STRIPE_WEBHOOK_SECRET: <%= ENV.fetch("CLACKY_TEST_STRIPE_WEBHOOK_SECRET") %>
     STRIPE
 
     # Update application.yml.example
