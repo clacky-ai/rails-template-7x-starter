@@ -8,11 +8,9 @@ function copyToClipboard(text: string): Promise<boolean> {
       navigator.clipboard.writeText(text)
         .then(() => resolve(true))
         .catch(() => {
-          // Fallback to execCommand
           fallbackCopy(text) ? resolve(true) : reject(new Error('Copy failed'));
         });
     } else {
-      // Use execCommand for iframe and older browsers
       fallbackCopy(text) ? resolve(true) : reject(new Error('Copy failed'));
     }
   });
@@ -25,7 +23,7 @@ function fallbackCopy(text: string): boolean {
   textArea.style.opacity = '0';
   document.body.appendChild(textArea);
   textArea.select();
-  
+
   try {
     const success = document.execCommand('copy');
     document.body.removeChild(textArea);

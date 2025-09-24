@@ -1,4 +1,11 @@
-<div class="min-h-screen flex items-center justify-center">
+<div class="min-h-screen flex items-center justify-center"
+     data-controller="sdk-integration"
+     data-sdk-integration-message-value="Please help me develop this page: <%= request.path.sub('/', '') %>
+
+URL: <%= request.url %>
+Path: <%= request.path.sub('/', '') %>
+
+I need to create the view template and controller for this page.">
   <div class="max-w-md mx-auto text-center px-4">
     <!-- Icon -->
     <div class="mx-auto mb-8 w-24 h-24 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
@@ -10,11 +17,15 @@
     <!-- Title -->
     <h1 class="text-5xl font-bold text-gray-900 dark:text-white mb-4">Page Under Development</h1>
     <p class="text-lg text-gray-600 dark:text-gray-300 mb-8">This page is currently being developed. Please check back later!</p>
-    
+
     <!-- Action Buttons -->
     <div class="flex flex-col sm:flex-row gap-4 justify-center mb-8">
       <%= link_to "Back to Home", '/', class: "btn-primary" %>
-      <button type="button" onclick="sendToChatbox()" id="chatbox-develop-btn" class="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium py-2 px-4 rounded-lg transition-colors duration-200" style="display: none;">
+      <button type="button"
+              data-sdk-integration-target="sdkButton"
+              data-action="click->sdk-integration#sendToChatbox"
+              class="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium py-2 px-4 rounded-lg transition-colors duration-200"
+              style="display: none;">
         Develop in Chatbox
       </button>
     </div>
@@ -28,40 +39,3 @@
     </div>
   </div>
 </div>
-
-<script>
-  function sendToChatbox() {
-    const url = window.location.pathname.substring(1);
-    const message = `Please help me develop this page: ${url}
-
-URL: ${window.location.href}
-Path: ${url}
-
-I need to create the view template and controller for this page.`;
-
-    window.sdkUtils.sendMessage(message);
-  }
-
-  // Check SDK availability and show/hide button accordingly
-  document.addEventListener('DOMContentLoaded', function() {
-    const chatboxBtn = document.getElementById('chatbox-develop-btn');
-    if (chatboxBtn) {
-      // Check periodically for SDK availability (in case it loads later)
-      function checkSDKAndShowButton() {
-        if (window.isSDKAvailable && window.isSDKAvailable()) {
-          chatboxBtn.style.display = 'block';
-          return true;
-        }
-        return false;
-      }
-
-      // Initial check
-      if (!checkSDKAndShowButton()) {
-        // Retry after 1 second (in case SDK is loading)
-        setTimeout(checkSDKAndShowButton, 1000);
-        // Final retry after 3 seconds
-        setTimeout(checkSDKAndShowButton, 3000);
-      }
-    }
-  });
-</script>
