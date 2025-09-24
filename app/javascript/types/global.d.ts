@@ -11,7 +11,8 @@ declare global {
       adminSidebar?: any;
     };
     restoreButtonStates: () => void;
-    errorHandler: any;
+    errorHandler: ErrorHandler;
+    stimulusValidator: any;
     copyToClipboard: (text: string) => Promise<boolean>;
     sdkUtils: any;
     sendToSDK: (message: string) => boolean;
