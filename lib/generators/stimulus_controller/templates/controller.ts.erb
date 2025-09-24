@@ -1,0 +1,21 @@
+import { Controller } from "@hotwired/stimulus"
+
+export default class extends Controller<HTMLElement> {
+  static targets = [] as string[]
+  static values = {}
+  static classes = [] as string[]
+
+  connect(): void {
+    console.log("<%= class_name.camelize %> connected")
+  }
+
+  disconnect(): void {
+    console.log("<%= class_name.camelize %> disconnected")
+  }
+
+  // Add your action methods here
+  // Example:
+  // click(): void {
+  //   console.log("Button clicked")
+  // }
+}

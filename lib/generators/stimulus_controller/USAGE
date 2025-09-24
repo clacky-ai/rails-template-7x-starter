@@ -1,0 +1,39 @@
+Description:
+    Generate a TypeScript Stimulus controller and automatically integrate it with the application.
+
+    This generator creates:
+    - A TypeScript Stimulus controller file in app/javascript/controllers/
+    - Automatically imports the controller in controllers/index.ts
+    - Registers the controller with the Stimulus application
+    - Updates .cursorrules with generation information
+
+Example:
+    rails generate stimulus_controller modal
+
+    This will create:
+        app/javascript/controllers/modal_controller.ts
+        
+    And update:
+        app/javascript/controllers/index.ts (adds import and registration)
+        .cursorrules (adds generation notes)
+
+    The controller will be available in HTML as:
+        data-controller="modal"
+
+Usage:
+    rails generate stimulus_controller NAME
+
+Arguments:
+    NAME    The name of the Stimulus controller (snake_case)
+
+Examples:
+    rails generate stimulus_controller dropdown
+    rails generate stimulus_controller form_validator  
+    rails generate stimulus_controller image_gallery
+
+Generated controller features:
+    - TypeScript support with proper typing
+    - Basic controller structure with connect/disconnect
+    - Placeholder for targets, values, and classes
+    - Console logging for debugging
+    - Ready-to-use template with common patterns
