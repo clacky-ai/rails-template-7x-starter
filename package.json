@@ -11,7 +11,11 @@
     "build:css:admin": "postcss ./app/assets/stylesheets/admin.css -o ./app/assets/builds/admin.css",
     "watch:css": "run-p watch:css:*",
     "watch:css:app": "postcss ./app/assets/stylesheets/application.css -o ./app/assets/builds/application.css --map --watch",
-    "watch:css:admin": "postcss ./app/assets/stylesheets/admin.css -o ./app/assets/builds/admin.css --map --watch"
+    "watch:css:admin": "postcss ./app/assets/stylesheets/admin.css -o ./app/assets/builds/admin.css --map --watch",
+    "lint": "eslint app/javascript/**/*.ts",
+    "lint:fix": "eslint app/javascript/**/*.ts --fix",
+    "lint:watch": "eslint app/javascript/**/*.ts --watch",
+    "check": "run-p type-check lint"
   },
   "dependencies": {
     "@hotwired/stimulus": "^3.2.2",
@@ -39,6 +43,11 @@
   ],
   "devDependencies": {
     "@types/node": "^24.5.2",
+    "@typescript-eslint/eslint-plugin": "^8.44.1",
+    "@typescript-eslint/parser": "^8.44.1",
+    "eslint": "^9.36.0",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-prefer-arrow": "^1.2.3",
     "typescript": "^5.9.2"
   }
 }

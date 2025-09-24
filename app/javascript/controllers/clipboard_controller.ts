@@ -39,7 +39,7 @@ export default class extends Controller<HTMLElement> {
 
     window.copyToClipboard(textToCopy).then(() => {
       this.showSuccess()
-    }).catch(err => {
+    }).catch(_error => {
       this.showFailure()
     })
   }
@@ -99,7 +99,7 @@ export default class extends Controller<HTMLElement> {
       } else {
         this.showFailure()
       }
-    } catch (error) {
+    } catch (_error) {
       document.body.removeChild(textArea)
       this.showFailure()
     }
