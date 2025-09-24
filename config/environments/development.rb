@@ -47,7 +47,11 @@ Rails.application.configure do
   # caching is enabled.
   config.action_mailer.perform_caching = false
 
-  config.action_mailer.default_url_options = { host: ENV.fetch("PUBLIC_HOST", "localhost"), port: "443", protocol: "https" }
+  if ENV.fetch("PUBLIC_HOST").present?
+    config.action_mailer.default_url_options = { host: ENV.fetch("PUBLIC_HOST"), port: "443", protocol: "https" }
+  else
+    config.action_mailer.default_url_options = { host: "localhost", port: "3000", protocol: "http" }
+  end
 
   config.action_mailer.smtp_settings = {
     address: ENV.fetch("SMTP_ADDRESS"),
