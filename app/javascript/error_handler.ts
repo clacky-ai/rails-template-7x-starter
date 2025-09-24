@@ -1,20 +1,123 @@
 // Enhanced JavaScript Error Handler with Persistent Status Bar
 // Provides user-friendly error monitoring with permanent visibility
 
+// Error type definitions
+type ErrorType = 'javascript' | 'interaction' | 'network' | 'promise' | 'http' | 'actioncable' | 'manual' | 'stimulus';
+
+// Base error info interface
+interface BaseErrorInfo {
+  message: string;
+  type: ErrorType;
+  timestamp: string;
+  filename?: string;
+  lineno?: number;
+  colno?: number;
+  error?: Error;
+}
+
+// JavaScript/Interaction error info
+interface JavaScriptErrorInfo extends BaseErrorInfo {
+  type: 'javascript' | 'interaction';
+  filename?: string;
+  lineno?: number;
+  colno?: number;
+  error?: Error;
+}
+
+// Promise error info
+interface PromiseErrorInfo extends BaseErrorInfo {
+  type: 'promise';
+  error?: any;
+}
+
+// Network/HTTP error info
+interface NetworkErrorInfo extends BaseErrorInfo {
+  type: 'network' | 'http';
+  url?: string;
+  method?: string;
+  status?: number;
+  responseBody?: string;
+  jsonError?: any;
+}
+
+// ActionCable error info
+interface ActionCableErrorInfo extends BaseErrorInfo {
+  type: 'actioncable';
+  channel?: string;
+  action?: string;
+  details?: any;
+}
+
+// Manual error info
+interface ManualErrorInfo extends BaseErrorInfo {
+  type: 'manual';
+  [key: string]: any; // Allow additional context properties
+}
+
+// Stimulus error info
+interface StimulusErrorInfo extends BaseErrorInfo {
+  type: 'stimulus';
+  missingControllers?: string[];
+  suggestion?: string;
+}
+
+// Union type for all possible error info types
+type ErrorInfo = JavaScriptErrorInfo | PromiseErrorInfo | NetworkErrorInfo | ActionCableErrorInfo | ManualErrorInfo | StimulusErrorInfo;
+
+// Stored error interface (includes additional properties added by the handler)
+interface StoredError {
+  id: string;
+  message: string;
+  type: ErrorType;
+  timestamp: string;
+  count: number;
+  lastOccurred: string;
+  // Optional properties that may exist on different error types
+  filename?: string;
+  lineno?: number;
+  colno?: number;
+  error?: Error | any;
+  url?: string;
+  method?: string;
+  status?: number;
+  responseBody?: string;
+  jsonError?: any;
+  channel?: string;
+  action?: string;
+  details?: any;
+  missingControllers?: string[];
+  suggestion?: string;
+  [key: string]: any; // Allow additional properties for manual errors
+}
+
+// Error counts interface
+interface ErrorCounts {
+  javascript: number;
+  interaction: number;
+  network: number;
+  promise: number;
+  http: number;
+  actioncable: number;
+  manual?: number;
+  stimulus?: number;
+}
+
 class ErrorHandler {
-  private errors: any[] = [];
+  private errors: StoredError[] = [];
   private maxErrors: number = 50;
   private isExpanded: boolean = false;
   private statusBar: HTMLElement | null = null;
   private errorList: HTMLElement | null = null;
   private isInteractionError: boolean = false;
-  private errorCounts: any = {
+  private errorCounts: ErrorCounts = {
     javascript: 0,
     interaction: 0,
     network: 0,
     promise: 0,
     http: 0,
-    actioncable: 0
+    actioncable: 0,
+    manual: 0,
+    stimulus: 0
   };
   private recentErrorsDebounce: Map<string, number> = new Map();
   private debounceTime: number = 1000;
@@ -255,7 +358,7 @@ class ErrorHandler {
 
           this.handleError({
             message: detailedMessage,
-            url: args[0],
+            url: args[0].toString(),
             method: method,
             type: response.status >= 500 ? 'http' : 'network',
             status: response.status,
@@ -273,9 +376,9 @@ class ErrorHandler {
         
         this.handleError({
           message: `${method} ${args[0]} - Network Error: ${(error as Error).message}`,
-          url: args[0],
+          url: args[0].toString(),
           method: method,
-          error: error,
+          error: error as Error,
           type: 'network',
           timestamp: new Date().toISOString()
         });
@@ -284,7 +387,7 @@ class ErrorHandler {
     };
   }
 
-  handleError(errorInfo: any): void {
+  handleError(errorInfo: ErrorInfo): void {
     console.log('handleError called with:', errorInfo.message, errorInfo.type);
     // Filter out browser-specific errors we can't control
     if (this.shouldIgnoreError(errorInfo)) {
@@ -337,7 +440,9 @@ class ErrorHandler {
     }
 
     // Update counts
-    this.errorCounts[errorInfo.type]++;
+    if (errorInfo.type in this.errorCounts) {
+      this.errorCounts[errorInfo.type as keyof ErrorCounts]++;
+    }
 
     // Update UI (if ready) or mark for later update
     if (this.uiReady) {
@@ -360,7 +465,7 @@ class ErrorHandler {
     console.error('Captured Error:', errorInfo);
   }
 
-  shouldIgnoreError(errorInfo: any): boolean {
+  shouldIgnoreError(errorInfo: ErrorInfo): boolean {
     const ignoredPatterns = [
       // Browser extension errors
       /chrome-extension:/,
@@ -391,7 +496,7 @@ class ErrorHandler {
     );
   }
 
-  findDuplicateError(errorInfo: any): any {
+  findDuplicateError(errorInfo: ErrorInfo): StoredError | undefined {
     return this.errors.find(error =>
       error.message === errorInfo.message &&
       error.type === errorInfo.type &&
@@ -435,7 +540,7 @@ class ErrorHandler {
     this.attachErrorItemListeners();
   }
 
-  createErrorItemHTML(error: any): string {
+  createErrorItemHTML(error: StoredError): string {
     const icon = this.getErrorIcon(error.type);
     const countText = error.count > 1 ? ` (${error.count}x)` : '';
     const timeStr = new Date(error.timestamp).toLocaleTimeString();
@@ -511,7 +616,7 @@ class ErrorHandler {
     }
   }
 
-  formatTechnicalDetails(error: any): string {
+  formatTechnicalDetails(error: StoredError): string {
     const details = [];
 
     details.push(`<div><strong>Page URL:</strong> ${window.location.href}</div>`);
@@ -708,7 +813,7 @@ Technical Details:`;
     return report;
   }
 
-  generateErrorReport(error: any): string {
+  generateErrorReport(error: StoredError): string {
     let report = `Frontend Error Report
 ─────────────
 Time: ${new Date(error.timestamp).toLocaleString()}
@@ -768,7 +873,9 @@ ${error.message}`;
     if (errorIndex === -1) return;
 
     const error = this.errors[errorIndex];
-    this.errorCounts[error.type] = Math.max(0, this.errorCounts[error.type] - error.count);
+    if (error.type in this.errorCounts) {
+      this.errorCounts[error.type as keyof ErrorCounts] = Math.max(0, (this.errorCounts[error.type as keyof ErrorCounts] || 0) - error.count);
+    }
     this.errors.splice(errorIndex, 1);
 
     this.updateStatusBar();
@@ -788,7 +895,9 @@ ${error.message}`;
       network: 0,
       promise: 0,
       http: 0,
-      actioncable: 0
+      actioncable: 0,
+      manual: 0,
+      stimulus: 0
     };
 
     this.updateStatusBar();
@@ -834,7 +943,7 @@ ${error.message}`;
     }
   }
 
-  checkAutoExpand(errorInfo: any): void {
+  checkAutoExpand(errorInfo: ErrorInfo): void {
     // Auto-expand logic disabled
     // Auto-expand if this is the first error ever
     // if (!this.hasShownFirstError) {
@@ -898,11 +1007,11 @@ ${error.message}`;
   }
 
   // Public API methods
-  getErrors() {
+  getErrors(): StoredError[] {
     return this.errors;
   }
 
-  reportError(message: string, context: any = {}): void {
+  reportError(message: string, context: Partial<ErrorInfo> = {}): void {
     this.handleError({
       message: message,
       type: 'manual',
@@ -915,7 +1024,7 @@ ${error.message}`;
   handleActionCableError(errorData: any): void {
     this.errorCounts.actioncable++;
     
-    const errorInfo = {
+    const errorInfo: ActionCableErrorInfo = {
       type: 'actioncable',
       message: errorData.message || 'ActionCable error occurred',
       timestamp: new Date().toISOString(),

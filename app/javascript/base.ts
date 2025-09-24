@@ -8,6 +8,7 @@ import { createConsumer } from "@rails/actioncable"
 import './controllers'
 import './clipboard_utils'
 import './sdk_utils'
+import './stimulus_validator'
 import './channels'
 
 RailsUjs.start()
