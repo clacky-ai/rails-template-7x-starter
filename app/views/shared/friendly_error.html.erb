@@ -1,4 +1,7 @@
-<div class="min-h-screen bg-gray-100 flex items-center justify-center">
+<div class="min-h-screen bg-gray-100 flex items-center justify-center" 
+     data-controller="sdk-integration"
+     data-sdk-integration-action-value="sendErrorForFix"
+     data-sdk-integration-message-value="<%= j @original_exception&.message || @error_description %>">
   <div class="container-md w-full mx-auto text-center py-2">
     <!-- Dynamic Icon -->
     <div class="mx-auto mb-8 w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center">
@@ -13,12 +16,37 @@
 
     <% if Rails.env.development? && @original_exception %>
       <!-- Development Info -->
-      <div class="mb-8 text-left">
+      <%
+        # Prepare formatted error text for clipboard
+        error_text = []
+        error_text << "URL: #{@error_url}"
+        error_text << "Message: #{@original_exception.message}"
+        
+        if @filtered_backtrace&.any?
+          error_text << "User Code Stack Trace:"
+          @filtered_backtrace.each_with_index do |line, index|
+            error_text << "#{index + 1}: #{line}"
+          end
+        elsif @original_exception&.backtrace
+          error_text << "Stack Trace (First 3 lines):"
+          @original_exception.backtrace.first(3).each_with_index do |line, index|
+            error_text << "#{index + 1}: #{line}"
+          end
+        end
+        
+        formatted_error_text = error_text.join("\n")
+      %>
+      <div class="mb-8 text-left" 
+           data-controller="clipboard"
+           data-clipboard-text-value="<%= j formatted_error_text %>">
         <div class="card shadow-lg">
           <div class="card-body">
             <div class="flex items-center justify-between mb-4">
               <h3 class="text-base font-medium text-gray-900">Development Debug Info</h3>
-              <button type="button" onclick="copyErrorDetails()" class="border border-blue-600 text-blue-600 hover:bg-blue-50 font-medium py-1 px-3 rounded text-sm transition-colors" id="copy-btn">
+              <button type="button" 
+                      data-clipboard-target="button"
+                      data-action="click->clipboard#copy"
+                      class="border border-blue-600 text-blue-600 hover:bg-blue-50 font-medium py-1 px-3 rounded text-sm transition-colors">
                 <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
                 </svg>
@@ -34,7 +62,7 @@
                   </span>
                 </summary>
                 <div class="p-4 border-t border-gray-200">
-                  <div class="bg-gray-800 text-white rounded-lg p-4 font-mono text-sm" id="error-details">
+                  <div class="bg-gray-800 text-white rounded-lg p-4 font-mono text-sm">
                     <div class="mb-2">
                       <span class="font-semibold text-blue-400">URL:</span> <%= @error_url %>
                     </div>
@@ -82,62 +110,13 @@
     <!-- Action Buttons -->
     <div class="flex flex-col sm:flex-row gap-4 justify-center mb-4">
       <%= link_to "Back to Home", '/', class: "btn-primary" %>
-      <button type="button" onclick="sendErrorToChatbox()" id="chatbox-fix-btn" class="border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-2 px-4 rounded-lg transition-colors duration-200" style="display: none;">
+      <button type="button" 
+              data-sdk-integration-target="sdkButton"
+              data-action="click->sdk-integration#sendErrorToChatbox"
+              class="border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-2 px-4 rounded-lg transition-colors duration-200" 
+              style="display: none;">
         Fix in Chatbox
       </button>
     </div>
   </div>
 </div>
-
-<script>
-  function copyErrorDetails() {
-    const errorDetails = document.getElementById('error-details');
-    if (errorDetails) {
-      const text = errorDetails.innerText;
-      copyToClipboard(text).then(() => {
-        const btn = document.getElementById('copy-btn');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Copied!';
-        btn.className = 'border border-green-600 text-green-600 hover:bg-green-50 font-medium py-1 px-3 rounded text-sm transition-colors';
-        setTimeout(() => {
-          btn.innerHTML = originalText;
-          btn.className = 'border border-blue-600 text-blue-600 hover:bg-blue-50 font-medium py-1 px-3 rounded text-sm transition-colors';
-        }, 2000);
-      }).catch(err => {
-        console.error('Failed to copy: ', err);
-        alert('Copy failed. Error details:\n' + text);
-      });
-    }
-  }
-
-  function sendErrorToChatbox() {
-    const errorMessage = '<%= j @original_exception&.message || @error_description %>';
-    
-    window.sdkUtils.sendErrorForFix({
-      errorMessage: errorMessage
-    });
-  }
-
-  // Check SDK availability and show/hide button accordingly
-  document.addEventListener('DOMContentLoaded', function() {
-    const chatboxBtn = document.getElementById('chatbox-fix-btn');
-    if (chatboxBtn) {
-      // Check periodically for SDK availability (in case it loads later)
-      function checkSDKAndShowButton() {
-        if (window.isSDKAvailable && window.isSDKAvailable()) {
-          chatboxBtn.style.display = 'block';
-          return true;
-        }
-        return false;
-      }
-
-      // Initial check
-      if (!checkSDKAndShowButton()) {
-        // Retry after 1 second (in case SDK is loading)
-        setTimeout(checkSDKAndShowButton, 1000);
-        // Final retry after 3 seconds
-        setTimeout(checkSDKAndShowButton, 3000);
-      }
-    }
-  });
-</script>
