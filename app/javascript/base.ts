@@ -5,6 +5,7 @@ import * as ActiveStorage from '@rails/activestorage'
 import Alpine from 'alpinejs'
 import * as ActionCable from "@rails/actioncable"
 import { createConsumer } from "@rails/actioncable"
+import './controllers'
 import './clipboard_utils'
 import './sdk_utils'
 import './channels'
@@ -25,7 +26,7 @@ window.restoreButtonStates = function(): void {
   const disabledButtons = document.querySelectorAll<HTMLInputElement | HTMLButtonElement>(
     'input[type="submit"][disabled], button[type="submit"][disabled], button:not([type])[disabled]'
   );
-  
+
   disabledButtons.forEach((button: HTMLInputElement | HTMLButtonElement) => {
     button.disabled = false;
     // Restore original text if data-disable-with was used
