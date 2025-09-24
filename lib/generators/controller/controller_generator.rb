@@ -6,8 +6,28 @@ class ControllerGenerator < Rails::Generators::NamedBase
   class_option :auth, type: :boolean, default: false, desc: "Generate controller with authentication required"
   class_option :single, type: :boolean, default: false, desc: "Generate singular resource (resource instead of resources)"
 
+  def check_name_validity
+    # Check for reserved words first (before processing)
+    if %w[controller controllers].include?(name.downcase)
+      say "Error: Cannot generate controller with name '#{name}'.", :red
+      say "This name is reserved. Please choose a different name.", :yellow
+      say "Example: rails generate controller products", :blue
+      exit(1)
+    end
+
+    # Check for empty or invalid names after processing
+    if base_name_without_controller.blank?
+      say "Error: Controller name cannot be empty after processing.", :red
+      say "Usage: rails generate controller NAME [actions]", :yellow
+      say "Example: rails generate controller products", :blue
+      exit(1)
+    end
+  end
+
   def check_controller_conflicts
     return if options[:force_override]
+
+    check_name_validity
 
     # Special check for home controller
     if singular_name == 'home' || plural_name == 'home'
