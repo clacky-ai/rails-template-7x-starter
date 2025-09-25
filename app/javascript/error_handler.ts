@@ -59,10 +59,236 @@ interface StimulusErrorInfo extends BaseErrorInfo {
   type: 'stimulus';
   missingControllers?: string[];
   suggestion?: string;
+  details?: any;
+  subType?: 'missing-controller' | 'scope-error' | 'positioning-issues' | 'action-click';
+  controllerName?: string;
+  action?: string;
+  elementInfo?: any;
+  positioningIssues?: string[];
 }
 
 // Union type for all possible error info types
 type ErrorInfo = JavaScriptErrorInfo | PromiseErrorInfo | NetworkErrorInfo | ActionCableErrorInfo | ManualErrorInfo | StimulusErrorInfo;
+
+// Unified error detail configuration system
+interface ErrorDetailConfig {
+  htmlFormatter: (value: any, key: string) => string;
+  textFormatter: (value: any, key: string) => string;
+  label: string;
+  priority?: number; // Higher priority fields appear first
+  condition?: (error: StoredError) => boolean; // Optional condition to show this field
+}
+
+interface ErrorTypeConfig {
+  icon: string;
+  fields: { [key: string]: ErrorDetailConfig };
+}
+
+// Centralized error type configurations
+const ERROR_TYPE_CONFIGS: { [key: string]: ErrorTypeConfig } = {
+  javascript: {
+    icon: '⚠️',
+    fields: {
+      filename: {
+        label: 'File',
+        priority: 10,
+        htmlFormatter: (value: string) => `<div class="mb-2"><strong>File:</strong> ${value}</div>`,
+        textFormatter: (value: string) => `File: ${value}`
+      },
+      lineno: {
+        label: 'Line',
+        priority: 9,
+        htmlFormatter: (value: number) => `<div class="mb-2"><strong>Line:</strong> ${value}</div>`,
+        textFormatter: (value: number) => `Line: ${value}`
+      },
+      'error.stack': {
+        label: 'Stack Trace',
+        priority: 1,
+        condition: (error) => error.error?.stack,
+        htmlFormatter: (value: string) => `<div class="mb-3"><div class="mb-2"><strong>Stack Trace:</strong></div><pre class="text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed">${value}</pre></div>`,
+        textFormatter: (value: string) => `Stack Trace:\n${value}`
+      }
+    }
+  },
+  interaction: {
+    icon: '🔴',
+    fields: {
+      filename: {
+        label: 'File',
+        priority: 10,
+        htmlFormatter: (value: string) => `<div class="mb-2"><strong>File:</strong> ${value}</div>`,
+        textFormatter: (value: string) => `File: ${value}`
+      },
+      lineno: {
+        label: 'Line',
+        priority: 9,
+        htmlFormatter: (value: number) => `<div class="mb-2"><strong>Line:</strong> ${value}</div>`,
+        textFormatter: (value: number) => `Line: ${value}`
+      }
+    }
+  },
+  network: {
+    icon: '📡',
+    fields: {
+      method: {
+        label: 'Method',
+        priority: 10,
+        htmlFormatter: (value: string) => `<div class="mb-2"><strong>Method:</strong> ${value}</div>`,
+        textFormatter: (value: string) => `Method: ${value}`
+      },
+      status: {
+        label: 'Status Code',
+        priority: 9,
+        htmlFormatter: (value: number) => `<div class="mb-2"><strong>Status Code:</strong> ${value}</div>`,
+        textFormatter: (value: number) => `Status Code: ${value}`
+      },
+      jsonError: {
+        label: 'JSON Error Details',
+        priority: 5,
+        condition: (error) => !!error.jsonError,
+        htmlFormatter: (value: any) => `<div class="mb-3"><div class="mb-2"><strong>JSON Error Details:</strong></div><pre class="text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed">${JSON.stringify(value, null, 2)}</pre></div>`,
+        textFormatter: (value: any) => `JSON Error Details:\n${JSON.stringify(value, null, 2)}`
+      },
+      responseBody: {
+        label: 'Response Body',
+        priority: 4,
+        condition: (error) => !!(error.responseBody && (!error.jsonError || error.responseBody !== JSON.stringify(error.jsonError, null, 2))),
+        htmlFormatter: (value: string) => `<div class="mb-3"><div class="mb-2"><strong>Response Body:</strong></div><pre class="text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed">${value}</pre></div>`,
+        textFormatter: (value: string) => `Response Body:\n${value}`
+      }
+    }
+  },
+  http: {
+    icon: '🌐',
+    fields: {
+      method: {
+        label: 'Method',
+        priority: 10,
+        htmlFormatter: (value: string) => `<div class="mb-2"><strong>Method:</strong> ${value}</div>`,
+        textFormatter: (value: string) => `Method: ${value}`
+      },
+      status: {
+        label: 'Status Code',
+        priority: 9,
+        htmlFormatter: (value: number) => `<div class="mb-2"><strong>Status Code:</strong> ${value}</div>`,
+        textFormatter: (value: number) => `Status Code: ${value}`
+      },
+      jsonError: {
+        label: 'JSON Error Details',
+        priority: 5,
+        condition: (error) => !!error.jsonError,
+        htmlFormatter: (value: any) => `<div class="mb-3"><div class="mb-2"><strong>JSON Error Details:</strong></div><pre class="text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed">${JSON.stringify(value, null, 2)}</pre></div>`,
+        textFormatter: (value: any) => `JSON Error Details:\n${JSON.stringify(value, null, 2)}`
+      },
+      responseBody: {
+        label: 'Response Body',
+        priority: 4,
+        condition: (error) => !!(error.responseBody && (!error.jsonError || error.responseBody !== JSON.stringify(error.jsonError, null, 2))),
+        htmlFormatter: (value: string) => `<div class="mb-3"><div class="mb-2"><strong>Response Body:</strong></div><pre class="text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed">${value}</pre></div>`,
+        textFormatter: (value: string) => `Response Body:\n${value}`
+      }
+    }
+  },
+  promise: {
+    icon: '⚡',
+    fields: {
+      'error.stack': {
+        label: 'Stack Trace',
+        priority: 1,
+        condition: (error) => error.error?.stack,
+        htmlFormatter: (value: string) => `<div class="mb-3"><div class="mb-2"><strong>Stack Trace:</strong></div><pre class="text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed">${value}</pre></div>`,
+        textFormatter: (value: string) => `Stack Trace:\n${value}`
+      }
+    }
+  },
+  actioncable: {
+    icon: '🔌',
+    fields: {
+      channel: {
+        label: 'Channel',
+        priority: 10,
+        htmlFormatter: (value: string) => `<div class="mb-2"><strong>Channel:</strong> ${value}</div>`,
+        textFormatter: (value: string) => `Channel: ${value}`
+      },
+      action: {
+        label: 'Action',
+        priority: 9,
+        htmlFormatter: (value: string) => `<div class="mb-2"><strong>Action:</strong> ${value}</div>`,
+        textFormatter: (value: string) => `Action: ${value}`
+      },
+      details: {
+        label: 'Channel Error Details',
+        priority: 5,
+        condition: (error) => !!error.details,
+        htmlFormatter: (value: any) => `<div class="mb-3"><div class="mb-2"><strong>Channel Error Details:</strong></div><pre class="text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed">${JSON.stringify(value, null, 2)}</pre></div>`,
+        textFormatter: (value: any) => `Channel Error Details:\n${JSON.stringify(value, null, 2)}`
+      }
+    }
+  },
+  stimulus: {
+    icon: '🎯',
+    fields: {
+      subType: {
+        label: 'Stimulus Error Type',
+        priority: 10,
+        htmlFormatter: (value: string) => `<div class="mb-2"><strong>Stimulus Error Type:</strong> ${value}</div>`,
+        textFormatter: (value: string) => `Stimulus Error Type: ${value}`
+      },
+      controllerName: {
+        label: 'Controller',
+        priority: 9,
+        htmlFormatter: (value: string) => `<div class="mb-2"><strong>Controller:</strong> ${value}</div>`,
+        textFormatter: (value: string) => `Controller: ${value}`
+      },
+      action: {
+        label: 'Action',
+        priority: 8,
+        htmlFormatter: (value: string) => `<div class="mb-2"><strong>Action:</strong> ${value}</div>`,
+        textFormatter: (value: string) => `Action: ${value}`
+      },
+      missingControllers: {
+        label: 'Missing Controllers',
+        priority: 7,
+        condition: (error) => !!(error.missingControllers && error.missingControllers.length > 0),
+        htmlFormatter: (value: string[]) => `<div class="mb-3"><strong>Missing Controllers:</strong> ${value.join(', ')}</div>`,
+        textFormatter: (value: string[]) => `Missing Controllers: ${value.join(', ')}`
+      },
+      positioningIssues: {
+        label: 'Positioning Issues',
+        priority: 6,
+        condition: (error) => !!(error.positioningIssues && error.positioningIssues.length > 0),
+        htmlFormatter: (value: string[]) => `<div class="mb-3"><div class="mb-2"><strong>Positioning Issues:</strong></div><ul class="text-xs list-disc list-inside bg-gray-800 p-3 rounded space-y-1">${value.map((issue: string) => `<li class="leading-relaxed">${issue}</li>`).join('')}</ul></div>`,
+        textFormatter: (value: string[]) => `Positioning Issues:\n${value.map((issue: string) => `  - ${issue}`).join('\n')}`
+      },
+      elementInfo: {
+        label: 'Element Info',
+        priority: 5,
+        condition: (error) => !!error.elementInfo,
+        htmlFormatter: (value: any) => `<div class="mb-3"><div class="mb-2"><strong>Element Info:</strong></div><pre class="text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed">${JSON.stringify(value, null, 2)}</pre></div>`,
+        textFormatter: (value: any) => `Element Info:\n${JSON.stringify(value, null, 2)}`
+      },
+      suggestion: {
+        label: '💡 Suggestion',
+        priority: 3,
+        htmlFormatter: (value: string) => `<div class="mb-3"><div class="mb-2"><strong>💡 Suggestion:</strong></div><div class="text-sm bg-blue-900 text-blue-200 p-3 rounded leading-relaxed">${value}</div></div>`,
+        textFormatter: (value: string) => `Suggestion: ${value}`
+      },
+      details: {
+        label: 'Detailed Information',
+        priority: 2,
+        condition: (error) => !!error.details,
+        htmlFormatter: (value: any) => `<div class="mb-3"><div class="mb-2"><strong>Detailed Information:</strong></div><pre class="text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed">${JSON.stringify(value, null, 2)}</pre></div>`,
+        textFormatter: (value: any) => `Detailed Information:\n${JSON.stringify(value, null, 2)}`
+      }
+    }
+  },
+  manual: {
+    icon: '📝',
+    fields: {
+      // Manual errors can have dynamic fields, so we'll handle them in the generic formatter
+    }
+  }
+};
 
 // Stored error interface (includes additional properties added by the handler)
 interface StoredError {
@@ -605,69 +831,100 @@ class ErrorHandler {
   }
 
   getErrorIcon(type: string): string {
-    switch (type) {
-      case 'interaction': return '🔴';
-      case 'javascript': return '⚠️';
-      case 'network': return '📡';
-      case 'http': return '🌐';
-      case 'promise': return '⚡';
-      case 'actioncable': return '🔌';
-      default: return '❌';
+    return ERROR_TYPE_CONFIGS[type]?.icon || '❌';
+  }
+
+  // Unified error detail formatting
+  private formatErrorDetails(error: StoredError, format: 'html' | 'text'): string[] {
+    const config = ERROR_TYPE_CONFIGS[error.type];
+    if (!config) {
+      // Fallback for unknown error types
+      return this.formatGenericErrorDetails(error, format);
     }
+
+    const details: string[] = [];
+    const fields = Object.entries(config.fields);
+    
+    // Sort by priority (higher priority first)
+    fields.sort(([, a], [, b]) => (b.priority || 0) - (a.priority || 0));
+    
+    for (const [fieldPath, fieldConfig] of fields) {
+      // Check condition if specified
+      if (fieldConfig.condition && !fieldConfig.condition(error)) {
+        continue;
+      }
+      
+      // Get field value using dot notation (e.g., 'error.stack')
+      const value = this.getNestedValue(error, fieldPath);
+      if (value !== undefined && value !== null && value !== '') {
+        const formatter = format === 'html' ? fieldConfig.htmlFormatter : fieldConfig.textFormatter;
+        details.push(formatter(value, fieldPath));
+      }
+    }
+    
+    return details;
+  }
+
+  // Helper to get nested object values using dot notation
+  private getNestedValue(obj: any, path: string): any {
+    return path.split('.').reduce((current, key) => current?.[key], obj);
+  }
+
+  // Fallback formatter for unknown error types or manual errors
+  private formatGenericErrorDetails(error: StoredError, format: 'html' | 'text'): string[] {
+    const details: string[] = [];
+    const commonFields = ['filename', 'lineno', 'colno', 'stack'];
+    
+    // Handle common fields
+    for (const field of commonFields) {
+      const value = (error as any)[field];
+      if (value !== undefined && value !== null && value !== '') {
+        if (format === 'html') {
+          if (field === 'stack') {
+            details.push(`<div class="mb-3"><div class="mb-2"><strong>${this.capitalize(field)}:</strong></div><pre class="text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed">${value}</pre></div>`);
+          } else {
+            details.push(`<div class="mb-2"><strong>${this.capitalize(field)}:</strong> ${value}</div>`);
+          }
+        } else {
+          details.push(`${this.capitalize(field)}: ${value}`);
+        }
+      }
+    }
+    
+    // Handle any additional properties for manual errors
+    if (error.type === 'manual') {
+      for (const [key, value] of Object.entries(error)) {
+        if (!['id', 'message', 'type', 'timestamp', ...commonFields].includes(key) && value !== undefined && value !== null && value !== '') {
+          if (format === 'html') {
+            const formattedValue = typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value);
+            if (typeof value === 'object') {
+              details.push(`<div class="mb-3"><div class="mb-2"><strong>${this.capitalize(key)}:</strong></div><pre class="text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed">${formattedValue}</pre></div>`);
+            } else {
+              details.push(`<div class="mb-2"><strong>${this.capitalize(key)}:</strong> ${formattedValue}</div>`);
+            }
+          } else {
+            const formattedValue = typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value);
+            details.push(`${this.capitalize(key)}: ${formattedValue}`);
+          }
+        }
+      }
+    }
+    
+    return details;
+  }
+
+  // Helper to capitalize first letter
+  private capitalize(str: string): string {
+    return str.charAt(0).toUpperCase() + str.slice(1);
   }
 
   formatTechnicalDetails(error: StoredError): string {
-    const details = [];
-
-    details.push(`<div><strong>Page URL:</strong> ${window.location.href}</div>`);
-
-    // For ActionCable errors, show channel-specific information
-    if (error.type === 'actioncable') {
-      if (error.channel) {
-        details.push(`<div><strong>Channel:</strong> ${error.channel}</div>`);
-      }
-      if (error.action) {
-        details.push(`<div><strong>Action:</strong> ${error.action}</div>`);
-      }
-      
-      // Show detailed ActionCable error data
-      if (error.details) {
-        details.push(`<div class="mb-1"><strong>Channel Error Details:</strong></div>`);
-        details.push(`<pre class="text-xs bg-gray-800 p-2 rounded overflow-x-auto whitespace-pre-wrap">${JSON.stringify(error.details, null, 2)}</pre>`);
-      }
-    }
-
-    // For fetch/network errors, show detailed HTTP information
-    if (error.type === 'http' || error.type === 'network') {
-      if (error.method) {
-        details.push(`<div><strong>Method:</strong> ${error.method}</div>`);
-      }
-      if (error.status) {
-        details.push(`<div><strong>Status Code:</strong> ${error.status}</div>`);
-      }
-      
-      // Show JSON error details if available
-      if (error.jsonError) {
-        details.push(`<div class="mb-1"><strong>JSON Error Details:</strong></div>`);
-        details.push(`<pre class="text-xs bg-gray-800 p-2 rounded overflow-x-auto whitespace-pre-wrap">${JSON.stringify(error.jsonError, null, 2)}</pre>`);
-      }
-      
-      // Show response body if available and different from JSON error
-      if (error.responseBody && (!error.jsonError || error.responseBody !== JSON.stringify(error.jsonError, null, 2))) {
-        details.push(`<div class="mb-1"><strong>Response Body:</strong></div>`);
-        details.push(`<pre class="text-xs bg-gray-800 p-2 rounded overflow-x-auto whitespace-pre-wrap">${error.responseBody}</pre>`);
-      }
-    }
-
-    if (error.lineno) {
-      details.push(`<div><strong>Line:</strong> ${error.lineno}</div>`);
-    }
-
-    if (error.error && error.error.stack) {
-      details.push(`<div class="mb-1"><strong>Stack Trace:</strong></div>`);
-      details.push(`<pre class="text-xs bg-gray-800 p-2 rounded overflow-x-auto whitespace-pre-wrap">${error.error.stack}</pre>`);
-    }
-
+    const details = [`<div><strong>Page URL:</strong> ${window.location.href}</div>`];
+    
+    // Use the unified formatting system
+    const typeSpecificDetails = this.formatErrorDetails(error, 'html');
+    details.push(...typeSpecificDetails);
+    
     return details.join('');
   }
 
@@ -745,48 +1002,14 @@ ${error.message}
 
 Technical Details:`;
 
-      // Add ActionCable specific details
-      if (error.type === 'actioncable') {
-        if (error.channel) {
-          report += `\nChannel: ${error.channel}`;
-        }
-        if (error.action) {
-          report += `\nAction: ${error.action}`;
-        }
-        if (error.details) {
-          const detailsStr = JSON.stringify(error.details, null, 2);
-          report += `\nChannel Error Details:\n${this.truncateText(detailsStr, maxResponseBodyLength)}`;
-        }
-      }
-
-      // Add HTTP-specific details for fetch/network errors
-      if (error.type === 'http' || error.type === 'network') {
-        if (error.method) {
-          report += `\nMethod: ${error.method}`;
-        }
-        if (error.status) {
-          report += `\nStatus Code: ${error.status}`;
-        }
-        if (error.jsonError) {
-          const jsonStr = JSON.stringify(error.jsonError, null, 2);
-          report += `\nJSON Error Details:\n${this.truncateText(jsonStr, maxResponseBodyLength)}`;
-        }
-        if (error.responseBody && (!error.jsonError || error.responseBody !== JSON.stringify(error.jsonError, null, 2))) {
-          report += `\nResponse Body:\n${this.truncateText(error.responseBody, maxResponseBodyLength)}`;
-        }
-      }
-
-      // Add file and line info for JavaScript errors
-      if (error.filename) {
-        report += `\nFile: ${error.filename}`;
-      }
-      if (error.lineno) {
-        report += `\nLine: ${error.lineno}`;
-      }
-
-      // Add stack trace if available (truncated)
-      if (error.error && error.error.stack) {
-        report += `\nStack Trace:\n${this.truncateText(error.error.stack, maxResponseBodyLength)}`;
+      // Use the unified formatting system for text output
+      const typeSpecificDetails = this.formatErrorDetails(error, 'text');
+      if (typeSpecificDetails.length > 0) {
+        // Truncate long details to respect length limits
+        const truncatedDetails = typeSpecificDetails.map(detail => 
+          this.truncateText(detail, maxResponseBodyLength)
+        );
+        report += '\n' + truncatedDetails.join('\n');
       }
 
       // Add timestamp
@@ -822,46 +1045,10 @@ Page URL: ${window.location.href}
 Technical Details:
 ${error.message}`;
 
-    // Add ActionCable specific details
-    if (error.type === 'actioncable') {
-      if (error.channel) {
-        report += `\nChannel: ${error.channel}`;
-      }
-      if (error.action) {
-        report += `\nAction: ${error.action}`;
-      }
-      if (error.details) {
-        report += `\nChannel Error Details:\n${JSON.stringify(error.details, null, 2)}`;
-      }
-    }
-
-    // Add HTTP-specific details for fetch/network errors
-    if (error.type === 'http' || error.type === 'network') {
-      if (error.method) {
-        report += `\nMethod: ${error.method}`;
-      }
-      if (error.status) {
-        report += `\nStatus Code: ${error.status}`;
-      }
-      if (error.jsonError) {
-        report += `\nJSON Error Details:\n${JSON.stringify(error.jsonError, null, 2)}`;
-      }
-      if (error.responseBody && (!error.jsonError || error.responseBody !== JSON.stringify(error.jsonError, null, 2))) {
-        report += `\nResponse Body:\n${error.responseBody}`;
-      }
-    }
-
-    // Add file and line info for JavaScript errors
-    if (error.filename) {
-      report += `\nFile: ${error.filename}`;
-    }
-    if (error.lineno) {
-      report += `\nLine: ${error.lineno}`;
-    }
-
-    // Add stack trace if available
-    if (error.error && error.error.stack) {
-      report += `\n\nStack Trace:\n${error.error.stack}`;
+    // Use the unified formatting system for text output
+    const typeSpecificDetails = this.formatErrorDetails(error, 'text');
+    if (typeSpecificDetails.length > 0) {
+      report += '\n\n' + typeSpecificDetails.join('\n');
     }
 
     report += `\n\nPlease help me analyze and fix this issue.`;

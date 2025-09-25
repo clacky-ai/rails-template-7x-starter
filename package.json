@@ -4,18 +4,18 @@
   "scripts": {
     "build": "esbuild app/javascript/*.* --bundle --sourcemap=inline --format=esm --outdir=app/assets/builds --public-path=/assets --loader:.ts=ts --loader:.tsx=tsx",
     "watch:js": "esbuild app/javascript/*.* --bundle --sourcemap=inline --format=esm --outdir=app/assets/builds --public-path=/assets --watch --loader:.ts=ts --loader:.tsx=tsx",
-    "type-check": "tsc --noEmit",
-    "type-check:watch": "tsc --noEmit --watch",
     "build:css": "run-p build:css:*",
     "build:css:app": "postcss ./app/assets/stylesheets/application.css -o ./app/assets/builds/application.css",
     "build:css:admin": "postcss ./app/assets/stylesheets/admin.css -o ./app/assets/builds/admin.css",
     "watch:css": "run-p watch:css:*",
     "watch:css:app": "postcss ./app/assets/stylesheets/application.css -o ./app/assets/builds/application.css --map --watch",
     "watch:css:admin": "postcss ./app/assets/stylesheets/admin.css -o ./app/assets/builds/admin.css --map --watch",
-    "lint": "eslint app/javascript/**/*.ts",
-    "lint:fix": "eslint app/javascript/**/*.ts --fix",
-    "lint:watch": "eslint app/javascript/**/*.ts --watch",
-    "check": "run-p type-check lint"
+
+    "lint": "run-p lint:eslint lint:types",
+    "lint:eslint": "eslint app/javascript/**/*.ts",
+    "lint:types": "tsc --noEmit",
+    "type-check": "tsc --noEmit",
+    "lint:fix": "eslint app/javascript/**/*.ts --fix"
   },
   "dependencies": {
     "@hotwired/stimulus": "^3.2.2",

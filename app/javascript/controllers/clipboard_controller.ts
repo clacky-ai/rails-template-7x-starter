@@ -1,12 +1,10 @@
 import { Controller } from "@hotwired/stimulus"
 
-export default class extends Controller<HTMLElement> {
-  static targets = ["button"]
+export default class extends Controller<HTMLButtonElement> {
+  static targets: string[] = []
   static values = { text: String }
 
-  // Declare targets and values
-  declare readonly buttonTarget: HTMLButtonElement
-  declare readonly hasButtonTarget: boolean
+  // Declare values
   declare readonly textValue: string
 
   // Copy content to clipboard
@@ -37,6 +35,7 @@ export default class extends Controller<HTMLElement> {
       return
     }
 
+    console.log('Attempting to copy:', textToCopy)
     window.copyToClipboard(textToCopy).then(() => {
       this.showSuccess()
     }).catch(_error => {
@@ -46,15 +45,13 @@ export default class extends Controller<HTMLElement> {
 
   // Show success feedback
   private showSuccess(): void {
-    if (!this.hasButtonTarget) return
-
-    const button = this.buttonTarget
+    const button = this.element
     const originalText = button.innerHTML
     const originalClass = button.className
 
     // Show success state
     button.innerHTML = 'Copied!'
-    button.className = 'border border-green-600 text-green-600 hover:bg-green-50 font-medium py-1 px-3 rounded text-sm transition-colors'
+    button.className = 'btn btn-success btn-sm'
 
     // Restore original state after 2 seconds
     setTimeout(() => {
@@ -65,15 +62,13 @@ export default class extends Controller<HTMLElement> {
 
   // Show failure feedback
   private showFailure(): void {
-    if (!this.hasButtonTarget) return
-
-    const button = this.buttonTarget
+    const button = this.element
     const originalText = button.innerHTML
     const originalClass = button.className
 
     // Show failure state
     button.innerHTML = 'Copy Failed!'
-    button.className = 'border border-red-600 text-red-600 hover:bg-red-50 font-medium py-1 px-3 rounded text-sm transition-colors'
+    button.className = 'btn btn-danger btn-sm'
 
     // Restore original state after 2 seconds
     setTimeout(() => {
@@ -82,26 +77,4 @@ export default class extends Controller<HTMLElement> {
     }, 2000)
   }
 
-  // Fallback copy method
-  private fallbackCopy(text: string): void {
-    const textArea = document.createElement('textarea')
-    textArea.value = text
-    textArea.style.position = 'fixed'
-    textArea.style.opacity = '0'
-    document.body.appendChild(textArea)
-    textArea.select()
-
-    try {
-      const success = document.execCommand('copy')
-      document.body.removeChild(textArea)
-      if (success) {
-        this.showSuccess()
-      } else {
-        this.showFailure()
-      }
-    } catch (_error) {
-      document.body.removeChild(textArea)
-      this.showFailure()
-    }
-  }
 }
