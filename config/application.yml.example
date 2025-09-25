@@ -1,10 +1,14 @@
 # Use `rake secret` to generate one key, Only needed in production environment
 SECRET_KEY_BASE: ''
 
-# Your published app's HOST, Used by emailer/payment in production environment
-DOMAIN: ''
-# Your published app's PROTOCOL, Used by emailer/payment in production environment
-PROTOCOL: 'https'
+APP_PORT: '3000'
 
 # Browser base title
 APPNAME: 'ClackyAI APP'
+
+# SMTP
+SMTP_ADDRESS: '<%= ENV.fetch("CLACKY_EMAIL_SMTP_ADDRESS") %>'
+SMTP_PORT: '<%= ENV.fetch("CLACKY_EMAIL_SMTP_PORT") %>'
+SMTP_USERNAME: '<%= ENV.fetch("CLACKY_EMAIL_SMTP_USERNAME") %>'
+SMTP_PASSWORD: '<%= ENV.fetch("CLACKY_EMAIL_API_KEY") %>'
+SMTP_DOMAIN: '<%= ENV.fetch("CLACKY_EMAIL_SMTP_DOMAIN") %>'

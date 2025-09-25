@@ -36,8 +36,8 @@ class StripePaymentService < ApplicationService
         ],
         mode: 'payment',
         customer_email: order.customer_email,
-        success_url: success_order_url(order, host: default_host, protocol: default_protocol),
-        cancel_url: failure_order_url(order, host: default_host, protocol: default_protocol),
+        success_url: success_order_url(order, only_path: false),
+        cancel_url: failure_order_url(order, only_path: false),
         metadata: {
           order_id: order.id,
           customer_email: order.customer_email,
@@ -106,30 +106,6 @@ class StripePaymentService < ApplicationService
   end
 
   private
-
-  def default_host
-    if not Rails.env.production?
-      if not @request.present?
-        raise "Got default_host for payment callback url failed, You Must pass `request` to initialize function"
-      end
-      return "#{@request.host}:#{@request.port}"
-    else
-      return ENV['DOMAIN'] if ENV['DOMAIN'].present?
-      raise 'No `DOMAIN` environment variable found, stripe payment callback url failed'
-    end
-  end
-
-  def default_protocol
-    if not Rails.env.production?
-      if not @request.present?
-        raise "Got default_protocol for payment callback url failed, You Must pass `request` to initialize function"
-      end
-      return @request.protocol
-    else
-      return ENV['PROTOCOL'] if ENV['PROTOCOL'].present?
-      raise 'No `PROTOCOL` environment variable found, stripe payment callback url failed'
-    end
-  end
 
   def self.handle_checkout_success(checkout_session)
     order = Order.find_by(stripe_payment_intent_id: checkout_session['id'])
