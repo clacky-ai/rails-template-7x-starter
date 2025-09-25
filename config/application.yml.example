@@ -2,9 +2,7 @@
 SECRET_KEY_BASE: ''
 
 # Set this value to generate email sending URLs and callback URLs
-CLACKY_PUBLIC_HOST: '<%= if ENV["CLACKY_PUBLIC_HOST"].blank? and ENV["CLACKY_PREVIEW_DOMAIN_BASE"].present? then '#{ENV["APP_PORT"] + ENV["CLACKY_PREVIEW_DOMAIN_BASE"]}' else ENV.fetch("CLACKY_PUBLIC_HOST") end %>'
-
-APP_PORT: '3000'
+CLACKY_PUBLIC_HOST: '<%= if ENV["CLACKY_PUBLIC_HOST"].blank? and ENV["CLACKY_PREVIEW_DOMAIN_BASE"].present? then ENV.fetch("APP_PORT", "3000") + ENV.fetch("CLACKY_PREVIEW_DOMAIN_BASE") else ENV.fetch("CLACKY_PUBLIC_HOST") end %>'
 
 # Browser base title
 APPNAME: 'ClackyAI APP'

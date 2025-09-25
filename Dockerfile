@@ -14,8 +14,7 @@ RUN npm install
 ENV NODE_ENV="production" \
   PATH="${PATH}:/home/ruby/.local/bin:/node_modules/.bin:/usr/local/bundle/bin" \
   USER="ruby" \
-  APP_PORT="3000" \
-  PORT="${APP_PORT}"
+  PORT="3000"
 
 WORKDIR /rails
 # Copy application code
