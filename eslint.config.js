@@ -21,8 +21,8 @@ module.exports = [
       },
     },
     rules: {
-      '@typescript-eslint/no-unused-vars': ['error', { 
-        argsIgnorePattern: '^_', 
+      '@typescript-eslint/no-unused-vars': ['error', {
+        argsIgnorePattern: '^_',
         varsIgnorePattern: '^_',
         caughtErrorsIgnorePattern: '^_'
       }],
@@ -82,8 +82,6 @@ module.exports = [
       'test/',
       '**/*.config.js',
       '**/*.min.js',
-      'node_modules/**/*.d.ts',
-      'app/assets/builds/**/*.d.ts',
     ],
   },
 ]

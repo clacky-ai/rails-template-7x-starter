@@ -1,7 +1,7 @@
 import { Controller } from '@hotwired/stimulus'
 
 export default class extends Controller<HTMLElement> {
-  static targets = ['menu'] as const
+  static targets: string[] = ['menu']
 
   declare readonly menuTarget: HTMLElement
 
