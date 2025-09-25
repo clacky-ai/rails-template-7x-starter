@@ -14,7 +14,8 @@ RUN npm install
 ENV NODE_ENV="production" \
   PATH="${PATH}:/home/ruby/.local/bin:/node_modules/.bin:/usr/local/bundle/bin" \
   USER="ruby" \
-  PORT="3000"
+  APP_PORT="3000" \
+  PORT="${APP_PORT}"
 
 WORKDIR /rails
 # Copy application code
@@ -25,4 +26,5 @@ RUN SECRET_KEY_BASE_DUMMY=1 bundle exec rails assets:precompile
 ENTRYPOINT ["/rails/bin/docker-entrypoint"]
 
 # Start the server by default, this can be overwritten at runtime
+EXPOSE ${PORT}
 CMD ["./bin/rails", "server"]
