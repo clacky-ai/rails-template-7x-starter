@@ -10,6 +10,7 @@ Figaro
 PostgreSQL
 Active_Storage for upload file
 Kaminari
+FriendlyId (for SEO-friendly URLs)
 Puma
 RSpec
 RailsUjs( no turo/turbolinks )
@@ -37,6 +38,8 @@ Restarting project is unnecessary because Rails automatically hot-reloads code c
 If there are rgb colors in index.css, make sure to not use them in tailwind.config.js wrapped in hsl functions as this will create wrong colors
 
 CRITICAL: USE SEMANTIC TOKENS FOR COLORS, GRADIENTS, FONTS, ETC. It's important you follow best practices. DO NOT use direct colors like text-white, text-black, bg-white, bg-black, etc. Everything must be themed via the design system defined in the `application.css` and `tailwind.config.js` files!
+
+**NEVER use `@apply group` in CSS** - `group` class should only be added in HTML templates, not in CSS @apply directives.
 
 Pay attention to contrast, color, and typography.
 
@@ -91,9 +94,15 @@ Use `rails generate controller xxx [action1] [action2] [--auth] [--single]` (whe
 
 Use `rails generate channel xxx [action1] [action2] [--auth]` to create ActionCable channels. --auth option adds user authentication support (enables current_user method, adds authentication tests).
 
-**URL Handling Policy:** Do not use `to_param` in model, no need friendly url, no need slug, always using `id: params[:id]`. *Explanation: Custom `to_param` methods add complexity and can cause routing errors. Use simple integer IDs to keep code straightforward.*
+Use `rails generate stimulus_controller xxx` to create new Stimulus controllers with TypeScript support. 
 
-ALWAYS prefer TailwindCSS v3 and pure CSS for UI components (e.g., tabs, dropdowns), and minimize pure JavaScript usage.
+Use FriendlyId (already configured) if need slug URLs. For user-facing content use `friendly_id :title, use: :slugged`, for admin/API use simple IDs.
+
+## 🎯 FRONTEND DEVELOPMENT RULES - STIMULUS + TYPESCRIPT
+
+**MANDATORY**: ALL frontend interactions MUST use Stimulus controllers. NO inline JavaScript allowed.
+
+ALWAYS prefer TailwindCSS v3 and Stimulus controllers for UI behavior. NO pure JavaScript or jQuery allowed.
 
 Every form should include error messages using the shared partial. Add `<%= render 'shared/error_messages', model: @your_model %>` at the beginning of every form for consistent error display. Never write nested form.
 
@@ -116,6 +125,13 @@ Use `bundle exec rspec spec/requests/xxx_spec.rb --format documentation`( not -v
 
 Temporary files should be written in the `tmp` directory.
 
+
+## Code Quality
+
+**COMMENTS:**
+- Minimal comments, focus on self-documenting code
+- English only, explain WHY not WHAT
+- No obvious comments that repeat the code
 
 ## Some files never edit
 

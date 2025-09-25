@@ -58,11 +58,13 @@ interface ManualErrorInfo extends BaseErrorInfo {
 interface StimulusErrorInfo extends BaseErrorInfo {
   type: 'stimulus';
   missingControllers?: string[];
+  missingTargets?: string[];
   suggestion?: string;
   details?: any;
-  subType?: 'missing-controller' | 'scope-error' | 'positioning-issues' | 'action-click';
+  subType?: 'missing-controller' | 'scope-error' | 'positioning-issues' | 'action-click' | 'missing-target' | 'missing-action' | 'method-not-found';
   controllerName?: string;
   action?: string;
+  methodName?: string;
   elementInfo?: any;
   positioningIssues?: string[];
 }
@@ -503,8 +505,30 @@ class ErrorHandler {
   }
 
   setupGlobalErrorHandlers() {
-    // Capture uncaught JavaScript errors
+    // Set window.onerror for compatibility with libraries like Stimulus that check for its existence
+    if (!window.onerror) {
+      window.onerror = (message: string | Event, source?: string, lineno?: number, colno?: number, error?: Error) => {
+        this.handleError({
+          message: typeof message === 'string' ? message : 'Script error',
+          filename: source,
+          lineno: lineno,
+          colno: colno,
+          error: error,
+          type: this.isInteractionError ? 'interaction' : 'javascript',
+          timestamp: new Date().toISOString()
+        });
+        return true; // Prevent default browser error handling
+      };
+    }
+
+    // Also use addEventListener for additional error capture capabilities
     window.addEventListener('error', (event) => {
+      // Only handle if not already handled by window.onerror
+      if (window.onerror && typeof window.onerror === 'function') {
+        // window.onerror already handled this, but we can add additional processing if needed
+        return;
+      }
+      
       this.handleError({
         message: event.message,
         filename: event.filename,
