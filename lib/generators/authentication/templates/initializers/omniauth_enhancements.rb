@@ -8,13 +8,17 @@ module OmniAuth
 
     # Override provider method to add automatic OAuth configuration functionality
     def provider(klass, *args, **opts, &block)
+      # Normalize options: merge positional hash (if any) with keyword opts
+      positional_options = args.last.is_a?(Hash) ? args.pop : {}
+      user_opts = positional_options.deep_merge(opts)
+
       # Check if it's a supported OAuth provider
       if clacky_env_provided? and oauth_provider?(klass)
         # Enhance OAuth provider configuration
-        enhance_oauth_provider(klass, args, opts, &block)
+        enhance_oauth_provider(klass, args, user_opts, &block)
       else
-        # Use the original provider method
-        original_provider(klass, *args, **opts, &block)
+        # Use the original provider method (preserve call shape)
+        original_provider(klass, *args, **user_opts, &block)
       end
     end
 
@@ -61,7 +65,8 @@ module OmniAuth
 
       # Check if using Clacky Auth
       if using_clacky_auth?(client_id)
-        opts = opts.merge(clacky_auth_options(klass, client_id))
+        # Deep merge so nested hashes like client_options are merged instead of overwritten
+        opts = opts.deep_merge(clacky_auth_options(klass, client_id))
       end
 
       opts
