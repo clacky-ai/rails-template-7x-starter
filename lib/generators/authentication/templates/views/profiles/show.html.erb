@@ -87,7 +87,7 @@
               Security Settings
             </h2>
 
-            <% unless @user.verified? %>
+            <% unless @user.verified? or @user.email_was_generated? %>
               <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg mb-4">
                 <div class="flex">
                   <svg class="w-5 h-5 text-blue-400 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
