@@ -226,9 +226,10 @@ class StimulusValidator {
       const actions = actionElement.getAttribute('data-action')?.split(' ') || [];
       
       actions.forEach(action => {
-        const controllerMatch = action.match(/([\w-]+)#\w+/);
+        const controllerMatch = action.match(/([\w-]+)#([\w-]+)/);
         if (controllerMatch) {
           const controllerName = controllerMatch[1];
+          const methodName = controllerMatch[2];
           
           // 检查控制器是否存在
           if (!this.registeredControllers.has(controllerName)) {
@@ -240,7 +241,11 @@ class StimulusValidator {
           const controllerElement = actionElement.closest(`[data-controller*="${controllerName}"]`);
           if (!controllerElement) {
             this.reportMissingControllerScope(controllerName, action, actionElement);
+            return;
           }
+
+          // 检查方法是否存在
+          this.checkMethodExists(controllerName, methodName, action, actionElement);
         }
       });
     }, true); // 使用 capture 阶段确保能拦截到
@@ -286,6 +291,73 @@ class StimulusValidator {
           elementInfo: this.getElementInfo(element),
           description: 'Action element is not within the scope of its target controller',
           solution: `Wrap the element with <div data-controller="${controllerName}">...</div>`
+        }
+      });
+    }
+  }
+
+  private checkMethodExists(controllerName: string, methodName: string, action: string, element: Element): void {
+    try {
+      // Get the actual controller instance from Stimulus
+      const stimulus = window.Stimulus as any;
+      if (stimulus?.router?.modulesByIdentifier) {
+        const module = stimulus.router.modulesByIdentifier.get(controllerName);
+        if (module) {
+          const controllerClass = module.definition.controllerConstructor;
+          const instance = new controllerClass();
+          
+          // Check if method exists and is callable
+          if (typeof instance[methodName] !== 'function') {
+            this.reportMissingMethod(controllerName, methodName, action, element);
+          }
+        }
+      }
+    } catch (error) {
+      // If we can't instantiate the controller, try alternative approach
+      this.checkMethodExistsAlternative(controllerName, methodName, action, element);
+    }
+  }
+
+  private checkMethodExistsAlternative(controllerName: string, methodName: string, action: string, element: Element): void {
+    // Try to get controller constructor directly
+    try {
+      const stimulus = window.Stimulus as any;
+      if (stimulus?.router?.modulesByIdentifier) {
+        const module = stimulus.router.modulesByIdentifier.get(controllerName);
+        if (module) {
+          const controllerClass = module.definition.controllerConstructor;
+          
+          // Check prototype for method
+          if (!controllerClass.prototype[methodName] || typeof controllerClass.prototype[methodName] !== 'function') {
+            this.reportMissingMethod(controllerName, methodName, action, element);
+          }
+        }
+      }
+    } catch (error) {
+      console.warn(`Could not validate method existence for ${controllerName}#${methodName}:`, error);
+    }
+  }
+
+  private reportMissingMethod(controllerName: string, methodName: string, action: string, element: Element): void {
+    if (window.errorHandler) {
+      window.errorHandler.handleError({
+        message: `User clicked action "${action}" but method "${methodName}" does not exist in controller "${controllerName}"`,
+        type: 'stimulus',
+        subType: 'method-not-found',
+        controllerName,
+        methodName,
+        action,
+        elementInfo: this.getElementInfo(element),
+        timestamp: new Date().toISOString(),
+        suggestion: `Add method "${methodName}" to the ${controllerName} controller or fix the action name`,
+        details: {
+          errorType: 'Method Not Found',
+          controllerName,
+          methodName,
+          action,
+          elementInfo: this.getElementInfo(element),
+          description: `The method "${methodName}" was called but does not exist in the controller`,
+          solution: `Add the method to your controller:\n\n${methodName}(): void {\n  // Your implementation here\n}`
         }
       });
     }
