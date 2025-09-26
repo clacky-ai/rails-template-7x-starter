@@ -47,13 +47,15 @@ Rails.application.configure do
     config.action_mailer.default_url_options = { host: ENV.fetch("CLACKY_PUBLIC_HOST"), port: "443", protocol: "https" }
   end
 
-  config.action_mailer.smtp_settings = {
-    address: ENV.fetch("SMTP_ADDRESS"),
-    port: ENV.fetch("SMTP_PORT"),
-    user_name: ENV.fetch("SMTP_USERNAME"),
-    password: ENV.fetch("SMTP_PASSWORD")
-  }
-  config.action_mailer.delivery_method = :smtp
+  if ENV["SMTP_PASSWORD"].present?
+    config.action_mailer.smtp_settings = {
+      address: ENV.fetch("SMTP_ADDRESS"),
+      port: ENV.fetch("SMTP_PORT"),
+      user_name: ENV.fetch("SMTP_USERNAME"),
+      password: ENV.fetch("SMTP_PASSWORD")
+    }
+    config.action_mailer.delivery_method = :smtp
+  end
 
   # Assume all access to the app is happening through a SSL-terminating reverse proxy.
   # Can be used together with config.force_ssl for Strict-Transport-Security and secure cookies.
@@ -86,8 +88,8 @@ Rails.application.configure do
   # config.active_job.queue_name_prefix = "myapp_production"
 
   # Configure GoodJob for production
-  config.good_job.execution_mode = :external
-  config.good_job.max_threads = 10
+  config.good_job.execution_mode = :async
+  config.good_job.max_threads = 4
   config.good_job.poll_interval = 10
   config.good_job.shutdown_timeout = 25
   config.good_job.enable_cron = true
