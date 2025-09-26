@@ -62,7 +62,6 @@ Rails.application.configure do
     port: ENV.fetch("SMTP_PORT"),
     user_name: ENV.fetch("SMTP_USERNAME"),
     password: ENV.fetch("SMTP_PASSWORD"),
-    domain: ENV.fetch("SMTP_DOMAIN"),
     tls: true
   }
   config.action_mailer.delivery_method = :smtp
