@@ -271,18 +271,29 @@ class StimulusValidator {
 
           const definedTargets = controllerClass.targets || [];
           const missingTargets: string[] = [];
+          const outOfScopeTargets: string[] = [];
 
           definedTargets.forEach((targetName: string) => {
             const targetSelector = `[data-${controllerName}-target="${targetName}"]`;
             const targetElement = controllerElement.querySelector(targetSelector);
 
             if (!targetElement) {
-              missingTargets.push(targetName);
+              // Check if target exists globally but outside controller scope
+              const globalTargetElement = document.querySelector(targetSelector);
+              if (globalTargetElement) {
+                outOfScopeTargets.push(targetName);
+              } else {
+                missingTargets.push(targetName);
+              }
             }
           });
 
           if (missingTargets.length > 0) {
             this.reportMissingTargets(controllerName, missingTargets, controllerElement);
+          }
+
+          if (outOfScopeTargets.length > 0) {
+            this.reportOutOfScopeTargets(controllerName, outOfScopeTargets, controllerElement);
           }
         }
       }
@@ -378,6 +389,31 @@ class StimulusValidator {
           elementInfo: this.getElementInfo(controllerElement),
           description: `The controller "${controllerName}" defines targets [${targetList}] but these elements are not found in the DOM within the controller scope`,
           solution: `Add the missing target elements:\n\n${targetExamples}\n\nMake sure they are inside the controller element: <div data-controller="${controllerName}">...</div>`
+        }
+      });
+    }
+  }
+
+  private reportOutOfScopeTargets(controllerName: string, outOfScopeTargets: string[], controllerElement: Element): void {
+    if (window.errorHandler) {
+      const targetList = outOfScopeTargets.join(', ');
+
+      window.errorHandler.handleError({
+        message: `Stimulus controller "${controllerName}" targets exist but are outside controller scope: ${targetList}`,
+        type: 'stimulus',
+        subType: 'target-scope-error',
+        controllerName,
+        outOfScopeTargets,
+        elementInfo: this.getElementInfo(controllerElement),
+        timestamp: new Date().toISOString(),
+        suggestion: `Move target elements inside controller scope or expand controller scope to include targets`,
+        details: {
+          errorType: 'Targets Outside Controller Scope',
+          controllerName,
+          outOfScopeTargets,
+          elementInfo: this.getElementInfo(controllerElement),
+          description: `The controller "${controllerName}" defines targets [${targetList}] and these elements exist in the DOM but are outside the controller scope`,
+          solution: `Either move the target elements inside the controller scope, or expand the controller scope to include the targets by moving the data-controller attribute to a parent element that contains both the controller logic and the target elements.`
         }
       });
     }

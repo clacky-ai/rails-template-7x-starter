@@ -39,7 +39,14 @@ class ControllerGenerator < Rails::Generators::NamedBase
     end
 
     if protected_controller_names.include?(plural_name)
-      say "Error: Cannot generate controller for '#{plural_name}' as it conflicts with authentication system.", :red
+      conflict_reason = case plural_name
+                       when 'tmp', 'tmps'
+                         "as it conflicts with development middleware and temporary file system"
+                       else
+                         "as it conflicts with authentication system"
+                       end
+      
+      say "Error: Cannot generate controller for '#{plural_name}' #{conflict_reason}.", :red
       say "The following controller names are protected:", :yellow
       protected_controller_names.each { |name| say "  - #{name}", :yellow }
       say "\nSolutions:", :blue
@@ -158,8 +165,9 @@ class ControllerGenerator < Rails::Generators::NamedBase
       passwords
       profiles
       invitations
-      omniauth
+      omniauths
       orders
+      tmps
     ]
   end
 

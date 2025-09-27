@@ -1,36 +1,34 @@
 import { Controller } from "@hotwired/stimulus"
 
-export default class extends Controller<HTMLButtonElement> {
-  static targets: string[] = []
-  static values = { text: String }
+/*
+ * Clipboard Controller
+ *
+ * Usage:
+ * <div data-controller="clipboard">
+ *   <input data-clipboard-target="source" value="text to copy">
+ *   <button data-action="click->clipboard#copy">Copy</button>
+ * </div>
+ */
+export default class extends Controller<HTMLElement> {
+  static targets = ["source"]
 
-  // Declare values
-  declare readonly textValue: string
+  // Declare targets
+  declare readonly sourceTarget: HTMLInputElement
 
   // Copy content to clipboard
   copy(event: Event): void {
     event.preventDefault()
 
-    // Decode escaped text from Rails (reverse of `j` helper)
-    let textToCopy = this.textValue
-    if (textToCopy) {
-      textToCopy = textToCopy
-        .replace(/\\n/g, '\n')        // Convert \\n back to \n
-        .replace(/\\r/g, '\r')        // Convert \\r back to \r
-        .replace(/\\t/g, '\t')        // Convert \\t back to \t
-        .replace(/\\"/g, '"')         // Convert \\" back to "
-        .replace(/\\'/g, "'")         // Convert \\' back to '
-        .replace(/\\\\/g, '\\')       // Convert \\\\ back to \\ (must be last)
-    }
+    const textToCopy = this.sourceTarget.value
 
     if (!textToCopy) {
-      console.error('no textToCopy')
+      console.error('No text to copy found')
       this.showFailure()
       return
     }
 
     if (!window.copyToClipboard) {
-      console.error('no window.copyToClipboard')
+      console.error('window.copyToClipboard not available')
       this.showFailure()
       return
     }
@@ -45,13 +43,13 @@ export default class extends Controller<HTMLButtonElement> {
 
   // Show success feedback
   private showSuccess(): void {
-    const button = this.element
+    const button = this.getButton()
     const originalText = button.innerHTML
     const originalClass = button.className
 
     // Show success state
     button.innerHTML = 'Copied!'
-    button.className = 'btn btn-success btn-sm'
+    button.className = originalClass.replace(/btn-\w+/, 'btn-success')
 
     // Restore original state after 2 seconds
     setTimeout(() => {
@@ -62,19 +60,31 @@ export default class extends Controller<HTMLButtonElement> {
 
   // Show failure feedback
   private showFailure(): void {
-    const button = this.element
+    const button = this.getButton()
     const originalText = button.innerHTML
     const originalClass = button.className
 
     // Show failure state
     button.innerHTML = 'Copy Failed!'
-    button.className = 'btn btn-danger btn-sm'
+    button.className = originalClass.replace(/btn-\w+/, 'btn-danger')
 
     // Restore original state after 2 seconds
     setTimeout(() => {
       button.innerHTML = originalText
       button.className = originalClass
     }, 2000)
+  }
+
+  // Get the button to show feedback on
+  private getButton(): HTMLElement {
+    // Look for a button within the controller scope
+    const button = this.element.querySelector('button')
+    if (button) {
+      return button
+    }
+
+    // Fall back to controller element if it's a button
+    return this.element
   }
 
 }
