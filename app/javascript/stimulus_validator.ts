@@ -273,7 +273,15 @@ class StimulusValidator {
           const missingTargets: string[] = [];
           const outOfScopeTargets: string[] = [];
 
+          // Get optional targets by checking for hasXXXTarget properties
+          const optionalTargets = this.getOptionalTargets(controllerClass);
+
           definedTargets.forEach((targetName: string) => {
+            // Skip validation for optional targets
+            if (optionalTargets.has(targetName)) {
+              return;
+            }
+
             const targetSelector = `[data-${controllerName}-target="${targetName}"]`;
             const targetElement = controllerElement.querySelector(targetSelector);
 
@@ -300,6 +308,33 @@ class StimulusValidator {
     } catch (error) {
       console.warn(`Could not validate targets for controller ${controllerName}:`, error);
     }
+  }
+
+  private getOptionalTargets(controllerClass: any): Set<string> {
+    const optionalTargets = new Set<string>();
+
+    try {
+      // Get defined targets
+      const definedTargets = controllerClass.targets || [];
+
+      definedTargets.forEach((targetName: string) => {
+        // Convert target name to hasXXXTarget property name
+        const capitalizedTarget = targetName.charAt(0).toUpperCase() + targetName.slice(1);
+        const hasTargetProperty = `has${capitalizedTarget}Target`;
+
+        // Check if hasXXXTarget is declared as a property on the class
+        // This indicates the target is optional
+        if (hasTargetProperty in controllerClass.prototype ||
+            Object.getOwnPropertyDescriptor(controllerClass.prototype, hasTargetProperty) ||
+            Object.hasOwnProperty.call(controllerClass.prototype, hasTargetProperty)) {
+          optionalTargets.add(targetName);
+        }
+      });
+    } catch (error) {
+      console.warn('Could not analyze controller for optional targets:', error);
+    }
+
+    return optionalTargets;
   }
 
   private validateElementPositioning(controllerElement: Element): void {
@@ -380,15 +415,14 @@ class StimulusValidator {
         missingTargets,
         elementInfo: this.getElementInfo(controllerElement),
         timestamp: new Date().toISOString(),
-        suggestion: `Add the required target elements to the DOM within the controller scope`,
+        suggestion: `Add the required target elements to the DOM within the controller scope, or make them optional by adding 'declare readonly has${missingTargets.map(t => t.charAt(0).toUpperCase() + t.slice(1)).join('Target: boolean, declare readonly has')}Target: boolean' to the controller`,
         details: {
           errorType: 'Missing Required Targets',
           controllerName,
           missingTargets,
           requiredElements: targetExamples,
           elementInfo: this.getElementInfo(controllerElement),
-          description: `The controller "${controllerName}" defines targets [${targetList}] but these elements are not found in the DOM within the controller scope`,
-          solution: `Add the missing target elements:\n\n${targetExamples}\n\nMake sure they are inside the controller element: <div data-controller="${controllerName}">...</div>`
+          description: `The controller "${controllerName}" defines targets [${targetList}] but these elements are not found in the DOM within the controller scope`
         }
       });
     }

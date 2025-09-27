@@ -48,7 +48,7 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
       content = File.read(view_file)
       relative_path = view_file.sub(Rails.root.to_s + '/', '')
 
-      content.scan(/render\s+['"]([^'"]+)['"]/) do |match|
+      content.scan(/render\s+(?:partial:\s*)?['"]([^'"]+)['"]/) do |match|
         partial_name = match[0]
 
         if partial_name.include?('/')
@@ -283,7 +283,7 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
           error_details << "Method error: #{error[:controller]}##{error[:method]} in #{error[:file]} - #{error[:suggestion]}"
         end
 
-        expect(total_errors).to eq(0), "Stimulus validation failed:\n#{error_details.join("\n")}\n\nNote: The above results are from static code analysis. Suggestions are for reference only."
+        expect(total_errors).to eq(0), "Stimulus validation failed:\n#{error_details.join("\n")}"
       end
     end
   end
