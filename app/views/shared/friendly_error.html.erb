@@ -36,15 +36,15 @@
         
         formatted_error_text = error_text.join("\n")
       %>
-      <div class="mb-8 text-left" 
-           data-controller="clipboard"
-           data-clipboard-text-value="<%= j formatted_error_text %>">
+      <div class="mb-8 text-left" data-controller="clipboard">
         <div class="card shadow-lg">
           <div class="card-body">
             <div class="flex items-center justify-between mb-4">
               <h3 class="text-base font-medium text-gray-900">Development Debug Info</h3>
-              <button type="button" 
-                      data-clipboard-target="button"
+              <input type="hidden"
+                     data-clipboard-target="source"
+                     value="<%= j formatted_error_text %>">
+              <button type="button"
                       data-action="click->clipboard#copy"
                       class="border border-blue-600 text-blue-600 hover:bg-blue-50 font-medium py-1 px-3 rounded text-sm transition-colors">
                 <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
