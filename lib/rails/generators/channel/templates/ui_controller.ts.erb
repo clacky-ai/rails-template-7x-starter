@@ -1,10 +1,22 @@
 import { Controller } from "@hotwired/stimulus"
 import consumer from "../channels/consumer"
 
+/**
+ * 🏗️ <%= file_name.camelize %> Controller - Handles WebSocket + UI for <%= file_name.humanize.downcase %>
+ * 
+ * ADD YOUR UI HERE:
+ * - static targets = ["messageInput", "messagesContainer", "sendButton"]
+ * - Add UI methods like sendMessage(), displayMessage()
+ * - Use channelReceived() to handle real-time updates
+ * 
+ * DON'T create separate controllers - extend this one!
+ * HTML: <div data-controller="<%= file_name.dasherize %>">...</div>
+ */
 export default class extends Controller<HTMLElement> {
   static targets = [
-    // Add your targets here, e.g.:
-    // "messageInput", "messagesContainer", "sendButton"
+    // 💡 EXAMPLE: Common targets for your UI
+    // "messageInput",     // <input data-<%= file_name.dasherize %>-target="messageInput">
+    // "messagesContainer" // <div data-<%= file_name.dasherize %>-target="messagesContainer">
   ] as const
 
   static values = {
@@ -29,6 +41,19 @@ export default class extends Controller<HTMLElement> {
   disconnect(): void {
     console.log("<%= file_name.camelize %> controller disconnected")
     this.destroySubscription()
+  }
+
+  // 🎮 ADD YOUR UI METHODS HERE
+  // Example: data-action="click-><%= file_name.dasherize %>#sendMessage"
+  sendMessage(event: Event): void {
+    // TODO: Get input content, send via WebSocket, clear form
+    // Example: this.performAction('send_message', { content: input.value })
+  }
+
+  // 💡 UI HELPER METHODS - Add methods to update your interface
+  private displayMessage(messageData: any): void {
+    // TODO: Create message HTML element and add to container
+    // TODO: Scroll to bottom, update UI state
   }
 
   // WebSocket subscription management
@@ -105,6 +130,10 @@ export default class extends Controller<HTMLElement> {
       this.handleGlobalError(data)
       return
     }
+
+    // 💡 WEBSOCKET INTEGRATION - Handle real-time data here
+    // TODO: Call this.displayMessage(data) for new messages
+    // TODO: Update user lists, typing indicators, etc.
 
     // Handle different types of messages
     switch(data.type) {
