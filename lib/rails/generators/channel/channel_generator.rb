@@ -61,27 +61,17 @@ module Rails
 
       def show_completion_message
         say "\n"
-        say "Channel: app/channels/#{file_name}_channel.rb", :green
-        say "Stimulus Controller: app/javascript/controllers/#{file_name}_controller.ts", :green
-        say "Test: spec/channels/#{file_name}_channel_spec.rb", :green
-        say "Updated: app/javascript/controllers/index.ts (added import and registration)", :green
-        if requires_authentication?
-          say "Authentication: Enabled (--auth)", :cyan
-        else
-          say "Authentication: Disabled (use --auth to enable)", :yellow
-        end
+        say "✅ Generated #{file_name.camelize}Channel (WebSocket + UI controller)", :green
         say "\n"
-        say "Next steps:", :yellow
-        say "1. Add your custom logic to the channel methods", :blue
-        say "2. Add data-controller=\"#{file_name.dasherize}\" to your HTML element", :blue
-        say "3. Use data-action attributes to trigger channel methods", :blue
-        say "4. Access the channel subscription via this.subscription in the controller", :blue
+        say "🎯 This controller handles BOTH WebSocket AND UI interactions", :yellow
+        say "   Don't create additional #{file_name} controllers - extend this one!", :yellow
+        say "\n"
+        say "📝 Edit: app/javascript/controllers/#{file_name}_controller.ts", :blue
+        say "🧪 Test: bundle exec rspec spec/channels/#{file_name}_channel_spec.rb", :blue
         if requires_authentication?
-          say "5. Ensure ActionCable connection is configured for user authentication", :blue
-          say "6. Test your channel: bundle exec rspec spec/channels/#{file_name}_channel_spec.rb", :blue
+          say "🔐 Authentication: Enabled", :cyan
         else
-          say "5. Test your channel: bundle exec rspec spec/channels/#{file_name}_channel_spec.rb", :blue
-          say "6. Add --auth flag if you need user authentication support", :blue
+          say "🔓 Authentication: Disabled (use --auth to enable)", :yellow
         end
         say "\n"
       end

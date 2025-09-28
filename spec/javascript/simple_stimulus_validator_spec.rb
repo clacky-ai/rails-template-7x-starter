@@ -90,6 +90,149 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
     controllers.uniq
   end
 
+  def parse_action_string(action_string)
+    return [] unless action_string
+
+    actions = []
+
+    # Split by whitespace, but be careful about complex action strings
+    action_parts = action_string.scan(/\S+/)
+
+    action_parts.each do |action|
+      # Improved regex to handle more action formats
+      if match = action.match(/^(?:(\w+(?:\.\w+)*)->)?(\w+(?:-\w+)*)#(\w+)(?:@\w+)?$/)
+        event, controller_name, method_name = match[1], match[2], match[3]
+        actions << {
+          action: action,
+          event: event,
+          controller: controller_name,
+          method: method_name
+        }
+      end
+    end
+
+    actions
+  end
+
+  def parse_erb_actions(content, relative_path)
+    actions = []
+
+    # Parse data: { action: "..." } syntax across multiple lines
+    erb_action_pattern = /data:\s*\{[^}]*action:\s*["']([^"']+)["'][^}]*\}/m
+
+    # Find all matches in the entire content
+    content.scan(erb_action_pattern) do |match|
+      action_value = match[0]
+
+      # Find which line this action starts on by looking for the action value
+      lines = content.split("\n")
+      action_line_number = nil
+
+      lines.each_with_index do |line, index|
+        if line.include?(action_value)
+          action_line_number = index + 1
+          break
+        end
+      end
+
+      action_line_number ||= 1 # fallback
+
+      # Parse the action string which may contain multiple actions
+      parsed_actions = parse_action_string(action_value)
+
+      parsed_actions.each do |action_info|
+        actions << {
+          element: nil, # ERB actions don't have direct DOM elements
+          action: action_info[:action],
+          event: action_info[:event],
+          controller: action_info[:controller],
+          method: action_info[:method],
+          source: 'erb',
+          line_number: action_line_number,
+          line_content: action_value
+        }
+      end
+    end
+
+    actions
+  end
+
+  def check_erb_action_scope(action_info, content, relative_path)
+    controller_name = action_info[:controller]
+    action_line = action_info[:line_number]
+
+    # Find all controller definitions in the file
+    controller_scopes = []
+    lines = content.split("\n")
+
+    lines.each_with_index do |line, index|
+      line_num = index + 1
+
+      # Check for data-controller attribute
+      if line.match(/data-controller=["'][^"']*\b#{Regexp.escape(controller_name)}\b[^"']*["']/)
+        # Find the scope boundaries for this controller
+        scope_start = line_num
+        scope_end = find_scope_end(lines, index)
+        controller_scopes << { start: scope_start, end: scope_end, line: line.strip }
+
+      end
+    end
+
+    # Check if action line is within any controller scope
+    in_scope = controller_scopes.any? do |scope|
+      action_line >= scope[:start] && action_line <= scope[:end]
+    end
+
+    in_scope
+  end
+
+  def find_scope_end(lines, start_index)
+    # Find the opening tag that contains data-controller
+    start_line = lines[start_index]
+
+    # Look for the opening tag in the current line or previous line
+    opening_tag_line = nil
+    tag_name = nil
+
+    # Check current line and previous line for opening tag
+    [start_index - 1, start_index].each do |line_idx|
+      next if line_idx < 0
+      line = lines[line_idx]
+      if match = line.match(/<(\w+)(?:\s[^>]*)?(?:\s+data-controller|\s+id=)/)
+        tag_name = match[1]
+        opening_tag_line = line_idx
+        break
+      end
+    end
+
+    return lines.length unless tag_name
+
+    # Count nested tags to find the matching closing tag
+    depth = 0
+    tag_found = false
+
+    (opening_tag_line...lines.length).each do |i|
+      line = lines[i]
+
+      # Look for opening tags
+      line.scan(/<#{tag_name}(?:\s|>)/) do
+        depth += 1
+        tag_found = true
+      end
+
+      # Look for closing tags
+      line.scan(/<\/#{tag_name}>/) do
+        depth -= 1
+        if depth == 0 && tag_found
+          return i + 1
+        end
+      end
+    end
+
+    # If no matching closing tag found, assume scope extends to end of file
+    lines.length
+  end
+
   describe 'Core Validation: Targets and Actions' do
     it 'validates that controller targets exist in HTML and actions have methods' do
       target_errors = []
@@ -167,54 +310,95 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
           end
         end
 
+        # Parse both HTML data-action attributes and ERB data: { action: } syntax
+        all_actions = []
+
+        # Parse HTML data-action attributes
         doc.css('[data-action]').each do |action_element|
-          actions = action_element['data-action'].split(/\s+/)
+          action_value = action_element['data-action']
+          parsed_actions = parse_action_string(action_value)
+          parsed_actions.each do |action_info|
+            all_actions << {
+              element: action_element,
+              action: action_info[:action],
+              event: action_info[:event],
+              controller: action_info[:controller],
+              method: action_info[:method]
+            }
+          end
+        end
 
-          actions.each do |action|
-            if match = action.match(/^(?:(\w+)->)?(\w+(?:-\w+)*)#(\w+)(?:@\w+)?$/)
-              event, controller_name, method_name = match[1], match[2], match[3]
+        # Parse ERB data: { action: } syntax
+        erb_actions = parse_erb_actions(content, relative_path)
+        erb_actions.each do |action_info|
+          all_actions << action_info
+        end
 
-              controller_scope = action_element.ancestors.css("[data-controller*='#{controller_name}']").first ||
-                               (action_element['data-controller']&.include?(controller_name) ? action_element : nil)
+        all_actions.each do |action_info|
+          action_element = action_info[:element]
+          controller_name = action_info[:controller]
+          method_name = action_info[:method]
+          action = action_info[:action]
+          source = action_info[:source]
 
-              if !controller_scope && relative_path.include?('_')
-                parent_controllers = get_controllers_from_parents(relative_path)
-                if parent_controllers.include?(controller_name)
-                  controller_scope = true
-                end
+          # For ERB actions, check if controller scope actually includes the action
+          if source == 'erb' || source == 'erb_snake_case'
+            controller_scope = false
+
+            # Use proper scope checking for ERB actions
+            controller_scope = check_erb_action_scope(action_info, content, relative_path)
+
+            # Check parent files for partials
+            if !controller_scope && relative_path.include?('_')
+              parent_controllers = get_controllers_from_parents(relative_path)
+              if parent_controllers.include?(controller_name)
+                controller_scope = true
               end
+            end
+          else
+            # For HTML data-action attributes
+            controller_scope = action_element.ancestors.css("[data-controller*='#{controller_name}']").first ||
+                             (action_element['data-controller']&.include?(controller_name) ? action_element : nil)
 
-              unless controller_scope
-                if relative_path.include?('_')
-                  suggestion = "Controller '#{controller_name}' should be defined in parent template or wrap with <div data-controller=\"#{controller_name}\">...</div>"
-                else
-                  suggestion = "Wrap with <div data-controller=\"#{controller_name}\">...</div>"
-                end
-
-                scope_errors << {
-                  action: action,
-                  controller: controller_name,
-                  file: relative_path,
-                  is_partial: relative_path.include?('_'),
-                  parent_files: partial_parent_map[relative_path] || [],
-                  suggestion: suggestion
-                }
-                next
+            if !controller_scope && relative_path.include?('_')
+              parent_controllers = get_controllers_from_parents(relative_path)
+              if parent_controllers.include?(controller_name)
+                controller_scope = true
               end
+            end
+          end
 
-              if controller_data.key?(controller_name)
-                # Check if method exists
-                unless controller_data[controller_name][:methods].include?(method_name)
-                  action_errors << {
-                    action: action,
-                    controller: controller_name,
-                    method: method_name,
-                    file: relative_path,
-                    available_methods: controller_data[controller_name][:methods],
-                    suggestion: "Add method '#{method_name}(): void { }' to #{controller_name} controller"
-                  }
-                end
-              end
+          unless controller_scope
+            if relative_path.include?('_')
+              suggestion = "Controller '#{controller_name}' should be defined in parent template or wrap with <div data-controller=\"#{controller_name}\">...</div>"
+            else
+              suggestion = "Wrap with <div data-controller=\"#{controller_name}\">...</div>"
+            end
+
+            scope_errors << {
+              action: action,
+              controller: controller_name,
+              file: relative_path,
+              is_partial: relative_path.include?('_'),
+              parent_files: partial_parent_map[relative_path] || [],
+              suggestion: suggestion,
+              source: source
+            }
+            next
+          end
+
+          if controller_data.key?(controller_name)
+            # Check if method exists
+            unless controller_data[controller_name][:methods].include?(method_name)
+              action_errors << {
+                action: action,
+                controller: controller_name,
+                method: method_name,
+                file: relative_path,
+                available_methods: controller_data[controller_name][:methods],
+                suggestion: "Add method '#{method_name}(): void { }' to #{controller_name} controller",
+                source: source
+              }
             end
           end
         end
