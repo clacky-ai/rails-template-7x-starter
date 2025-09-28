@@ -22,6 +22,14 @@ class ControllerGenerator < Rails::Generators::NamedBase
       say "Example: rails generate controller products", :blue
       exit(1)
     end
+
+    # Check for minimum length (at least 2 characters)
+    if base_name_without_controller.length < 2
+      say "Error: Controller name must be at least 2 characters long.", :red
+      say "Single letter controller names can cause naming conflicts.", :yellow
+      say "Example: rails generate controller posts", :blue
+      exit(1)
+    end
   end
 
   def check_controller_conflicts
@@ -82,10 +90,26 @@ class ControllerGenerator < Rails::Generators::NamedBase
   end
 
   def add_routes
-    if options[:single]
-      route "resource :#{singular_name}#{route_options}"
+    if behavior == :invoke
+      # Creating routes
+      if options[:single]
+        if route_options.nil?
+          # Has custom actions, use do-end block
+          route_with_custom_actions("resource :#{singular_name}")
+        else
+          add_simple_route("resource :#{singular_name}#{route_options}")
+        end
+      else
+        if route_options.nil?
+          # Has custom actions, use do-end block
+          route_with_custom_actions("resources :#{plural_name}")
+        else
+          add_simple_route("resources :#{plural_name}#{route_options}")
+        end
+      end
     else
-      route "resources :#{plural_name}#{route_options}"
+      # Destroying routes
+      remove_routes
     end
   end
 
@@ -174,37 +198,37 @@ class ControllerGenerator < Rails::Generators::NamedBase
   def controller_actions
     actions_code = []
 
-    if selected_actions.include?('index')
-      actions_code << index_action
+    # Add CRUD actions
+    crud_actions_to_generate.each do |action|
+      case action
+      when 'index' then actions_code << index_action
+      when 'show' then actions_code << show_action
+      when 'new' then actions_code << new_action
+      when 'create' then actions_code << create_action
+      when 'edit' then actions_code << edit_action
+      when 'update' then actions_code << update_action
+      when 'destroy' then actions_code << destroy_action
+      end
     end
 
-    if selected_actions.include?('show')
-      actions_code << show_action
-    end
-
-    if selected_actions.include?('new')
-      actions_code << new_action
-      actions_code << create_action
-    end
-
-    if selected_actions.include?('edit')
-      actions_code << edit_action
-      actions_code << update_action
-    end
-
-    if selected_actions.any? { |action| %w[new edit].include?(action) }
-      actions_code << destroy_action
+    # Add non-CRUD actions
+    non_crud_actions.each do |action|
+      actions_code << custom_action(action)
     end
 
     actions_code.join("\n\n")
   end
 
-
   def route_options
     if actions.empty?
       ""
+    elsif has_full_crud? && has_only_crud_actions?
+      ""  # Full resources without only restriction and no custom actions
+    elsif has_only_crud_actions?
+      ", only: [:#{route_actions.join(', :')}]"
     else
-      ", only: [:#{selected_actions.join(', :')}#{', :create' if selected_actions.include?('new')}#{', :update' if selected_actions.include?('edit')}#{', :destroy' if selected_actions.any? { |a| %w[new edit].include?(a) }}]"
+      # Has custom actions, need do-end block
+      nil  # Will be handled in add_routes method
     end
   end
 
@@ -262,6 +286,165 @@ class ControllerGenerator < Rails::Generators::NamedBase
     # Write your real logic here
   end
     ACTION
+  end
+
+  def custom_action(action_name)
+    <<-ACTION
+  def #{action_name}
+    # Write your real logic here
+  end
+    ACTION
+  end
+
+  # Helper methods for route generation
+  def crud_actions_to_generate
+    actions = []
+
+    # Include explicitly specified actions
+    selected_actions.each do |action|
+      case action
+      when 'index', 'show', 'new', 'edit', 'create', 'update', 'destroy'
+        actions << action
+      end
+    end
+
+    # Auto-add paired actions only if not explicitly specified
+    if selected_actions.include?('new') && !selected_actions.include?('create')
+      actions << 'create'
+    end
+
+    if selected_actions.include?('edit') && !selected_actions.include?('update')
+      actions << 'update'
+    end
+
+    # Only auto-add destroy if new or edit is present but destroy is not explicitly specified
+    if selected_actions.any? { |action| %w[new edit].include?(action) } && !selected_actions.include?('destroy')
+      actions << 'destroy'
+    end
+
+    actions.uniq
+  end
+
+  def non_crud_actions
+    # HTTP methods and user-facing CRUD actions should not be in member blocks
+    standard_actions = %w[index show new edit create update destroy]
+    selected_actions.reject { |action| standard_actions.include?(action) }
+  end
+
+  def has_full_crud?
+    return false if actions.empty?
+
+    expected_crud = if options[:single]
+      %w[show new edit create update destroy]
+    else
+      %w[index show new edit create update destroy]
+    end
+
+    # Check if all expected CRUD actions are present (allow additional custom actions)
+    expected_crud.all? { |action| selected_actions.include?(action) }
+  end
+
+  def has_only_crud_actions?
+    non_crud_actions.empty?
+  end
+
+  def route_actions
+    actions = []
+
+    selected_actions.each do |action|
+      case action
+      when 'index', 'show', 'new', 'edit', 'create', 'update', 'destroy'
+        actions << action
+      end
+    end
+
+    # Auto-add paired actions only if not explicitly specified
+    if selected_actions.include?('new') && !selected_actions.include?('create')
+      actions << 'create'
+    end
+
+    if selected_actions.include?('edit') && !selected_actions.include?('update')
+      actions << 'update'
+    end
+
+    # Only auto-add destroy if new or edit is present but destroy is not explicitly specified
+    if selected_actions.any? { |action| %w[new edit].include?(action) } && !selected_actions.include?('destroy')
+      actions << 'destroy'
+    end
+
+    actions.uniq
+  end
+
+  def route_with_custom_actions(base_route)
+    controller_name = options[:single] ? singular_name : plural_name
+    route_lines = []
+
+    # Add comment marker for identification
+    route_lines << "  # Routes for #{controller_name} generated by controller generator"
+
+    if route_actions.any? && !has_full_crud?
+      # Has some CRUD actions but not all - include them with only
+      route_lines << "  #{base_route}, only: [:#{route_actions.join(', :')}] do"
+    else
+      # Either no CRUD actions or has full CRUD - just the base route
+      route_lines << "  #{base_route} do"
+    end
+
+    # Add custom actions as simple member routes
+    if non_crud_actions.any?
+      non_crud_actions.each do |action|
+        route_lines << "    get :#{action}"
+      end
+    end
+
+    route_lines << "  end"
+    route_lines << "  # End routes for #{controller_name}"
+
+    inject_into_file 'config/routes.rb', after: "Rails.application.routes.draw do\n" do
+      route_lines.join("\n") + "\n\n"
+    end
+  end
+
+  def add_simple_route(route_line)
+    controller_name = options[:single] ? singular_name : plural_name
+
+    route_content = [
+      "  # Routes for #{controller_name} generated by controller generator",
+      "  #{route_line}",
+      "  # End routes for #{controller_name}",
+      ""
+    ].join("\n")
+
+    inject_into_file 'config/routes.rb', after: "Rails.application.routes.draw do\n" do
+      route_content + "\n"
+    end
+  end
+
+  def remove_routes
+    routes_file = File.join(destination_root, 'config/routes.rb')
+    return unless File.exist?(routes_file)
+
+    routes_content = File.read(routes_file)
+    controller_name = options[:single] ? singular_name : plural_name
+
+    # Look for routes using comment markers
+    start_comment = "  # Routes for #{controller_name} generated by controller generator"
+    end_comment = "  # End routes for #{controller_name}"
+
+    if routes_content.include?(start_comment) && routes_content.include?(end_comment)
+      # Remove section between comment markers (including the comments)
+      pattern = /  # Routes for #{Regexp.escape(controller_name)} generated by controller generator.*?  # End routes for #{Regexp.escape(controller_name)}\n\n/m
+
+      new_content = routes_content.gsub(pattern, '')
+      File.write(routes_file, new_content)
+      say "Removed routes for #{controller_name}", :green
+    else
+      say "Could not find marked routes for #{controller_name}. Please remove manually from config/routes.rb", :yellow
+      say "Note: Routes generated by newer versions use comment markers for easier removal.", :blue
+    end
+  rescue => e
+    say "Error removing routes: #{e.message}", :red
+    say "Please manually remove routes for #{controller_name} from config/routes.rb", :yellow
   end
 
 end
