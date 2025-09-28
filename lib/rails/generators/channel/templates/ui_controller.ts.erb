@@ -3,12 +3,12 @@ import consumer from "../channels/consumer"
 
 /**
  * 🏗️ <%= file_name.camelize %> Controller - Handles WebSocket + UI for <%= file_name.humanize.downcase %>
- * 
+ *
  * ADD YOUR UI HERE:
  * - static targets = ["messageInput", "messagesContainer", "sendButton"]
  * - Add UI methods like sendMessage(), displayMessage()
  * - Use channelReceived() to handle real-time updates
- * 
+ *
  * DON'T create separate controllers - extend this one!
  * HTML: <div data-controller="<%= file_name.dasherize %>">...</div>
  */
@@ -26,7 +26,10 @@ export default class extends Controller<HTMLElement> {
   }
 
   // Declare your targets and values
+  // Must-having target
   // declare readonly messageInputTarget: HTMLInputElement
+  // Optional target
+  // declare readonly hasMessagesContainerTarget: HTMLElement
   // declare readonly messagesContainerTarget: HTMLElement
   // declare readonly roomIdValue: string
 
@@ -41,19 +44,6 @@ export default class extends Controller<HTMLElement> {
   disconnect(): void {
     console.log("<%= file_name.camelize %> controller disconnected")
     this.destroySubscription()
-  }
-
-  // 🎮 ADD YOUR UI METHODS HERE
-  // Example: data-action="click-><%= file_name.dasherize %>#sendMessage"
-  sendMessage(event: Event): void {
-    // TODO: Get input content, send via WebSocket, clear form
-    // Example: this.performAction('send_message', { content: input.value })
-  }
-
-  // 💡 UI HELPER METHODS - Add methods to update your interface
-  private displayMessage(messageData: any): void {
-    // TODO: Create message HTML element and add to container
-    // TODO: Scroll to bottom, update UI state
   }
 
   // WebSocket subscription management
@@ -131,20 +121,19 @@ export default class extends Controller<HTMLElement> {
       return
     }
 
-    // 💡 WEBSOCKET INTEGRATION - Handle real-time data here
-    // TODO: Call this.displayMessage(data) for new messages
-    // TODO: Update user lists, typing indicators, etc.
-
     // Handle different types of messages
     switch(data.type) {
-<% actions.each do |action| %>
-      case '<%= action %>':
-        this.handle<%= action.camelize %>(data)
-        break
-<% end %>
-      default:
-        console.warn("Unknown message type:", data.type)
-        this.handleUnknownMessage(data)
+    // 📨 EXAMPLE: Handle incoming message
+    // case 'message':
+    //   this.handleMessage(data)
+    //   break
+    // 📊 EXAMPLE: Handle status update
+    // case 'status_update':
+    //   this.handleStatusUpdate(data)
+    //   break
+    default:
+      console.warn("Unknown message type:", data.type)
+      this.handleUnknownMessage(data)
     }
   }
 
@@ -161,32 +150,32 @@ export default class extends Controller<HTMLElement> {
     // Handle unknown message types
   }
 
-<% actions.each do |action| %>
-  // Send <%= action %> to server
-  <%= action.camelize(:lower) %>(data: any = {}): void {
-    if (!this.isConnected) {
-      console.warn("<%= channel_name %> not connected, cannot perform <%= action %>")
-      return
-    }
+  // 🎮 ADD YOUR UI METHODS HERE
+  // Example: data-action="click-><%= file_name.dasherize %>#sendMessage"
+  // sendMessage(data: any = {}): void {
+  //   if (!this.isConnected) return
+  //   this.subscription?.perform('send_message', data)
+  // }
 
-    if (this.subscription) {
-      this.subscription.perform('<%= action %>', data)
-    }
-  }
+  // 📊 EXAMPLE: Send status update to server
+  // updateStatus(data: any = {}): void {
+  //   if (!this.isConnected) return
+  //   this.subscription?.perform('update_status', data)
+  // }
 
-  // Handle <%= action %> message from server
-  private handle<%= action.camelize %>(data: any): void {
-    console.log('<%= action.camelize %> received:', data)
-    this.on<%= action.camelize %>Received(data)
-    this.dispatch('<%= action.dasherize %>-received', { detail: data })
-  }
+  // 📨 EXAMPLE: Handle message from server
+  // 💡 UI HELPER METHODS - Add methods to update your interface
+  // private handleMessage(data: any): void {
+  //   console.log('Message received:', data)
+  //   TODO: Create message HTML element and add to container
+  //   TODO: Scroll to bottom, update UI state
+  // }
 
-  // Override this method to handle <%= action %> messages from server
-  protected on<%= action.camelize %>Received(data: any): void {
-    // Add your <%= action %> handling logic here
-  }
+  // 📊 EXAMPLE: Handle status update from server
+  // private handleStatusUpdate(data: any): void {
+  //   console.log('Status update received:', data)
+  // }
 
-<% end %>
   // Global error handling for this channel
   private handleGlobalError(errorData: any): void {
     // Send to global error handler

@@ -6,7 +6,6 @@ module Rails
     class ChannelGenerator < NamedBase
       source_root File.expand_path("templates", __dir__)
 
-      argument :actions, type: :array, default: [], banner: "method method"
 
       class_option :assets, type: :boolean
       class_option :auth, type: :boolean, default: false, desc: "Generate channel with user authentication support"

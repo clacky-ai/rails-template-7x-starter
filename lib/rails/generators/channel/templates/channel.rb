@@ -9,26 +9,41 @@ class <%= channel_name %> < ApplicationCable::Channel
     # Any cleanup needed when channel is unsubscribed
   end
 
-<% actions.each do |action| %>
-  def <%= action %>(data)
-    # Handle <%= action %> action
-    # You can access:
-    # - data: the data sent from client
-    # - current_user: the authenticated user (if available)
-    # - params: parameters passed when subscribing
-    
-    # Example broadcast:
-    # ActionCable.server.broadcast(
-    #   "<%= stream_name %>",
-    #   {
-    #     type: '<%= action %>',
-    #     data: data,
-    #     user: current_user&.slice(:id, :name, :email)
-    #   }
-    # )
-  end
+  # 📨 EXAMPLE: Handle send_message action from client
+  # def send_message(data)
+  #   # TODO: Save message to database, validate, etc.
+  #   # You can access:
+  #   # - data: the data sent from client
+  #   # - current_user: the authenticated user (if available)
+  #   # - params: parameters passed when subscribing
+  #
+  #   # Broadcast to all subscribers
+  #   ActionCable.server.broadcast(
+  #     "<%= stream_name %>",
+  #     {
+  #       type: 'message',
+  #       content: data['content'],
+  #       user: current_user&.slice(:id, :name, :email),
+  #       timestamp: Time.current
+  #     }
+  #   )
+  # end
 
-<% end %>
+  # 📊 EXAMPLE: Handle update_status action from client
+  # def update_status(data)
+  #   # TODO: Update user status, validate, etc.
+  #
+  #   # Broadcast status update to subscribers
+  #   ActionCable.server.broadcast(
+  #     "<%= stream_name %>",
+  #     {
+  #       type: 'status_update',
+  #       status: data['status'],
+  #       user: current_user&.slice(:id, :name, :email),
+  #       timestamp: Time.current
+  #     }
+  #   )
+  # end
   private
 
 <% if requires_authentication? -%>
