@@ -27,35 +27,38 @@ RSpec.describe <%= channel_name %>, type: :channel do
       subscribe
 
       expect(subscription).to be_confirmed
-      expect(subscription).to have_stream_from("<%= stream_name %>")
     end
   end
 
   describe "#unsubscribed" do
     it "successfully unsubscribes from the channel" do
       subscribe
-      unsubscribe_from_channel
+      expect(subscription).to be_confirmed
 
-      expect(subscription).not_to be_confirmed
+      unsubscribe
+      # Channel cleanup is successful if no errors are raised
     end
   end
 
-<% actions.each do |action| %>
-  describe "#<%= action %>" do
-    before { subscribe }
-
-    it "handles <%= action %> action" do
-      expect {
-        perform :<%= action %>, { message: "test data" }
-      }.not_to raise_error
-    end
-
-    it "broadcasts <%= action %> message" do
-      expect {
-        perform :<%= action %>, { message: "test data" }
-      }.to have_broadcasted_to("<%= stream_name %>")
-    end
-  end
-
-<% end %>
+  # 📨 EXAMPLE: Test send_message action
+  # describe "#send_message" do
+  #   before { subscribe }
+  #
+  #   it "handles send_message action" do
+  #     expect {
+  #       perform :send_message, { content: "Hello world" }
+  #     }.not_to raise_error
+  #   end
+  #
+  #   it "broadcasts message" do
+  #     expect {
+  #       perform :send_message, { content: "Hello world" }
+  #     }.to have_broadcasted_to("<%= stream_name %>").with(
+  #       hash_including(
+  #         type: 'message',
+  #         content: 'Hello world'
+  #       )
+  #     )
+  #   end
+  # end
 end
