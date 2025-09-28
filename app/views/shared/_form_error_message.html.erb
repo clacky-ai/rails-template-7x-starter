@@ -1,0 +1,19 @@
+<% if model.errors.any? %>
+  <div class="p-4 bg-red-50 border border-red-200 rounded-lg flex justify-between items-start" x-data="{ show: true }" x-show="show">
+    <div class="flex-1 pr-4">
+      <h3 class="font-medium text-red-800">
+        <%= pluralize(model.errors.count, "error") %> prohibited this <%= model.class.model_name.human.downcase %> from being saved:
+      </h3>
+      <ul class="list-disc list-inside mt-2 text-sm text-red-700">
+        <% model.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+    <button type="button" class="ml-auto flex-shrink-0 p-1 text-red-600 hover:text-red-800 hover:bg-red-100 rounded transition-colors" @click="show = false">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
+<% end %>

@@ -16,7 +16,7 @@
   <div class="card">
     <div class="card-body">
       <%%= form_with model: [:admin, @<%= singular_name %>], local: true, class: "space-y-6" do |form| %>
-        <%%= render 'shared/error_messages', model: @<%= singular_name %> %>
+        <%%= render 'shared/form_error_message', model: @<%= singular_name %> %>
 
 <% all_form_fields.each do |field| -%>
 <% if field[:type] == :attribute -%>

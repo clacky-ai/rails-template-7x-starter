@@ -11,7 +11,7 @@
         <%= button_to "Re-send verification email", identity_email_verification_path, class: "btn-ghost w-full" %>
       <% else %>
         <%= form_with model: @user, url: identity_email_path, method: :patch, local: true, class: "space-y-6" do |form| %>
-          <%= render 'shared/error_messages', model: @user %>
+          <%= render 'shared/form_error_message', model: @user %>
 
           <div>
             <%= form.label :email, class: "form-label" do %>

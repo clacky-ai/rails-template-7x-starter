@@ -4,7 +4,7 @@
       <h1 class="text-3xl font-bold text-text-primary mb-8 text-center">Create New Order</h1>
 
     <%%= form_with model: @order, local: true, class: "space-y-6" do |form| %>
-      <%%= render 'shared/error_messages', model: @order %>
+      <%%= render 'shared/form_error_message', model: @order %>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
