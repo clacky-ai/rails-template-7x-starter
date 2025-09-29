@@ -17,11 +17,15 @@ module SmartPermitPatch
       case filter
       when Symbol, String
         field_name = filter.to_s
-        
         if self[field_name].is_a?(Array)
           { field_name.to_sym => [] }
-        elsif self[field_name].is_a?(Hash) || self[field_name].is_a?(ActionController::Parameters)
-          { field_name.to_sym => {} }
+        else
+          filter
+        end
+      when Hash
+        # change xxx => {} to :xxx
+        if filter.values.first == {}
+          filter.keys.first
         else
           filter
         end
@@ -29,7 +33,7 @@ module SmartPermitPatch
         filter
       end
     end
-    
+
     super(*smart_filters)
   end
 end

@@ -16,6 +16,12 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
         targets = match[1].scan(/["']([^"']+)["']/).flatten
       end
 
+      values = []
+      if match = content.match(/static values\s*=\s*\{([^}]*)\}/m)
+        values_content = match[1]
+        values = values_content.scan(/(\w+):\s*\w+/).map { |m| m[0] }
+      end
+
       methods = []
       content.scan(/^\s*(?:async\s+)?(\w+)\s*\([^)]*\)\s*:\s*[\w<>]*\s*\{/) do |match|
         method_name = match[0]
@@ -26,6 +32,7 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
 
       data[controller_name] = {
         targets: targets,
+        values: values,
         methods: methods,
         file: file
       }
@@ -239,6 +246,7 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
       action_errors = []
       scope_errors = []
       registration_errors = []
+      value_errors = []
 
       view_files.each do |view_file|
         content = File.read(view_file)
@@ -305,6 +313,52 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
                   file: relative_path,
                   suggestion: "Add <div data-#{controller_name}-target=\"#{target}\">...</div> within controller scope"
                 }
+              end
+            end
+
+            # Check for missing or incorrectly formatted values
+            controller_data[controller_name][:values].each do |value_name|
+              kebab_value_name = value_name.gsub(/([a-z])([A-Z])/, '\1-\2').downcase
+              expected_attr = "data-#{controller_name}-#{kebab_value_name}-value"
+
+              if !controller_element.has_attribute?(expected_attr)
+                # Check for common mistakes in ERB context
+                common_mistakes = [
+                  "data-#{value_name}",
+                  "data-#{controller_name}-#{value_name}",
+                  "data-#{controller_name}-#{kebab_value_name}",
+                  "data-#{value_name}-value"
+                ]
+
+                # Filter out standard Stimulus attributes
+                stimulus_standard_attrs = %w[data-controller data-action data-target]
+                common_mistakes = common_mistakes.reject { |attr|
+                  stimulus_standard_attrs.any? { |std_attr| attr.start_with?(std_attr) }
+                }
+
+                found_mistakes = common_mistakes.select { |attr|
+                  controller_element.has_attribute?(attr) || content.include?(attr)
+                }
+
+                if found_mistakes.any?
+                  value_errors << {
+                    controller: controller_name,
+                    value: value_name,
+                    file: relative_path,
+                    expected: expected_attr,
+                    found: found_mistakes.first,
+                    suggestion: "Change '#{found_mistakes.first}' to '#{expected_attr}'"
+                  }
+                else
+                  value_errors << {
+                    controller: controller_name,
+                    value: value_name,
+                    file: relative_path,
+                    expected: expected_attr,
+                    found: nil,
+                    suggestion: "Add #{expected_attr}=\"...\" to controller element"
+                  }
+                end
               end
             end
           end
@@ -407,7 +461,7 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
       # Remove duplicates from registration errors
       registration_errors = registration_errors.uniq { |error| [error[:controller], error[:file]] }
 
-      total_errors = target_errors.length + action_errors.length + scope_errors.length + registration_errors.length
+      total_errors = target_errors.length + action_errors.length + scope_errors.length + registration_errors.length + value_errors.length
 
       puts "\n🔍 Simple Stimulus Validation Results:"
       puts "   📁 Scanned: #{view_files.length} views, #{controller_data.keys.length} controllers"
@@ -428,6 +482,17 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
           puts "\n   🎯 Missing Targets (#{target_errors.length}):"
           target_errors.each do |error|
             puts "     • #{error[:controller]}:#{error[:target]} missing in #{error[:file]}"
+          end
+        end
+
+        if value_errors.any?
+          puts "\n   📋 Value Errors (#{value_errors.length}):"
+          value_errors.each do |error|
+            if error[:found]
+              puts "     • #{error[:controller]}:#{error[:value]} incorrect format '#{error[:found]}' in #{error[:file]}, expected '#{error[:expected]}'"
+            else
+              puts "     • #{error[:controller]}:#{error[:value]} missing in #{error[:file]}"
+            end
           end
         end
 
@@ -457,6 +522,10 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
 
         target_errors.each do |error|
           error_details << "Missing target: #{error[:controller]}:#{error[:target]} in #{error[:file]} - #{error[:suggestion]}"
+        end
+
+        value_errors.each do |error|
+          error_details << "Value error: #{error[:controller]}:#{error[:value]} in #{error[:file]} - #{error[:suggestion]}"
         end
 
         scope_errors.each do |error|
