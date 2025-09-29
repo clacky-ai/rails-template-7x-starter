@@ -8,10 +8,18 @@ function copyToClipboard(text: string): Promise<boolean> {
       navigator.clipboard.writeText(text)
         .then(() => resolve(true))
         .catch(() => {
-          fallbackCopy(text) ? resolve(true) : reject(new Error('Copy failed'));
+          if (fallbackCopy(text)) {
+            resolve(true);
+          } else {
+            reject(new Error('Copy failed'));
+          }
         });
     } else {
-      fallbackCopy(text) ? resolve(true) : reject(new Error('Copy failed'));
+      if (fallbackCopy(text)) {
+        resolve(true);
+      } else {
+        reject(new Error('Copy failed'));
+      }
     }
   });
 }
