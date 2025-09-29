@@ -1,5 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 import consumer from "../channels/consumer"
+import Rails from "@rails/ujs"
 
 /**
  * 🏗️ <%= file_name.camelize %> Controller - Handles WebSocket + UI for <%= file_name.humanize.downcase %>
@@ -155,6 +156,26 @@ export default class extends Controller<HTMLElement> {
   // sendMessage(data: any = {}): void {
   //   if (!this.isConnected) return
   //   this.subscription?.perform('send_message', data)
+  // }
+
+  // 📤 EXAMPLE: Submit form data via Rails.ajax
+  // submitForm(event: Event): void {
+  //   event.preventDefault()
+  //   const form = event.target as HTMLFormElement
+  //
+  //   Rails.ajax({
+  //     type: form.method || 'POST',
+  //     url: form.action,
+  //     data: new FormData(form),
+  //     success: (data: any) => {
+  //       // Update UI after successful submission
+  //       console.log('Form submitted successfully:', data)
+  //     },
+  //     error: (xhr: XMLHttpRequest) => {
+  //       // Update UI to show error message
+  //       console.error('Form submission failed:', xhr.responseText)
+  //     }
+  //   })
   // }
 
   // 📊 EXAMPLE: Send status update to server

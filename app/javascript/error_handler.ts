@@ -594,6 +594,8 @@ class ErrorHandler {
 
     // Intercept fetch errors
     this.interceptFetch();
+    // Intercept XHR errors
+    this.interceptXHR();
   }
 
   setupInteractionTracking() {
@@ -676,6 +678,83 @@ class ErrorHandler {
         });
         throw error;
       }
+    };
+  }
+
+  interceptXHR() {
+    const originalXHROpen = XMLHttpRequest.prototype.open;
+    const originalXHRSend = XMLHttpRequest.prototype.send;
+
+    XMLHttpRequest.prototype.open = function(method: string, url: string | URL, async?: boolean, user?: string | null, password?: string | null) {
+      (this as any)._errorHandler_method = method.toUpperCase();
+      (this as any)._errorHandler_url = url.toString();
+      return originalXHROpen.call(this, method, url, async ?? true, user, password);
+    };
+
+    XMLHttpRequest.prototype.send = function(body?: any) {
+      const xhr = this as any;
+      const method = xhr._errorHandler_method || 'GET';
+      const url = xhr._errorHandler_url || 'unknown';
+
+      // Set up error event listeners
+      xhr.addEventListener('error', (event: Event) => {
+        window.errorHandler?.handleError({
+          message: `${method} ${url} - Network Error: Request failed`,
+          url: url,
+          method: method,
+          type: 'network',
+          timestamp: new Date().toISOString()
+        });
+      });
+
+      xhr.addEventListener('timeout', () => {
+        window.errorHandler?.handleError({
+          message: `${method} ${url} - Network Error: Request timeout`,
+          url: url,
+          method: method,
+          type: 'network',
+          timestamp: new Date().toISOString()
+        });
+      });
+
+      xhr.addEventListener('loadend', () => {
+        if (xhr.status >= 400) {
+          let responseBody = null;
+          let jsonError = null;
+
+          try {
+            const contentType = xhr.getResponseHeader('content-type');
+            if (contentType && contentType.includes('application/json')) {
+              jsonError = JSON.parse(xhr.responseText);
+              responseBody = JSON.stringify(jsonError, null, 2);
+            } else {
+              responseBody = xhr.responseText;
+            }
+          } catch (parseError) {
+            responseBody = xhr.responseText || 'Unable to read response body';
+          }
+
+          // Create detailed error message
+          let detailedMessage = `${method} ${url} - HTTP ${xhr.status}`;
+          if (jsonError) {
+            const errorMsg = jsonError.error || jsonError.message || jsonError.errors || 'Unknown error';
+            detailedMessage += ` - ${errorMsg}`;
+          }
+
+          window.errorHandler?.handleError({
+            message: detailedMessage,
+            url: url,
+            method: method,
+            type: xhr.status >= 500 ? 'http' : 'network',
+            status: xhr.status,
+            responseBody: responseBody,
+            jsonError: jsonError,
+            timestamp: new Date().toISOString()
+          });
+        }
+      });
+
+      return originalXHRSend.call(this, body);
     };
   }
 
