@@ -255,23 +255,9 @@ class AuthenticationGenerator < Rails::Generators::Base
     say "     * TWITTER_OAUTH_ENABLED, TWITTER_API_KEY, TWITTER_API_SECRET"
     say "     * GITHUB_OAUTH_ENABLED, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET"
     say "     * Optional: CLACKY_AUTH_CLIENT_ID, CLACKY_AUTH_CLIENT_SECRET, CLACKY_AUTH_DOMAIN"
-    say "4. Customize the views to match your application's styling"
-    say "5. Configure your mailer settings for email verification and password reset"
-    say "\nGenerated features:", :blue
-    say "- User registration and authentication"
-    say "- Session management"
-    say "- Password management"
-    say "- Email verification"
-    say "- Password reset"
-    say "- OAuth integration (Google, Facebook, Twitter, GitHub) with automatic Clacky Auth fallback"
-    say "- User invitations"
-    say "- User profile management"
-    say "- Complete RSpec test suite including:"
-    say "  * User and Session factories"
-    say "  * Model tests for User and Session"
-    say "  * Request tests for authentication flows"
-    say "  * Home page access tests after login (200 status verification)"
-    say "  * Authentication helper methods"
+    say "4. Update navbar: For flexibility, navbar was not auto-generated."
+    say "   Please manually update app/views/shared/_navbar.html.erb", :cyan
+    say "5. Customize the views to match your application's styling"
   end
 
   private
