@@ -59,9 +59,10 @@ interface StimulusErrorInfo extends BaseErrorInfo {
   type: 'stimulus';
   missingControllers?: string[];
   missingTargets?: string[];
+  outOfScopeTargets?: string[];
   suggestion?: string;
   details?: any;
-  subType?: 'missing-controller' | 'scope-error' | 'positioning-issues' | 'action-click' | 'missing-target' | 'missing-action' | 'method-not-found';
+  subType?: 'missing-controller' | 'scope-error' | 'positioning-issues' | 'action-click' | 'missing-target' | 'missing-action' | 'method-not-found' | 'target-scope-error';
   controllerName?: string;
   action?: string;
   methodName?: string;
@@ -107,7 +108,10 @@ const ERROR_TYPE_CONFIGS: { [key: string]: ErrorTypeConfig } = {
         label: 'Stack Trace',
         priority: 1,
         condition: (error) => error.error?.stack,
-        htmlFormatter: (value: string) => `<div class="mb-3"><div class="mb-2"><strong>Stack Trace:</strong></div><pre class="text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed">${value}</pre></div>`,
+        htmlFormatter: (value: string) => {
+          const preClass = 'text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed';
+          return `<div class="mb-3"><div class="mb-2"><strong>Stack Trace:</strong></div><pre class="${preClass}">${value}</pre></div>`;
+        },
         textFormatter: (value: string) => `Stack Trace:\n${value}`
       }
     }
@@ -148,14 +152,22 @@ const ERROR_TYPE_CONFIGS: { [key: string]: ErrorTypeConfig } = {
         label: 'JSON Error Details',
         priority: 5,
         condition: (error) => !!error.jsonError,
-        htmlFormatter: (value: any) => `<div class="mb-3"><div class="mb-2"><strong>JSON Error Details:</strong></div><pre class="text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed">${JSON.stringify(value, null, 2)}</pre></div>`,
+        htmlFormatter: (value: any) => {
+          const preClass = 'text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed';
+          return `<div class="mb-3"><div class="mb-2"><strong>JSON Error Details:</strong></div><pre class="${preClass}">${JSON.stringify(value, null, 2)}</pre></div>`;
+        },
         textFormatter: (value: any) => `JSON Error Details:\n${JSON.stringify(value, null, 2)}`
       },
       responseBody: {
         label: 'Response Body',
         priority: 4,
-        condition: (error) => !!(error.responseBody && (!error.jsonError || error.responseBody !== JSON.stringify(error.jsonError, null, 2))),
-        htmlFormatter: (value: string) => `<div class="mb-3"><div class="mb-2"><strong>Response Body:</strong></div><pre class="text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed">${value}</pre></div>`,
+        condition: (error) => {
+          return !!(error.responseBody && (!error.jsonError || error.responseBody !== JSON.stringify(error.jsonError, null, 2)));
+        },
+        htmlFormatter: (value: string) => {
+          const preClass = 'text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed';
+          return `<div class="mb-3"><div class="mb-2"><strong>Response Body:</strong></div><pre class="${preClass}">${value}</pre></div>`;
+        },
         textFormatter: (value: string) => `Response Body:\n${value}`
       }
     }
@@ -179,14 +191,22 @@ const ERROR_TYPE_CONFIGS: { [key: string]: ErrorTypeConfig } = {
         label: 'JSON Error Details',
         priority: 5,
         condition: (error) => !!error.jsonError,
-        htmlFormatter: (value: any) => `<div class="mb-3"><div class="mb-2"><strong>JSON Error Details:</strong></div><pre class="text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed">${JSON.stringify(value, null, 2)}</pre></div>`,
+        htmlFormatter: (value: any) => {
+          const preClass = 'text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed';
+          return `<div class="mb-3"><div class="mb-2"><strong>JSON Error Details:</strong></div><pre class="${preClass}">${JSON.stringify(value, null, 2)}</pre></div>`;
+        },
         textFormatter: (value: any) => `JSON Error Details:\n${JSON.stringify(value, null, 2)}`
       },
       responseBody: {
         label: 'Response Body',
         priority: 4,
-        condition: (error) => !!(error.responseBody && (!error.jsonError || error.responseBody !== JSON.stringify(error.jsonError, null, 2))),
-        htmlFormatter: (value: string) => `<div class="mb-3"><div class="mb-2"><strong>Response Body:</strong></div><pre class="text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed">${value}</pre></div>`,
+        condition: (error) => {
+          return !!(error.responseBody && (!error.jsonError || error.responseBody !== JSON.stringify(error.jsonError, null, 2)));
+        },
+        htmlFormatter: (value: string) => {
+          const preClass = 'text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed';
+          return `<div class="mb-3"><div class="mb-2"><strong>Response Body:</strong></div><pre class="${preClass}">${value}</pre></div>`;
+        },
         textFormatter: (value: string) => `Response Body:\n${value}`
       }
     }
@@ -198,7 +218,10 @@ const ERROR_TYPE_CONFIGS: { [key: string]: ErrorTypeConfig } = {
         label: 'Stack Trace',
         priority: 1,
         condition: (error) => error.error?.stack,
-        htmlFormatter: (value: string) => `<div class="mb-3"><div class="mb-2"><strong>Stack Trace:</strong></div><pre class="text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed">${value}</pre></div>`,
+        htmlFormatter: (value: string) => {
+          const preClass = 'text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed';
+          return `<div class="mb-3"><div class="mb-2"><strong>Stack Trace:</strong></div><pre class="${preClass}">${value}</pre></div>`;
+        },
         textFormatter: (value: string) => `Stack Trace:\n${value}`
       }
     }
@@ -222,7 +245,10 @@ const ERROR_TYPE_CONFIGS: { [key: string]: ErrorTypeConfig } = {
         label: 'Channel Error Details',
         priority: 5,
         condition: (error) => !!error.details,
-        htmlFormatter: (value: any) => `<div class="mb-3"><div class="mb-2"><strong>Channel Error Details:</strong></div><pre class="text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed">${JSON.stringify(value, null, 2)}</pre></div>`,
+        htmlFormatter: (value: any) => {
+          const preClass = 'text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed';
+          return `<div class="mb-3"><div class="mb-2"><strong>Channel Error Details:</strong></div><pre class="${preClass}">${JSON.stringify(value, null, 2)}</pre></div>`;
+        },
         textFormatter: (value: any) => `Channel Error Details:\n${JSON.stringify(value, null, 2)}`
       }
     }
@@ -259,27 +285,40 @@ const ERROR_TYPE_CONFIGS: { [key: string]: ErrorTypeConfig } = {
         label: 'Positioning Issues',
         priority: 6,
         condition: (error) => !!(error.positioningIssues && error.positioningIssues.length > 0),
-        htmlFormatter: (value: string[]) => `<div class="mb-3"><div class="mb-2"><strong>Positioning Issues:</strong></div><ul class="text-xs list-disc list-inside bg-gray-800 p-3 rounded space-y-1">${value.map((issue: string) => `<li class="leading-relaxed">${issue}</li>`).join('')}</ul></div>`,
+        htmlFormatter: (value: string[]) => {
+          const ulClass = 'text-xs list-disc list-inside bg-gray-800 p-3 rounded space-y-1';
+          const items = value.map((issue: string) => `<li class="leading-relaxed">${issue}</li>`).join('');
+          return `<div class="mb-3"><div class="mb-2"><strong>Positioning Issues:</strong></div><ul class="${ulClass}">${items}</ul></div>`;
+        },
         textFormatter: (value: string[]) => `Positioning Issues:\n${value.map((issue: string) => `  - ${issue}`).join('\n')}`
       },
       elementInfo: {
         label: 'Element Info',
         priority: 5,
         condition: (error) => !!error.elementInfo,
-        htmlFormatter: (value: any) => `<div class="mb-3"><div class="mb-2"><strong>Element Info:</strong></div><pre class="text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed">${JSON.stringify(value, null, 2)}</pre></div>`,
+        htmlFormatter: (value: any) => {
+          const preClass = 'text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed';
+          return `<div class="mb-3"><div class="mb-2"><strong>Element Info:</strong></div><pre class="${preClass}">${JSON.stringify(value, null, 2)}</pre></div>`;
+        },
         textFormatter: (value: any) => `Element Info:\n${JSON.stringify(value, null, 2)}`
       },
       suggestion: {
         label: '💡 Suggestion',
         priority: 3,
-        htmlFormatter: (value: string) => `<div class="mb-3"><div class="mb-2"><strong>💡 Suggestion:</strong></div><div class="text-sm bg-blue-900 text-blue-200 p-3 rounded leading-relaxed">${value}</div></div>`,
+        htmlFormatter: (value: string) => {
+          const divClass = 'text-sm bg-blue-900 text-blue-200 p-3 rounded leading-relaxed';
+          return `<div class="mb-3"><div class="mb-2"><strong>💡 Suggestion:</strong></div><div class="${divClass}">${value}</div></div>`;
+        },
         textFormatter: (value: string) => `Suggestion: ${value}`
       },
       details: {
         label: 'Detailed Information',
         priority: 2,
         condition: (error) => !!error.details,
-        htmlFormatter: (value: any) => `<div class="mb-3"><div class="mb-2"><strong>Detailed Information:</strong></div><pre class="text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed">${JSON.stringify(value, null, 2)}</pre></div>`,
+        htmlFormatter: (value: any) => {
+          const preClass = 'text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed';
+          return `<div class="mb-3"><div class="mb-2"><strong>Detailed Information:</strong></div><pre class="${preClass}">${JSON.stringify(value, null, 2)}</pre></div>`;
+        },
         textFormatter: (value: any) => `Detailed Information:\n${JSON.stringify(value, null, 2)}`
       }
     }
@@ -382,7 +421,7 @@ class ErrorHandler {
       this.updateErrorList();
       this.showStatusBar();
       this.pendingUIUpdates = false;
-      
+
       // Auto-expand logic disabled
       // if (!this.hasShownFirstError && this.errors.length > 0) {
       //   this.hasShownFirstError = true;
@@ -408,9 +447,12 @@ class ErrorHandler {
           </div>
           <div id="error-tips" class="relative" style="display: none;">
             <span class="cursor-help text-gray-500 hover:text-gray-300 transition-colors duration-200 text-sm opacity-60 hover:opacity-100">💡</span>
-            <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg shadow-lg border border-gray-600 whitespace-nowrap opacity-0 pointer-events-none transition-opacity duration-200 tooltip">
+            <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs
+                      rounded-lg shadow-lg border border-gray-600 whitespace-nowrap opacity-0 pointer-events-none
+                      transition-opacity duration-200 tooltip">
               Send to chatbox for repair (90% cases) or ignore if browser extension (10% cases)
-              <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+              <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4
+                        border-transparent border-t-gray-800"></div>
             </div>
           </div>
         </div>
@@ -528,7 +570,7 @@ class ErrorHandler {
         // window.onerror already handled this, but we can add additional processing if needed
         return;
       }
-      
+
       this.handleError({
         message: event.message,
         filename: event.filename,
@@ -577,16 +619,16 @@ class ErrorHandler {
           // Extract HTTP method from request options
           const requestOptions = args[1] || {};
           const method = (requestOptions.method || 'GET').toUpperCase();
-          
+
           // Try to extract response body for detailed error information
           let responseBody = null;
           let jsonError = null;
-          
+
           try {
             // Clone the response to avoid consuming it
             const responseClone = response.clone();
             const contentType = response.headers.get('content-type');
-            
+
             if (contentType && contentType.includes('application/json')) {
               jsonError = await responseClone.json();
               responseBody = JSON.stringify(jsonError, null, 2);
@@ -623,7 +665,7 @@ class ErrorHandler {
         // Extract HTTP method for network errors too
         const requestOptions = args[1] || {};
         const method = (requestOptions.method || 'GET').toUpperCase();
-        
+
         this.handleError({
           message: `${method} ${args[0]} - Network Error: ${(error as Error).message}`,
           url: args[0].toString(),
@@ -700,7 +742,7 @@ class ErrorHandler {
       this.updateErrorList();
       this.showStatusBar();
       this.flashNewError();
-      
+
       // Auto-expand logic disabled
       // this.checkAutoExpand(errorInfo);
     } else {
@@ -756,7 +798,7 @@ class ErrorHandler {
   }
 
   generateErrorId() {
-    return 'error_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    return `error_${  Date.now()  }_${  Math.random().toString(36).substr(2, 9)}`;
   }
 
   updateStatusBar() {
@@ -868,16 +910,16 @@ class ErrorHandler {
 
     const details: string[] = [];
     const fields = Object.entries(config.fields);
-    
+
     // Sort by priority (higher priority first)
     fields.sort(([, a], [, b]) => (b.priority || 0) - (a.priority || 0));
-    
+
     for (const [fieldPath, fieldConfig] of fields) {
       // Check condition if specified
       if (fieldConfig.condition && !fieldConfig.condition(error)) {
         continue;
       }
-      
+
       // Get field value using dot notation (e.g., 'error.stack')
       const value = this.getNestedValue(error, fieldPath);
       if (value !== undefined && value !== null && value !== '') {
@@ -885,7 +927,7 @@ class ErrorHandler {
         details.push(formatter(value, fieldPath));
       }
     }
-    
+
     return details;
   }
 
@@ -898,14 +940,15 @@ class ErrorHandler {
   private formatGenericErrorDetails(error: StoredError, format: 'html' | 'text'): string[] {
     const details: string[] = [];
     const commonFields = ['filename', 'lineno', 'colno', 'stack'];
-    
+
     // Handle common fields
     for (const field of commonFields) {
       const value = (error as any)[field];
       if (value !== undefined && value !== null && value !== '') {
         if (format === 'html') {
           if (field === 'stack') {
-            details.push(`<div class="mb-3"><div class="mb-2"><strong>${this.capitalize(field)}:</strong></div><pre class="text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed">${value}</pre></div>`);
+            const preClass = 'text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed';
+            details.push(`<div class="mb-3"><div class="mb-2"><strong>${this.capitalize(field)}:</strong></div><pre class="${preClass}">${value}</pre></div>`);
           } else {
             details.push(`<div class="mb-2"><strong>${this.capitalize(field)}:</strong> ${value}</div>`);
           }
@@ -914,15 +957,17 @@ class ErrorHandler {
         }
       }
     }
-    
+
     // Handle any additional properties for manual errors
     if (error.type === 'manual') {
       for (const [key, value] of Object.entries(error)) {
-        if (!['id', 'message', 'type', 'timestamp', ...commonFields].includes(key) && value !== undefined && value !== null && value !== '') {
+        const excludedFields = ['id', 'message', 'type', 'timestamp', ...commonFields];
+        if (!excludedFields.includes(key) && value !== undefined && value !== null && value !== '') {
           if (format === 'html') {
             const formattedValue = typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value);
             if (typeof value === 'object') {
-              details.push(`<div class="mb-3"><div class="mb-2"><strong>${this.capitalize(key)}:</strong></div><pre class="text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed">${formattedValue}</pre></div>`);
+              const preClass = 'text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed';
+              details.push(`<div class="mb-3"><div class="mb-2"><strong>${this.capitalize(key)}:</strong></div><pre class="${preClass}">${formattedValue}</pre></div>`);
             } else {
               details.push(`<div class="mb-2"><strong>${this.capitalize(key)}:</strong> ${formattedValue}</div>`);
             }
@@ -933,7 +978,7 @@ class ErrorHandler {
         }
       }
     }
-    
+
     return details;
   }
 
@@ -944,11 +989,11 @@ class ErrorHandler {
 
   formatTechnicalDetails(error: StoredError): string {
     const details = [`<div><strong>Page URL:</strong> ${window.location.href}</div>`];
-    
+
     // Use the unified formatting system
     const typeSpecificDetails = this.formatErrorDetails(error, 'html');
     details.push(...typeSpecificDetails);
-    
+
     return details.join('');
   }
 
@@ -959,7 +1004,13 @@ class ErrorHandler {
     const errorReport = this.generateErrorReport(error);
     const button = document.querySelector(`[data-error-id="${errorId}"] .copy-error`) as HTMLElement;
 
-    copyToClipboard(errorReport).then(() => {
+    if (!window.copyToClipboard) {
+      console.error('window.copyToClipboard not found');
+      alert(`Copy failed. Error details:\n${  errorReport}`);
+      return;
+    }
+
+    window.copyToClipboard(errorReport).then(() => {
       if (!button) return;
       // Show success feedback
       const originalText = button.textContent;
@@ -973,7 +1024,7 @@ class ErrorHandler {
     }).catch(err => {
       console.error('Failed to copy error:', err);
       // Fallback: show error details in a modal or alert
-      alert('Copy failed. Error details:\n' + errorReport);
+      alert(`Copy failed. Error details:\n${  errorReport}`);
     });
   }
 
@@ -983,7 +1034,13 @@ class ErrorHandler {
     const allErrorsReport = this.generateAllErrorsReport();
     const button = document.getElementById('copy-all-errors') as HTMLElement;
 
-    copyToClipboard(allErrorsReport).then(() => {
+    if (!window.copyToClipboard) {
+      console.error('window.copyToClipboard not found');
+      alert(`Copy failed. Error details:\n${allErrorsReport}`);
+      return;
+    }
+
+    window.copyToClipboard(allErrorsReport).then(() => {
       if (!button) return;
       // Show success feedback
       const originalText = button.textContent;
@@ -997,7 +1054,7 @@ class ErrorHandler {
     }).catch(err => {
       console.error('Failed to copy all errors:', err);
       // Fallback: show error details in a modal or alert
-      alert('Copy failed. Error details:\n' + allErrorsReport);
+      alert(`Copy failed. Error details:\n${  allErrorsReport}`);
     });
   }
 
@@ -1005,10 +1062,10 @@ class ErrorHandler {
     const maxErrors = 3; // Show only latest 3 errors
     const maxResponseBodyLength = 400; // Limit response body length
     const maxTotalLength = 2000; // Total character limit
-    
+
     const recentErrors = this.errors.slice(0, maxErrors);
     const totalErrors = this.errors.reduce((sum, error) => sum + error.count, 0);
-    
+
     let report = `Frontend Error Report - Recent Errors
 ════════════════════════════════════
 Time: ${new Date().toLocaleString()}
@@ -1030,10 +1087,10 @@ Technical Details:`;
       const typeSpecificDetails = this.formatErrorDetails(error, 'text');
       if (typeSpecificDetails.length > 0) {
         // Truncate long details to respect length limits
-        const truncatedDetails = typeSpecificDetails.map(detail => 
+        const truncatedDetails = typeSpecificDetails.map(detail =>
           this.truncateText(detail, maxResponseBodyLength)
         );
-        report += '\n' + truncatedDetails.join('\n');
+        report += `\n${  truncatedDetails.join('\n')}`;
       }
 
       // Add timestamp
@@ -1043,7 +1100,7 @@ Technical Details:`;
       }
 
       report += '\n\n';
-      
+
       // Check if exceeding total character limit
       if (report.length > maxTotalLength - 100) { // Reserve 100 chars for ending
         report += `[Report truncated due to length limit]`;
@@ -1053,7 +1110,7 @@ Technical Details:`;
 
     // Ensure total length doesn't exceed limit
     if (report.length > maxTotalLength - 50) {
-      report = report.substring(0, maxTotalLength - 50) + '...\n\n';
+      report = `${report.substring(0, maxTotalLength - 50)  }...\n\n`;
     }
 
     report += 'Please help me analyze and fix these issues.';
@@ -1072,7 +1129,7 @@ ${error.message}`;
     // Use the unified formatting system for text output
     const typeSpecificDetails = this.formatErrorDetails(error, 'text');
     if (typeSpecificDetails.length > 0) {
-      report += '\n\n' + typeSpecificDetails.join('\n');
+      report += `\n\n${  typeSpecificDetails.join('\n')}`;
     }
 
     report += `\n\nPlease help me analyze and fix this issue.`;
@@ -1162,15 +1219,15 @@ ${error.message}`;
     //   this.autoExpandErrorDetails();
     //   return;
     // }
-    
+
     // Auto-expand if this is an interaction error (user just performed an action)
-    // if (errorInfo.type === 'interaction' || 
+    // if (errorInfo.type === 'interaction' ||
     //     (this.lastInteractionTime && Date.now() - this.lastInteractionTime < 3000)) {
     //   this.autoExpandErrorDetails();
     //   return;
     // }
   }
-  
+
   autoExpandErrorDetails() {
     // Auto-expand logic disabled
     // if (!this.isExpanded) {
@@ -1192,14 +1249,14 @@ ${error.message}`;
       .trim();
 
     return cleanMessage.length > 100
-      ? cleanMessage.substring(0, 100) + '...'
+      ? `${cleanMessage.substring(0, 100)  }...`
       : cleanMessage;
   }
 
   truncateText(text: string, maxLength: number): string {
     if (!text) return '';
     if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '... [truncated]';
+    return `${text.substring(0, maxLength)  }... [truncated]`;
   }
 
   extractFilename(filepath: string): string {
@@ -1234,7 +1291,7 @@ ${error.message}`;
   // ActionCable specific error handling
   handleActionCableError(errorData: any): void {
     this.errorCounts.actioncable++;
-    
+
     const errorInfo: ActionCableErrorInfo = {
       type: 'actioncable',
       message: errorData.message || 'ActionCable error occurred',
@@ -1245,7 +1302,7 @@ ${error.message}`;
       lineno: 0,
       details: errorData
     };
-    
+
     this.handleError(errorInfo);
   }
 }

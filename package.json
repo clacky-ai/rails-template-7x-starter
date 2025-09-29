@@ -2,7 +2,8 @@
   "name": "app",
   "private": true,
   "scripts": {
-    "build": "esbuild app/javascript/*.* --bundle --sourcemap=inline --format=esm --outdir=app/assets/builds --public-path=/assets --loader:.ts=ts --loader:.tsx=tsx",
+    "build": "run-p lint build:js",
+    "build:js": "esbuild app/javascript/*.* --bundle --sourcemap=inline --format=esm --outdir=app/assets/builds --public-path=/assets --loader:.ts=ts --loader:.tsx=tsx",
     "watch:js": "esbuild app/javascript/*.* --bundle --sourcemap=inline --format=esm --outdir=app/assets/builds --public-path=/assets --watch --loader:.ts=ts --loader:.tsx=tsx",
     "build:css": "run-p build:css:*",
     "build:css:app": "postcss ./app/assets/stylesheets/application.css -o ./app/assets/builds/application.css",
@@ -12,10 +13,10 @@
     "watch:css:admin": "postcss ./app/assets/stylesheets/admin.css -o ./app/assets/builds/admin.css --map --watch",
 
     "lint": "run-p lint:eslint lint:types",
-    "lint:eslint": "eslint app/javascript/**/*.ts",
+    "lint:eslint": "eslint",
     "lint:types": "tsc --noEmit",
     "type-check": "tsc --noEmit",
-    "lint:fix": "eslint app/javascript/**/*.ts --fix"
+    "lint:fix": "eslint --fix"
   },
   "dependencies": {
     "@hotwired/stimulus": "^3.2.2",

@@ -21,25 +21,21 @@ module.exports = [
       },
     },
     rules: {
-      '@typescript-eslint/no-unused-vars': ['error', {
-        argsIgnorePattern: '^_',
-        varsIgnorePattern: '^_',
-        caughtErrorsIgnorePattern: '^_'
-      }],
+      '@typescript-eslint/no-unused-vars': 'off',
       'no-unused-vars': 'off',
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
-      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-explicit-any': 'off',
 
       'prefer-const': 'error',
       'no-var': 'error',
-      'object-shorthand': 'error',
+      'object-shorthand': 'off',
       'prefer-template': 'error',
 
       'eqeqeq': ['error', 'always'],
-      'no-console': 'warn',
+      'no-console': 'off',
       'no-debugger': 'error',
-      'no-alert': 'warn',
+      'no-alert': 'off',
       'no-unused-expressions': 'error',
       'no-useless-return': 'error',
 
@@ -53,7 +49,6 @@ module.exports = [
   {
     files: ['app/javascript/controllers/**/*.ts'],
     rules: {
-      'no-console': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
     },
   },

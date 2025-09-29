@@ -53,7 +53,7 @@ class SDKUtils {
     const message = `Fix this error:
 URL: ${url}
 Error: ${errorMessage}
-Path: ${path}${additionalContext ? '\n\nAdditional Context:\n' + additionalContext : ''}
+Path: ${path}${additionalContext ? `\n\nAdditional Context:\n${  additionalContext}` : ''}
 
 Please help me fix this issue.`;
 

@@ -65,7 +65,7 @@ class StimulusValidator {
                   tagName: detail.element.tagName,
                   id: detail.element.id,
                   className: detail.element.className,
-                  outerHTML: detail.element.outerHTML?.substring(0, 200) + '...'
+                  outerHTML: `${detail.element.outerHTML?.substring(0, 200)  }...`
                 };
               }
             }
@@ -77,7 +77,8 @@ class StimulusValidator {
               if (controllerMatch) {
                 controllerName = controllerMatch[1].toLowerCase();
                 errorMessage = `Stimulus controller "${controllerName}" is not defined or not registered`;
-                suggestion = `Make sure to import and register the "${controllerName}" controller in app/javascript/controllers/index.ts. Check if the controller file exists at app/javascript/controllers/${controllerName}_controller.ts`;
+                suggestion = `Make sure to import and register the "${controllerName}" controller in app/javascript/controllers/index.ts. ` +
+                  `Check if the controller file exists at app/javascript/controllers/${controllerName}_controller.ts`;
               }
             } else if (error.message.includes('Missing target element')) {
               subType = 'missing-target';
@@ -415,7 +416,8 @@ class StimulusValidator {
         missingTargets,
         elementInfo: this.getElementInfo(controllerElement),
         timestamp: new Date().toISOString(),
-        suggestion: `Add the required target elements to the DOM within the controller scope, or make them optional by adding 'declare readonly has${missingTargets.map(t => t.charAt(0).toUpperCase() + t.slice(1)).join('Target: boolean, declare readonly has')}Target: boolean' to the controller`,
+        suggestion: `Add the required target elements to the DOM within the controller scope, or make them optional by adding ` +
+          `'declare readonly has${missingTargets.map(t => t.charAt(0).toUpperCase() + t.slice(1)).join('Target: boolean, declare readonly has')}Target: boolean' to the controller`,
         details: {
           errorType: 'Missing Required Targets',
           controllerName,
@@ -447,7 +449,8 @@ class StimulusValidator {
           outOfScopeTargets,
           elementInfo: this.getElementInfo(controllerElement),
           description: `The controller "${controllerName}" defines targets [${targetList}] and these elements exist in the DOM but are outside the controller scope`,
-          solution: `Either move the target elements inside the controller scope, or expand the controller scope to include the targets by moving the data-controller attribute to a parent element that contains both the controller logic and the target elements.`
+          solution: `Either move the target elements inside the controller scope, or expand the controller scope to include ` +
+            `the targets by moving the data-controller attribute to a parent element that contains both the controller logic and the target elements.`
         }
       });
     }
