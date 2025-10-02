@@ -1,0 +1,32 @@
+require 'rails_helper'
+
+RSpec.describe '<%= class_name.camelize %>Controller', type: :system, js: true do
+  describe 'Basic Initialization' do
+    it 'loads page without JavaScript errors' do
+      visit page_with_controller_path
+
+      expect(page).to have_css('[data-controller="<%= file_name_without_controller.dasherize %>"]')
+    end
+
+    # TODO: Add value tests when controller defines values
+    # Example for a controller with an example-value:
+    it 'handles example value correctly' do
+      visit page_with_controller_path
+
+      # Find element with controller and value
+      element = find('[data-controller="<%= file_name_without_controller.dasherize %>"]')
+      expect(element['data-<%= file_name_without_controller.dasherize %>-example-value']).to be_present
+    end
+  end
+
+  describe 'Basic Functionality' do
+    # TODO: Add tests for pages where this controller is actually used
+    # Focus on user-visible behavior, not internal controller mechanics
+    # Example:
+    # it 'shows expected content on target page' do
+    #   visit page_with_controller_path
+    #   expect(page).to have_text('Expected Content')
+    #   expect(page).to have_css('.some-expected-class')
+    # end
+  end
+end

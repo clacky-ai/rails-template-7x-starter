@@ -39,6 +39,7 @@ yarn-debug.log*
 *.swp
 
 /public/uploads/*
+/public/dev-assets/*
 /public/assets/*
 /tags
 
