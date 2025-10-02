@@ -60,31 +60,3 @@ document.addEventListener('DOMContentLoaded', (): void => {
     }
   });
 });
-
-// Optional: Custom JavaScript for Tailwind-based UI
-document.addEventListener('DOMContentLoaded', (): void => {
-  // Initialize any custom components here
-
-  // Mobile menu toggle (这些将被 Stimulus 控制器替代)
-  const mobileMenuButton = document.querySelector<HTMLElement>('[data-mobile-menu]');
-  const mobileMenu = document.querySelector<HTMLElement>('[data-mobile-menu-target]');
-
-  if (mobileMenuButton && mobileMenu) {
-    mobileMenuButton.addEventListener('click', (): void => {
-      mobileMenu.classList.toggle('hidden');
-    });
-  }
-
-  // Dropdown functionality (这些将被 Stimulus 控制器替代)
-  const dropdownButtons = document.querySelectorAll<HTMLElement>('[data-dropdown]');
-
-  dropdownButtons.forEach((button: HTMLElement) => {
-    button.addEventListener('click', (e: Event): void => {
-      e.stopPropagation();
-      const target = document.querySelector<HTMLElement>(`[data-dropdown-target="${button.dataset.dropdown}"]`);
-      if (target) {
-        target.classList.toggle('hidden');
-      }
-    });
-  });
-});
