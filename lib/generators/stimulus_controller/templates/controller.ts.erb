@@ -41,6 +41,10 @@ export default class extends Controller<HTMLElement> {
   //     type: form.method || 'POST',
   //     url: form.action,
   //     data: new FormData(form),
+  //     beforeSend: (xhr: XMLHttpRequest) => {
+  //       xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded')
+  //       return true
+  //     },
   //     success: (data: any) => {
   //       // Update UI after successful submission
   //       console.log('Form submitted successfully:', data)
