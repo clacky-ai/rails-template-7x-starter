@@ -326,6 +326,42 @@
     background-color: transparent;
   }
 
+  .btn-outline {
+    @apply btn px-4 py-2 text-sm;
+    background-color: transparent;
+    border: 1px solid hsl(var(--color-border));
+    color: hsl(var(--color-text-primary));
+  }
+
+  .btn-outline:hover:not(:disabled) {
+    background-color: hsl(var(--color-surface-elevated));
+    border-color: hsl(var(--color-text-secondary));
+    box-shadow: var(--shadow-sm);
+  }
+
+  .btn-outline:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px hsl(var(--color-text-secondary) / 0.3);
+  }
+
+  .btn-outline:disabled {
+    border-color: hsl(var(--color-border) / 0.5);
+    color: hsl(var(--color-text-muted));
+    background-color: transparent;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  .dark .btn-outline {
+    border-color: hsl(var(--color-border));
+    color: hsl(var(--color-text-secondary));
+  }
+
+  .dark .btn-outline:hover:not(:disabled) {
+    background-color: hsl(var(--color-surface-elevated));
+    border-color: hsl(var(--color-text-primary));
+  }
+
   .btn-outline-primary {
     @apply btn px-4 py-2 text-sm;
     background-color: transparent;
