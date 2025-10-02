@@ -1,4 +1,501 @@
 require 'rails_helper'
+require 'parser/current'
+
+# ERB AST Parser for Stimulus validation
+class ErbAstParser
+  def initialize(content)
+    @content = content
+    @erb_blocks = extract_erb_blocks
+  end
+
+  # Extract all ERB blocks from content
+  def extract_erb_blocks
+    blocks = []
+
+    # Extract <%= %> blocks (output)
+    @content.scan(/<%=\s*(.*?)\s*%>/m) do |match|
+      blocks << {
+        type: :output,
+        code: match[0].strip,
+        full_match: $&,
+        position: $~.offset(0)
+      }
+    end
+
+    # Extract <% %> blocks (execution)
+    @content.scan(/<%\s*(.*?)\s*%>/m) do |match|
+      next if match[0].strip.start_with?('=') # Skip <%= blocks already captured
+      blocks << {
+        type: :execution,
+        code: match[0].strip,
+        full_match: $&,
+        position: $~.offset(0)
+      }
+    end
+
+    blocks.sort_by { |block| block[:position][0] }
+  end
+
+  # Find Stimulus targets in ERB blocks
+  def find_stimulus_targets(controller_name, target_name)
+    results = []
+
+    @erb_blocks.each do |block|
+      # Skip blocks that don't contain target-related keywords
+      next unless should_parse_for_targets?(block[:code], controller_name, target_name)
+
+      # Parse the code with smart preprocessing - fail fast on errors
+      processed_code = preprocess_erb_code(block[:code])
+      ast = Parser::CurrentRuby.parse(processed_code)
+      target_matches = find_targets_in_ast(ast, controller_name, target_name)
+
+      target_matches.each do |match|
+        results << {
+          block: block,
+          match: match,
+          line_number: calculate_line_number(block[:position][0])
+        }
+      end
+    end
+
+    results
+  end
+
+  # Find Stimulus actions in ERB blocks
+  def find_stimulus_actions(controller_name = nil)
+    results = []
+
+    @erb_blocks.each do |block|
+      # Skip blocks that don't contain action-related keywords
+      next unless should_parse_for_actions?(block[:code])
+
+      # Parse the code with smart preprocessing - fail fast on errors
+      processed_code = preprocess_erb_code(block[:code])
+      ast = Parser::CurrentRuby.parse(processed_code)
+      action_matches = find_actions_in_ast(ast, controller_name)
+
+      action_matches.each do |match|
+        results << {
+          block: block,
+          match: match,
+          line_number: calculate_line_number(block[:position][0])
+        }
+      end
+    end
+
+    results
+  end
+
+  # Find Stimulus values in ERB blocks
+  def find_stimulus_values(controller_name, value_name)
+    results = []
+
+    @erb_blocks.each do |block|
+      # Skip blocks that don't contain value-related keywords
+      next unless should_parse_for_values?(block[:code], controller_name, value_name)
+
+      # Parse the code with smart preprocessing - fail fast on errors
+      processed_code = preprocess_erb_code(block[:code])
+      ast = Parser::CurrentRuby.parse(processed_code)
+      value_matches = find_values_in_ast(ast, controller_name, value_name)
+
+      value_matches.each do |match|
+        results << {
+          block: block,
+          match: match,
+          line_number: calculate_line_number(block[:position][0])
+        }
+      end
+    end
+
+    results
+  end
+
+  private
+
+  # Check if ERB block should be parsed for targets
+  def should_parse_for_targets?(code, controller_name, target_name)
+    # Must contain 'data' and either 'target' or the specific target name
+    return false unless code.include?('data')
+    return true if code.include?('target') || code.include?(target_name)
+    return true if code.include?(controller_name)
+    false
+  end
+
+  # Check if ERB block should be parsed for actions
+  def should_parse_for_actions?(code)
+    # Must contain 'data' and 'action'
+    code.include?('data') && code.include?('action')
+  end
+
+  # Check if ERB block should be parsed for values
+  def should_parse_for_values?(code, controller_name, value_name)
+    # Must contain 'data' and either 'value' or the specific value name
+    return false unless code.include?('data')
+    return true if code.include?('value') || code.include?(value_name)
+    return true if code.include?(controller_name)
+    false
+  end
+
+  # Preprocess ERB code to make it more parseable
+  def preprocess_erb_code(code)
+    # Skip blocks that don't contain Stimulus-related keywords
+    stimulus_keywords = ['data', 'controller', 'target', 'action', 'value']
+    return code unless stimulus_keywords.any? { |keyword| code.include?(keyword) }
+
+    # Skip preprocessing for simple expressions that are likely to parse correctly
+    return code if code.strip.match?(/^\w+\s*\(.*\)$/) || code.strip.match?(/^[\w\.\[\]]+$/)
+
+    # Handle common ERB patterns that cause parsing issues
+    processed = code.dup
+
+    # Skip blocks that are clearly control structures (if, unless, case, etc.)
+    return code if processed.strip.match?(/^(if|unless|case|when|else|elsif|end|do|while|for|begin|rescue|ensure)\b/)
+
+    # Skip blocks that look like method definitions or class definitions
+    return code if processed.strip.match?(/^(def|class|module)\b/)
+
+    # Skip blocks that are just variable assignments or simple expressions
+    return code if processed.strip.match?(/^@?\w+\s*[=\[]/) || processed.strip.match?(/^[\w\.\[\]"']+$/)
+
+    # For method calls with blocks, try to make them parseable
+    if processed.include?(' do |') && !processed.include?('end')
+      processed += "\nend"
+    elsif processed.include?(' do') && !processed.include?('end') && !processed.include?('|')
+      processed += "\nend"
+    end
+
+    # Handle incomplete hash literals
+    if processed.count('{') > processed.count('}')
+      processed += ' }' * (processed.count('{') - processed.count('}'))
+    end
+
+    # Handle incomplete array literals
+    if processed.count('[') > processed.count(']')
+      processed += ' ]' * (processed.count('[') - processed.count(']'))
+    end
+
+    # Handle incomplete parentheses
+    if processed.count('(') > processed.count(')')
+      processed += ' )' * (processed.count('(') - processed.count(')'))
+    end
+
+    processed
+  end
+
+  def find_targets_in_ast(node, controller_name, target_name)
+    return [] unless node
+
+    matches = []
+
+    case node.type
+    when :hash
+      matches.concat(find_targets_in_hash(node, controller_name, target_name))
+    when :send
+      matches.concat(find_targets_in_method_call(node, controller_name, target_name))
+    end
+
+    # Recursively search child nodes
+    if node.respond_to?(:children)
+      node.children.each do |child|
+        next unless child.is_a?(Parser::AST::Node)
+        matches.concat(find_targets_in_ast(child, controller_name, target_name))
+      end
+    end
+
+    matches
+  end
+
+  def find_targets_in_hash(hash_node, controller_name, target_name)
+    matches = []
+
+    # Process hash pairs - in AST, each child is a :pair node
+    hash_node.children.each do |pair_node|
+      next unless pair_node.type == :pair
+
+      key_node = pair_node.children[0]
+      value_node = pair_node.children[1]
+
+      next unless key_node && value_node
+
+      # Handle string keys: "controller-target" => "target"
+      if key_node.type == :str && value_node.type == :str
+        key_str = key_node.children[0]
+        value_str = value_node.children[0]
+
+        if key_str == "#{controller_name}-target" && value_str == target_name
+          matches << {
+            type: :hash_string_key,
+            controller: controller_name,
+            target: target_name,
+            key_node: key_node,
+            value_node: value_node
+          }
+        end
+      end
+
+      # Handle symbol keys: controller_target: "target"
+      if key_node.type == :sym && value_node.type == :str
+        key_sym = key_node.children[0]
+        value_str = value_node.children[0]
+
+        expected_key = "#{controller_name.gsub('-', '_')}_target"
+        if key_sym.to_s == expected_key && value_str == target_name
+          matches << {
+            type: :hash_symbol_key,
+            controller: controller_name,
+            target: target_name,
+            key_node: key_node,
+            value_node: value_node
+          }
+        end
+      end
+    end
+
+    matches
+  end
+
+  def find_targets_in_method_call(send_node, controller_name, target_name)
+    matches = []
+
+    # Look for method calls that might contain data attributes
+    # This handles cases like: data: { ... }
+    if send_node.children.length >= 2
+      method_name = send_node.children[1]
+
+      # Check if this is a method call with hash arguments
+      send_node.children[2..-1].each do |arg|
+        next unless arg.is_a?(Parser::AST::Node) && arg.type == :hash
+        matches.concat(find_targets_in_hash(arg, controller_name, target_name))
+      end
+    end
+
+    matches
+  end
+
+  def find_actions_in_ast(node, controller_name)
+    return [] unless node
+
+    matches = []
+
+    case node.type
+    when :hash
+      matches.concat(find_actions_in_hash(node, controller_name))
+    when :send
+      matches.concat(find_actions_in_method_call(node, controller_name))
+    end
+
+    # Recursively search child nodes
+    if node.respond_to?(:children)
+      node.children.each do |child|
+        next unless child.is_a?(Parser::AST::Node)
+        matches.concat(find_actions_in_ast(child, controller_name))
+      end
+    end
+
+    matches
+  end
+
+  def find_actions_in_hash(hash_node, controller_name)
+    matches = []
+
+    hash_node.children.each do |pair_node|
+      next unless pair_node.type == :pair
+
+      key_node = pair_node.children[0]
+      value_node = pair_node.children[1]
+
+      next unless key_node && value_node
+
+      # Look for action keys
+      if (key_node.type == :str && key_node.children[0] == "action") ||
+         (key_node.type == :sym && key_node.children[0] == :action)
+
+        if value_node.type == :str
+          action_string = value_node.children[0]
+          parsed_actions = parse_action_string(action_string)
+
+          parsed_actions.each do |action|
+            if controller_name.nil? || action[:controller] == controller_name
+              matches << {
+                type: :hash_action,
+                action_string: action_string,
+                parsed_action: action,
+                key_node: key_node,
+                value_node: value_node
+              }
+            end
+          end
+        end
+      end
+    end
+
+    matches
+  end
+
+  def find_actions_in_method_call(send_node, controller_name)
+    matches = []
+
+    if send_node.children.length >= 2
+      send_node.children[2..-1].each do |arg|
+        next unless arg.is_a?(Parser::AST::Node) && arg.type == :hash
+        matches.concat(find_actions_in_hash(arg, controller_name))
+      end
+    end
+
+    matches
+  end
+
+  def find_values_in_ast(node, controller_name, value_name)
+    return [] unless node
+
+    matches = []
+
+    case node.type
+    when :hash
+      matches.concat(find_values_in_hash(node, controller_name, value_name))
+    when :send
+      matches.concat(find_values_in_method_call(node, controller_name, value_name))
+    end
+
+    # Recursively search child nodes
+    if node.respond_to?(:children)
+      node.children.each do |child|
+        next unless child.is_a?(Parser::AST::Node)
+        matches.concat(find_values_in_ast(child, controller_name, value_name))
+      end
+    end
+
+    matches
+  end
+
+  def find_values_in_hash(hash_node, controller_name, value_name)
+    matches = []
+
+    hash_node.children.each do |pair_node|
+      next unless pair_node.type == :pair
+
+      key_node = pair_node.children[0]
+      value_node = pair_node.children[1]
+
+      next unless key_node && value_node
+
+      # Handle string keys: "controller-value-name-value" => "..."
+      if key_node.type == :str
+        key_str = key_node.children[0]
+        kebab_value_name = value_name.gsub(/([a-z])([A-Z])/, '\1-\2').downcase
+        expected_key = "#{controller_name}-#{kebab_value_name}-value"
+
+        if key_str == expected_key
+          matches << {
+            type: :hash_string_key,
+            controller: controller_name,
+            value: value_name,
+            key_node: key_node,
+            value_node: value_node
+          }
+        end
+      end
+
+      # Handle symbol keys: controller_value_name_value: "..."
+      if key_node.type == :sym
+        key_sym = key_node.children[0]
+        expected_key = "#{controller_name.gsub('-', '_')}_#{value_name.gsub(/([a-z])([A-Z])/, '\1_\2').downcase}_value"
+
+        if key_sym.to_s == expected_key
+          matches << {
+            type: :hash_symbol_key,
+            controller: controller_name,
+            value: value_name,
+            key_node: key_node,
+            value_node: value_node
+          }
+        end
+      end
+    end
+
+    matches
+  end
+
+  def find_values_in_method_call(send_node, controller_name, value_name)
+    matches = []
+
+    if send_node.children.length >= 2
+      send_node.children[2..-1].each do |arg|
+        next unless arg.is_a?(Parser::AST::Node) && arg.type == :hash
+        matches.concat(find_values_in_hash(arg, controller_name, value_name))
+      end
+    end
+
+    matches
+  end
+
+  def parse_action_string(action_string)
+    return [] unless action_string
+
+    actions = []
+    action_parts = action_string.scan(/\S+/)
+
+    action_parts.each do |action|
+      if match = action.match(/^(?:(\w+(?:\.\w+)*)->)?(\w+(?:-\w+)*)#(\w+)(?:@\w+)?$/)
+        event, controller_name, method_name = match[1], match[2], match[3]
+        actions << {
+          action: action,
+          event: event,
+          controller: controller_name,
+          method: method_name
+        }
+      end
+    end
+
+    actions
+  end
+
+
+  def calculate_line_number(position)
+    @content[0...position].count("\n") + 1
+  end
+
+  # Check if AST contains controller definition
+  def contains_controller_in_ast?(node, controller_name)
+    return false unless node
+
+    case node.type
+    when :hash
+      node.children.each do |pair_node|
+        next unless pair_node.type == :pair
+        
+        key_node = pair_node.children[0]
+        value_node = pair_node.children[1]
+        
+        # Look for controller key with matching value
+        if (key_node.type == :str && key_node.children[0] == "controller") ||
+           (key_node.type == :sym && key_node.children[0] == :controller)
+          
+          if value_node.type == :str && value_node.children[0] == controller_name
+            return true
+          end
+        end
+      end
+    when :send
+      # Check method call arguments
+      node.children[2..-1].each do |arg|
+        next unless arg.is_a?(Parser::AST::Node)
+        return true if contains_controller_in_ast?(arg, controller_name)
+      end
+    end
+
+    # Recursively search child nodes
+    if node.respond_to?(:children)
+      node.children.each do |child|
+        next unless child.is_a?(Parser::AST::Node)
+        return true if contains_controller_in_ast?(child, controller_name)
+      end
+    end
+
+    false
+  end
+end
 
 RSpec.describe 'Simple Stimulus Validator', type: :system do
   let(:controllers_dir) { Rails.root.join('app/javascript/controllers') }
@@ -124,41 +621,23 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
   def parse_erb_actions(content, relative_path)
     actions = []
 
-    # Parse data: { action: "..." } syntax across multiple lines
-    erb_action_pattern = /data:\s*\{[^}]*action:\s*["']([^"']+)["'][^}]*\}/m
+    # Use AST parser to find actions in ERB blocks
+    erb_parser = ErbAstParser.new(content)
+    erb_actions = erb_parser.find_stimulus_actions
 
-    # Find all matches in the entire content
-    content.scan(erb_action_pattern) do |match|
-      action_value = match[0]
+    erb_actions.each do |erb_action|
+      action_info = erb_action[:match][:parsed_action]
 
-      # Find which line this action starts on by looking for the action value
-      lines = content.split("\n")
-      action_line_number = nil
-
-      lines.each_with_index do |line, index|
-        if line.include?(action_value)
-          action_line_number = index + 1
-          break
-        end
-      end
-
-      action_line_number ||= 1 # fallback
-
-      # Parse the action string which may contain multiple actions
-      parsed_actions = parse_action_string(action_value)
-
-      parsed_actions.each do |action_info|
-        actions << {
-          element: nil, # ERB actions don't have direct DOM elements
-          action: action_info[:action],
-          event: action_info[:event],
-          controller: action_info[:controller],
-          method: action_info[:method],
-          source: 'erb',
-          line_number: action_line_number,
-          line_content: action_value
-        }
-      end
+      actions << {
+        element: nil, # ERB actions don't have direct DOM elements
+        action: action_info[:action],
+        event: action_info[:event],
+        controller: action_info[:controller],
+        method: action_info[:method],
+        source: 'erb_ast',
+        line_number: erb_action[:line_number],
+        line_content: action_info[:action]
+      }
     end
 
     actions
@@ -175,13 +654,19 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
     lines.each_with_index do |line, index|
       line_num = index + 1
 
-      # Check for data-controller attribute
-      if line.match(/data-controller=["'][^"']*\b#{Regexp.escape(controller_name)}\b[^"']*["']/)
-        # Find the scope boundaries for this controller
-        scope_start = line_num
-        scope_end = find_scope_end(lines, index)
-        controller_scopes << { start: scope_start, end: scope_end, line: line.strip }
-
+      # Check for data-controller attribute using simple string matching
+      if line.include?('data-controller=') && line.include?(controller_name)
+        # Verify it's actually the controller name (not a substring)
+        if line.include?("\"#{controller_name}\"") || line.include?("'#{controller_name}'") ||
+           line.include?("\"#{controller_name} ") || line.include?("'#{controller_name} ") ||
+           line.include?(" #{controller_name}\"") || line.include?(" #{controller_name}'") ||
+           line.include?(" #{controller_name} ")
+          
+          # Find the scope boundaries for this controller
+          scope_start = line_num
+          scope_end = find_scope_end(lines, index)
+          controller_scopes << { start: scope_start, end: scope_end, line: line.strip }
+        end
       end
     end
 
@@ -273,36 +758,28 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
             controller_data[controller_name][:targets].each do |target|
               target_found = false
 
-              target_selector = "[data-#{controller_name}-target*='#{target}']"
-              target_found = controller_element.css(target_selector).any?
-
-              unless target_found
-                rails_target_key = "#{controller_name.gsub('-', '_')}_target"
-                rails_pattern = /data:\s*\{[^}]*#{Regexp.escape(rails_target_key)}:\s*["']#{Regexp.escape(target)}["'][^}]*\}/
-
-                if controller_element.to_html.match?(rails_pattern)
-                  target_found = true
-                end
+              # 1. Check if controller element itself has the target (HTML attribute)
+              if controller_element["data-#{controller_name}-target"]&.include?(target)
+                target_found = true
               end
 
+              # 2. If not found on controller element, look inside it (HTML descendants)
               unless target_found
-                erb_pattern = /data:\s*\{\s*#{Regexp.escape(controller_name.gsub('-', '_'))}_target:\s*["']#{Regexp.escape(target)}["']\s*\}/
-                if content.match?(erb_pattern)
-                  target_found = true
-                end
+                target_selector = "[data-#{controller_name}-target*='#{target}']"
+                target_found = controller_element.css(target_selector).any?
               end
 
+              # 3. Use AST parser to find targets in ERB blocks within controller scope
               unless target_found
-                controller_start = content.index(%Q{data-controller="#{controller_name}"})
-                if controller_start
-                  content_after_controller = content[controller_start..-1]
+                erb_parser = ErbAstParser.new(content)
+                erb_targets = erb_parser.find_stimulus_targets(controller_name, target)
 
-                  controller_section = content_after_controller
-
-                  target_pattern = /#{Regexp.escape(controller_name.gsub('-', '_'))}_target:\s*["']#{Regexp.escape(target)}["']/
-                  if controller_section.match?(target_pattern)
-                    target_found = true
-                  end
+                # Check if any ERB target is within the controller scope
+                erb_targets.each do |erb_target|
+                  # For now, consider ERB targets found if they exist anywhere in the file
+                  # TODO: Implement proper scope checking for ERB blocks
+                  target_found = true
+                  break
                 end
               end
 
@@ -311,18 +788,34 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
                   controller: controller_name,
                   target: target,
                   file: relative_path,
-                  suggestion: "Add <div data-#{controller_name}-target=\"#{target}\">...</div> within controller scope"
+                  suggestion: "Add <div data-#{controller_name}-target=\"#{target}\">...</div> within controller scope or use ERB syntax: data: { \"#{controller_name}-target\" => \"#{target}\" }"
                 }
               end
             end
 
-            # Check for missing or incorrectly formatted values
+            # Check for missing or incorrectly formatted values using AST parser
             controller_data[controller_name][:values].each do |value_name|
               kebab_value_name = value_name.gsub(/([a-z])([A-Z])/, '\1-\2').downcase
               expected_attr = "data-#{controller_name}-#{kebab_value_name}-value"
+              value_found = false
 
-              if !controller_element.has_attribute?(expected_attr)
-                # Check for common mistakes in ERB context
+              # 1. Check HTML attributes on controller element
+              if controller_element.has_attribute?(expected_attr)
+                value_found = true
+              end
+
+              # 2. Use AST parser to find values in ERB blocks
+              unless value_found
+                erb_parser = ErbAstParser.new(content)
+                erb_values = erb_parser.find_stimulus_values(controller_name, value_name)
+
+                if erb_values.any?
+                  value_found = true
+                end
+              end
+
+              # 3. Check for common mistakes using AST and string detection
+              unless value_found
                 common_mistakes = [
                   "data-#{value_name}",
                   "data-#{controller_name}-#{value_name}",
@@ -347,7 +840,7 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
                     file: relative_path,
                     expected: expected_attr,
                     found: found_mistakes.first,
-                    suggestion: "Change '#{found_mistakes.first}' to '#{expected_attr}'"
+                    suggestion: "Change '#{found_mistakes.first}' to '#{expected_attr}'}"
                   }
                 else
                   value_errors << {
@@ -356,7 +849,7 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
                     file: relative_path,
                     expected: expected_attr,
                     found: nil,
-                    suggestion: "Add #{expected_attr}=\"...\" to controller element"
+                    suggestion: "Add #{expected_attr}=\"...\" to controller element}"
                   }
                 end
               end
@@ -396,7 +889,7 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
           source = action_info[:source]
 
           # For ERB actions, check if controller scope actually includes the action
-          if source == 'erb' || source == 'erb_snake_case'
+          if source == 'erb_ast'
             controller_scope = false
 
             # Use proper scope checking for ERB actions
@@ -411,8 +904,20 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
             end
           else
             # For HTML data-action attributes
-            controller_scope = action_element.ancestors.css("[data-controller*='#{controller_name}']").first ||
-                             (action_element['data-controller']&.include?(controller_name) ? action_element : nil)
+            controller_scope = false
+
+            # Check if element itself has the controller
+            if action_element['data-controller']&.include?(controller_name)
+              controller_scope = action_element
+            else
+              # Check ancestors for the controller (correct way)
+              action_element.ancestors.each do |ancestor|
+                if ancestor['data-controller']&.include?(controller_name)
+                  controller_scope = ancestor
+                  break
+                end
+              end
+            end
 
             if !controller_scope && relative_path.include?('_')
               parent_controllers = get_controllers_from_parents(relative_path)
@@ -423,10 +928,52 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
           end
 
           unless controller_scope
-            if relative_path.include?('_')
-              suggestion = "Controller '#{controller_name}' should be defined in parent template or wrap with <div data-controller=\"#{controller_name}\">...</div>"
+            # Check if controller exists anywhere in the file using AST parsing
+            controller_exists_in_file = false
+            
+            # Check HTML data-controller attributes
+            doc.css('[data-controller]').each do |element|
+              if element['data-controller'].split(/\s+/).include?(controller_name)
+                controller_exists_in_file = true
+                break
+              end
+            end
+            
+            # Check ERB blocks for controller definitions using AST
+            unless controller_exists_in_file
+              erb_parser = ErbAstParser.new(content)
+              erb_parser.instance_variable_get(:@erb_blocks).each do |block|
+                next unless block[:code].include?('data') && block[:code].include?('controller')
+                
+                begin
+                  processed_code = erb_parser.send(:preprocess_erb_code, block[:code])
+                  ast = Parser::CurrentRuby.parse(processed_code)
+                  if contains_controller_in_ast?(ast, controller_name)
+                    controller_exists_in_file = true
+                    break
+                  end
+                rescue
+                  # Skip unparseable blocks
+                end
+              end
+            end
+
+            if controller_exists_in_file
+              # Controller exists but out of scope
+              if relative_path.include?('_')
+                suggestion = "Controller '#{controller_name}' exists but action is out of scope - move action within controller scope or define controller in parent template"
+              else
+                suggestion = "Controller '#{controller_name}' exists but action is out of scope - move action within <div data-controller=\"#{controller_name}\">...</div>"
+              end
+              error_type = "out_of_scope"
             else
-              suggestion = "Wrap with <div data-controller=\"#{controller_name}\">...</div>"
+              # Controller doesn't exist in file at all
+              if relative_path.include?('_')
+                suggestion = "Controller '#{controller_name}' should be defined in parent template or wrap with <div data-controller=\"#{controller_name}\">...</div>"
+              else
+                suggestion = "Wrap with <div data-controller=\"#{controller_name}\">...</div>"
+              end
+              error_type = "missing_controller"
             end
 
             scope_errors << {
@@ -436,7 +983,8 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
               is_partial: relative_path.include?('_'),
               parent_files: partial_parent_map[relative_path] || [],
               suggestion: suggestion,
-              source: source
+              source: source,
+              error_type: error_type
             }
             next
           end
@@ -497,12 +1045,28 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
         end
 
         if scope_errors.any?
-          puts "\n   🚨 Scope Errors (#{scope_errors.length}):"
-          scope_errors.each do |error|
-            if error[:is_partial] && error[:parent_files].any?
-              puts "     • #{error[:action]} needs controller scope in #{error[:file]} (partial rendered in: #{error[:parent_files].join(', ')})"
-            else
-              puts "     • #{error[:action]} needs controller scope in #{error[:file]}"
+          out_of_scope_errors = scope_errors.select { |e| e[:error_type] == "out_of_scope" }
+          missing_controller_errors = scope_errors.select { |e| e[:error_type] == "missing_controller" }
+
+          if out_of_scope_errors.any?
+            puts "\n   🚨 Out of Scope Errors (#{out_of_scope_errors.length}):"
+            out_of_scope_errors.each do |error|
+              if error[:is_partial] && error[:parent_files].any?
+                puts "     • #{error[:action]} controller exists but action is out of scope in #{error[:file]} (partial rendered in: #{error[:parent_files].join(', ')})"
+              else
+                puts "     • #{error[:action]} controller exists but action is out of scope in #{error[:file]}"
+              end
+            end
+          end
+
+          if missing_controller_errors.any?
+            puts "\n   🚨 Missing Controller Scope (#{missing_controller_errors.length}):"
+            missing_controller_errors.each do |error|
+              if error[:is_partial] && error[:parent_files].any?
+                puts "     • #{error[:action]} needs controller scope in #{error[:file]} (partial rendered in: #{error[:parent_files].join(', ')})"
+              else
+                puts "     • #{error[:action]} needs controller scope in #{error[:file]}"
+              end
             end
           end
         end
@@ -529,7 +1093,11 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
         end
 
         scope_errors.each do |error|
-          error_details << "Scope error: #{error[:action]} in #{error[:file]} - #{error[:suggestion]}"
+          if error[:error_type] == "out_of_scope"
+            error_details << "Out of scope error: #{error[:action]} in #{error[:file]} - #{error[:suggestion]}"
+          else
+            error_details << "Scope error: #{error[:action]} in #{error[:file]} - #{error[:suggestion]}"
+          end
         end
 
         action_errors.each do |error|
@@ -548,8 +1116,35 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
 
       view_files.each do |view_file|
         content = File.read(view_file)
+        doc = Nokogiri::HTML::DocumentFragment.parse(content)
+        
         controller_data.keys.each do |controller|
-          if content.include?("data-controller") && content.match(/\b#{Regexp.escape(controller)}\b/)
+          # Check HTML data-controller attributes
+          found_in_html = doc.css('[data-controller]').any? do |element|
+            element['data-controller'].split(/\s+/).include?(controller)
+          end
+          
+          # Check ERB blocks using AST
+          found_in_erb = false
+          unless found_in_html
+            erb_parser = ErbAstParser.new(content)
+            erb_parser.instance_variable_get(:@erb_blocks).each do |block|
+              next unless block[:code].include?('data') && block[:code].include?('controller')
+              
+              begin
+                processed_code = erb_parser.send(:preprocess_erb_code, block[:code])
+                ast = Parser::CurrentRuby.parse(processed_code)
+                if erb_parser.send(:contains_controller_in_ast?, ast, controller)
+                  found_in_erb = true
+                  break
+                end
+              rescue
+                # Skip unparseable blocks
+              end
+            end
+          end
+          
+          if found_in_html || found_in_erb
             used_controllers << controller
           end
         end
@@ -590,12 +1185,12 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
           end
 
           if action_attr = element['data-action']
-            action_attr.split(/\s+/).each do |action|
-              if match = action.match(/^(?:\w+->)?(\w+(?:-\w+)*)#\w+/)
-                controller = match[1]
-                unless controller_data.key?(controller)
-                  missing_controllers << controller
-                end
+            # Parse action string using existing method
+            parsed_actions = parse_action_string(action_attr)
+            parsed_actions.each do |action_info|
+              controller = action_info[:controller]
+              unless controller_data.key?(controller)
+                missing_controllers << controller
               end
             end
           end
