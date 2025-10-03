@@ -1,0 +1,7 @@
+FactoryBot.define do
+  factory :<%= singular_name %> do
+<% if factory_attributes.present? %>
+<%= factory_attributes %>
+<% end %>
+  end
+end
