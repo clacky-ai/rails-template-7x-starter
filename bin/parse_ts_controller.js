@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable */
 
 const ts = require('typescript');
 const fs = require('fs');
