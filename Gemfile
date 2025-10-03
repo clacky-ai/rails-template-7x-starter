@@ -31,7 +31,7 @@ group :development, :test do
   gem "debug", platforms: %i[ mri mswin mswin64 mingw x64_mingw ], require: "debug/prelude"
   gem "brakeman", require: false
   gem "rubocop-rails-omakase", require: false
-  gem "parser", "~> 3.3"
+  gem "parser", "3.3.5.0"  # Match Ruby 3.3.5 version
 end
 
 group :test do

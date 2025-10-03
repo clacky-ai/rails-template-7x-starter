@@ -464,14 +464,14 @@ class ErbAstParser
     when :hash
       node.children.each do |pair_node|
         next unless pair_node.type == :pair
-        
+
         key_node = pair_node.children[0]
         value_node = pair_node.children[1]
-        
+
         # Look for controller key with matching value
         if (key_node.type == :str && key_node.children[0] == "controller") ||
            (key_node.type == :sym && key_node.children[0] == :controller)
-          
+
           if value_node.type == :str && value_node.children[0] == controller_name
             return true
           end
@@ -506,33 +506,23 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
 
     Dir.glob(controllers_dir.join('*_controller.ts')).each do |file|
       controller_name = File.basename(file, '.ts').gsub('_controller', '').gsub('_', '-')
-      content = File.read(file)
 
-      targets = []
-      if match = content.match(/static targets\s*=\s*\[(.*?)\]/m)
-        targets = match[1].scan(/["']([^"']+)["']/).flatten
+      # Use TypeScript AST parser to extract controller metadata
+      parser_script = Rails.root.join('bin/parse_ts_controller.js')
+      result_json = `node #{parser_script} #{file}`
+
+      if $?.success?
+        parsed_data = JSON.parse(result_json)
+
+        data[controller_name] = {
+          targets: parsed_data['targets'] || [],
+          values: parsed_data['values'] || [],
+          methods: parsed_data['methods'] || [],
+          file: file
+        }
+      else
+        raise 'Parse ts controller failed'
       end
-
-      values = []
-      if match = content.match(/static values\s*=\s*\{([^}]*)\}/m)
-        values_content = match[1]
-        values = values_content.scan(/(\w+):\s*\w+/).map { |m| m[0] }
-      end
-
-      methods = []
-      content.scan(/^\s*(?:async\s+)?(\w+)\s*\([^)]*\)\s*:\s*[\w<>]*\s*\{/) do |match|
-        method_name = match[0]
-        unless %w[connect disconnect constructor].include?(method_name)
-          methods << method_name
-        end
-      end
-
-      data[controller_name] = {
-        targets: targets,
-        values: values,
-        methods: methods,
-        file: file
-      }
     end
 
     data
@@ -661,7 +651,7 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
            line.include?("\"#{controller_name} ") || line.include?("'#{controller_name} ") ||
            line.include?(" #{controller_name}\"") || line.include?(" #{controller_name}'") ||
            line.include?(" #{controller_name} ")
-          
+
           # Find the scope boundaries for this controller
           scope_start = line_num
           scope_end = find_scope_end(lines, index)
@@ -930,7 +920,7 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
           unless controller_scope
             # Check if controller exists anywhere in the file using AST parsing
             controller_exists_in_file = false
-            
+
             # Check HTML data-controller attributes
             doc.css('[data-controller]').each do |element|
               if element['data-controller'].split(/\s+/).include?(controller_name)
@@ -938,13 +928,13 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
                 break
               end
             end
-            
+
             # Check ERB blocks for controller definitions using AST
             unless controller_exists_in_file
               erb_parser = ErbAstParser.new(content)
               erb_parser.instance_variable_get(:@erb_blocks).each do |block|
                 next unless block[:code].include?('data') && block[:code].include?('controller')
-                
+
                 begin
                   processed_code = erb_parser.send(:preprocess_erb_code, block[:code])
                   ast = Parser::CurrentRuby.parse(processed_code)
@@ -1117,20 +1107,20 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
       view_files.each do |view_file|
         content = File.read(view_file)
         doc = Nokogiri::HTML::DocumentFragment.parse(content)
-        
+
         controller_data.keys.each do |controller|
           # Check HTML data-controller attributes
           found_in_html = doc.css('[data-controller]').any? do |element|
             element['data-controller'].split(/\s+/).include?(controller)
           end
-          
+
           # Check ERB blocks using AST
           found_in_erb = false
           unless found_in_html
             erb_parser = ErbAstParser.new(content)
             erb_parser.instance_variable_get(:@erb_blocks).each do |block|
               next unless block[:code].include?('data') && block[:code].include?('controller')
-              
+
               begin
                 processed_code = erb_parser.send(:preprocess_erb_code, block[:code])
                 ast = Parser::CurrentRuby.parse(processed_code)
@@ -1143,7 +1133,7 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
               end
             end
           end
-          
+
           if found_in_html || found_in_erb
             used_controllers << controller
           end
