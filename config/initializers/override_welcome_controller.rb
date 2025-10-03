@@ -4,8 +4,9 @@ Rails.application.config.to_prepare do
 
   Rails::WelcomeController.class_eval do
     def index
-      custom = Rails.root.join("app/views/shared/missing_welcome_index.html.erb")
-      render file: custom, layout: false, content_type: 'text/html'
+      # Use static HTML file from public directory
+      static_file = Rails.root.join("public/missing_welcome_index.html")
+      render file: static_file, layout: false, content_type: 'text/html'
     end
   end
 end
