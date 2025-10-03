@@ -13,12 +13,34 @@ RSpec.configure do |config|
 
     puts "📦 Compiling assets for system tests..."
 
-    result = system("RAILS_ENV=test bin/rails assets:precompile",
-                   out: File::NULL, err: File::NULL)
+    # Capture both stdout and stderr
+    output = `RAILS_ENV=test bin/rails assets:precompile 2>&1`
+    result = $?.success?
 
     unless result
-      puts "❌ Asset compilation failed"
-      exit(1)
+      puts "\n" + "=" * 80
+      puts "❌ Asset compilation failed - Tests aborted"
+      puts "=" * 80
+
+      # Extract and display key error information
+      error_lines = output.split("\n").select do |line|
+        line.include?('error') || line.include?('Error') ||
+        line.include?('failed') || line.include?('Failed') ||
+        line.include?('✘') || line.include?('×')
+      end
+
+      if error_lines.any?
+        puts "\n🔍 Key errors:"
+        error_lines.first(10).each { |line| puts "   #{line}" }
+        puts "\n💡 Run 'bin/rails assets:precompile' to see full output" if error_lines.length > 10
+      else
+        # Show last 20 lines if no specific errors found
+        puts "\n📋 Last output lines:"
+        output.split("\n").last(20).each { |line| puts "   #{line}" }
+      end
+
+      puts "=" * 80 + "\n"
+      abort("Asset compilation failed. Fix the errors above and re-run tests.")
     end
 
     puts "✅ Assets compiled successfully"
