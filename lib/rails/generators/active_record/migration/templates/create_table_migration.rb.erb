@@ -1,0 +1,21 @@
+class <%= migration_class_name %> < ActiveRecord::Migration<%= migration_version %>
+  def change
+    create_table :<%= table_name %> do |t|
+<%- parsed_attributes.each do |attr| -%>
+  <%- if attr[:reference] -%>
+      t.references :<%= attr[:name] %>
+  <%- else -%>
+      t.<%= attr[:type] %> :<%= attr[:name] %><% if !attr[:null] || attr[:default] %>, <%= [("null: false" unless attr[:null]), (attr[:default] ? "default: #{attr[:type].to_s.in?(['string', 'text']) ? "\"#{attr[:default]}\"" : attr[:default]}" : nil)].compact.join(', ') %><% end %>
+  <%- end -%>
+<%- end -%>
+
+      t.timestamps
+    end
+<%- if parsed_attributes.any? { |attr| attr[:index] || attr[:unique] } -%>
+
+<%- parsed_attributes.select { |attr| attr[:index] || attr[:unique] }.each do |attr| -%>
+    add_index :<%= table_name %>, :<%= attr[:name] %><%= attr[:unique] ? ", unique: true" : "" %>
+<%- end -%>
+<%- end -%>
+  end
+end
