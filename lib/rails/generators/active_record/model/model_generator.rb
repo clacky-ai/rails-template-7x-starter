@@ -5,10 +5,6 @@ module ActiveRecord
     class ModelGenerator < ActiveRecord::Generators::Base
       source_root File.expand_path('templates', __dir__)
 
-      def self.next_migration_number(dirname)
-        Time.now.utc.strftime("%Y%m%d%H%M%S")
-      end
-
       # Store raw attributes before Rails parses them
       def initialize(args, *options)
         # Store raw attribute strings before parent processes them
@@ -82,18 +78,14 @@ module ActiveRecord
       end
 
       def show_completion_message
-        say "\n"
-        say "Model generated successfully!", :green
-        say "📄 Model: app/models/#{singular_name}.rb", :green
-        say "📄 Migration: db/migrate/*_create_#{table_name}.rb", :green unless options[:skip_migration]
-        say "📄 Factory: spec/factories/#{table_name}.rb", :green unless options[:skip_factory]
-        say "📄 Spec: spec/models/#{singular_name}_spec.rb", :green unless options[:skip_spec]
-        say "\n"
-        say "Next steps:", :yellow
-        say "1. Run: rails db:migrate", :blue unless options[:skip_migration]
-        say "2. Add validations and associations to the model", :blue
-        say "3. Update factory with realistic data", :blue unless options[:skip_factory]
-        say "4. Add model specs", :blue unless options[:skip_spec]
+        if behavior != :revoke
+          say "\n"
+          say "Next steps:", :yellow
+          say "1. Run: rails db:migrate", :blue unless options[:skip_migration]
+          say "2. Add validations and associations to the model", :blue
+          say "3. Update factory with realistic data", :blue unless options[:skip_factory]
+          say "4. Add model specs", :blue unless options[:skip_spec]
+        end
       end
 
       private
