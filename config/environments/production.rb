@@ -1,9 +1,5 @@
 require "active_support/core_ext/integer/time"
 
-if ENV["CLACKY_PUBLIC_HOST"].present?
-  Rails.application.default_url_options = { host: ENV.fetch("CLACKY_PUBLIC_HOST"), port: "443", protocol: "https" }
-end
-
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
 
@@ -43,9 +39,9 @@ Rails.application.configure do
   # config.action_cable.url = "wss://example.com/cable"
   # config.action_cable.allowed_request_origins = [ "http://example.com", /http:\/\/example.*/ ]
 
-  if ENV["CLACKY_PUBLIC_HOST"].present?
-    config.action_mailer.default_url_options = { host: ENV.fetch("CLACKY_PUBLIC_HOST"), port: "443", protocol: "https" }
-  end
+  host_and_port_and_protocol = EnvConfig.get_public_host_and_port_and_protocol
+  config.default_url_options = host_and_port_and_protocol
+  config.action_mailer.default_url_options = host_and_port_and_protocol
 
   if ENV["SMTP_PASSWORD"].present?
     config.action_mailer.smtp_settings = {

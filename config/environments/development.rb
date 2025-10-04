@@ -1,9 +1,5 @@
 require "active_support/core_ext/integer/time"
 
-if ENV["CLACKY_PUBLIC_HOST"].present?
-  Rails.application.default_url_options = { host: ENV.fetch("CLACKY_PUBLIC_HOST"), port: "443", protocol: "https" }
-end
-
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
 
@@ -45,11 +41,9 @@ Rails.application.configure do
   # caching is enabled.
   config.action_mailer.perform_caching = false
 
-  if ENV["CLACKY_PUBLIC_HOST"].present?
-    config.action_mailer.default_url_options = { host: ENV.fetch("CLACKY_PUBLIC_HOST"), port: "443", protocol: "https" }
-  else
-    config.action_mailer.default_url_options = { host: "localhost", port: ENV.fetch("APP_PORT"), protocol: "http" }
-  end
+  host_and_port_and_protocol = EnvConfig.get_public_host_and_port_and_protocol
+  config.default_url_options = host_and_port_and_protocol
+  config.action_mailer.default_url_options = host_and_port_and_protocol
 
   config.action_mailer.smtp_settings = {
     address: ENV.fetch("SMTP_ADDRESS"),

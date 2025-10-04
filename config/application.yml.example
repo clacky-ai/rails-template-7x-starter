@@ -1,15 +1,24 @@
 # Use `rake secret` to generate one key, Only needed in production environment
 SECRET_KEY_BASE: ''
 
+# CLACKY_XX variables, will be imported by Clacky CDE environments
+# CLACKY_PREVIEW_DOMAIN_BASE
+# CLACKY_EMAIL_SMTP_ADDRESS
+# CLACKY_EMAIL_SMTP_PORT
+# CLACKY_EMAIL_SMTP_USERNAME
+# CLACKY_EMAIL_SMTP_API_KEY
+# CLACKY_EMAIL_SMTP_DOMAIN
+
 # Set this value to generate email sending URLs and callback URLs
-CLACKY_PUBLIC_HOST: '<%= if ENV["CLACKY_PUBLIC_HOST"].blank? and ENV["CLACKY_PREVIEW_DOMAIN_BASE"].present? then ENV.fetch("APP_PORT", "3000") + ENV.fetch("CLACKY_PREVIEW_DOMAIN_BASE") else ENV.fetch("CLACKY_PUBLIC_HOST") end %>'
+CLACKY_PUBLIC_HOST: ''
 
 # Browser base title
 APPNAME: 'ClackyAI APP'
 
 # SMTP
-SMTP_ADDRESS: '<%= ENV.fetch("CLACKY_EMAIL_SMTP_ADDRESS") %>'
-SMTP_PORT: '<%= ENV.fetch("CLACKY_EMAIL_SMTP_PORT") %>'
-SMTP_USERNAME: '<%= ENV.fetch("CLACKY_EMAIL_SMTP_USERNAME") %>'
-SMTP_PASSWORD: '<%= ENV.fetch("CLACKY_EMAIL_API_KEY") %>'
-SMTP_DOMAIN: '<%= ENV.fetch("CLACKY_EMAIL_SMTP_DOMAIN") %>'
+# TODO only need when user system is ready
+SMTP_ADDRESS: '<%= ENV.fetch("CLACKY_EMAIL_SMTP_ADDRESS", '') %>'
+SMTP_PORT: '<%= ENV.fetch("CLACKY_EMAIL_SMTP_PORT", '') %>'
+SMTP_USERNAME: '<%= ENV.fetch("CLACKY_EMAIL_SMTP_USERNAME", '') %>'
+SMTP_PASSWORD: '<%= ENV.fetch("CLACKY_EMAIL_API_KEY", '') %>'
+SMTP_DOMAIN: '<%= ENV.fetch("CLACKY_EMAIL_SMTP_DOMAIN", '') %>'
