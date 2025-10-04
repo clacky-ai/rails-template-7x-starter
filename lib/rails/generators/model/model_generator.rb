@@ -1,17 +1,5 @@
-# Minimal patch: Only extend validation to allow default= and null
-require "rails/generators/generated_attribute"
-require "rails/generators/model_helpers"
-
-Rails::Generators::GeneratedAttribute.singleton_class.prepend(Module.new do
-  def valid_index_type?(index_type)
-    return true if index_type&.start_with?('default=')
-    return true if index_type == 'null'
-    return true if index_type == 'serialize'
-    super
-  end
-end)
-
 # Hook generator - delegates to active_record:model
+require "rails/generators/model_helpers"
 module Rails
   module Generators
     class ModelGenerator < NamedBase

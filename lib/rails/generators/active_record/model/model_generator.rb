@@ -62,7 +62,7 @@ module ActiveRecord
       def generate_migration
         return if options[:skip_migration]
 
-        migration_template "migration.rb.erb", "db/migrate/create_#{table_name}.rb"
+        migration_template "create_table_migration.rb.erb", "db/migrate/create_#{table_name}.rb"
       end
 
       def generate_factory
