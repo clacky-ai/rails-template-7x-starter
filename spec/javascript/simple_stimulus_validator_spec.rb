@@ -1199,4 +1199,79 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
       expect(missing_controllers).to be_kind_of(Array)
     end
   end
+
+  describe 'Turbo-Free Validation' do
+    it 'ensures no Turbo technologies are used in the project' do
+      turbo_violations = []
+
+      # Turbo-related patterns to check in views
+      view_turbo_patterns = {
+        'turbo_frame_tag' => 'Turbo Frame helper',
+        'turbo_stream_from' => 'Turbo Stream helper',
+        'data-turbo-frame' => 'Turbo Frame data attribute',
+        'data-turbo-stream' => 'Turbo Stream data attribute',
+        'turbo:' => 'Turbo event listener',
+        '<turbo-frame' => 'Turbo Frame HTML tag',
+        '<turbo-stream' => 'Turbo Stream HTML tag'
+      }
+
+      # Turbo-related patterns to check in controllers
+      controller_turbo_patterns = {
+        'format.turbo_stream' => 'Turbo Stream response format',
+        'turbo_stream' => 'Turbo Stream response',
+        'turbo_frame_request?' => 'Turbo Frame request check',
+        'turbo:' => 'Turbo configuration'
+      }
+
+      # Check view files
+      view_files.each do |view_file|
+        content = File.read(view_file)
+        relative_path = view_file.sub(Rails.root.to_s + '/', '')
+
+        view_turbo_patterns.each do |pattern, description|
+          if content.include?(pattern)
+            turbo_violations << {
+              file: relative_path,
+              pattern: pattern,
+              description: description,
+              suggestion: "Remove #{description} - use Stimulus controllers + RailsUJS instead"
+            }
+          end
+        end
+      end
+
+      # Check controller files
+      controller_files = Dir.glob(Rails.root.join('app/controllers/**/*_controller.rb'))
+      controller_files.each do |controller_file|
+        content = File.read(controller_file)
+        relative_path = controller_file.sub(Rails.root.to_s + '/', '')
+
+        controller_turbo_patterns.each do |pattern, description|
+          if content.include?(pattern)
+            turbo_violations << {
+              file: relative_path,
+              pattern: pattern,
+              description: description,
+              suggestion: "Remove #{description} - use format.json or format.html with Stimulus instead"
+            }
+          end
+        end
+      end
+
+      if turbo_violations.any?
+        puts "\n🚫 Turbo Usage Detected (#{turbo_violations.length}):"
+        turbo_violations.each do |violation|
+          puts "   • #{violation[:file]}: Found '#{violation[:pattern]}' (#{violation[:description]})"
+        end
+
+        error_details = turbo_violations.map do |v|
+          "#{v[:file]}: #{v[:pattern]} - #{v[:suggestion]}"
+        end
+
+        expect(turbo_violations).to be_empty, "Turbo technologies are not allowed in this project:\n#{error_details.join("\n")}"
+      else
+        puts "\n✅ No Turbo usage detected - project is Turbo-free!"
+      end
+    end
+  end
 end

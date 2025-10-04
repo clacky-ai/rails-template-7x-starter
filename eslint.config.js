@@ -37,7 +37,7 @@ module.exports = [
       'no-debugger': 'error',
       'no-alert': 'off',
       'no-unused-expressions': 'error',
-      'no-useless-return': 'error',
+      'no-useless-return': 'off',
 
       'semi': 'off',
       'quotes': 'off',

@@ -13,7 +13,8 @@ Kaminari
 FriendlyId (for SEO-friendly URLs)
 Puma
 RSpec
-RailsUjs( no turo/turbolinks )
+Stimulus( no turbo/turbo-stream/turbo-frame )
+RailsUjs
 ActionCable( solid_queue, no redis )
 
 Do not add or remove any components and avoid upgrading or downgrading components.
@@ -135,6 +136,13 @@ Use FriendlyId (already configured) if need slug URLs. For user-facing content u
 
 **MANDATORY**: ALL frontend interactions MUST use Stimulus controllers. NO inline JavaScript allowed.
 
+**CRITICAL - NO TURBO TECHNOLOGIES**:
+- ❌ NEVER use Turbo, Turbo Drive, Turbo Frames, or Turbo Streams
+- ❌ DO NOT use `turbo_frame_tag`, `turbo_stream_from`, or any turbo helpers
+- ❌ DO NOT use `data-turbo-frame`, `data-turbo-stream`, or turbo data attributes
+- ✅ Use Stimulus controllers + RailsUJS for all dynamic interactions
+- ✅ Use ActionCable for real-time features (not Turbo Streams)
+- This project keeps frontend simple and stable by avoiding Turbo completely
 
 ALWAYS prefer TailwindCSS v3 and Stimulus controllers for UI behavior. NO pure JavaScript or jQuery allowed.
 
@@ -144,7 +152,6 @@ Every form should include error messages using the shared partial. Add `<%= rend
 ## Testing Requirements
 
 **MANDATORY**: Keep `rake test` all passed Before delivery feature to users.
-
 
 `rake test` is configured to only show 3 failed test cases at a time, so you should repeatedly run rake test (no less than 3 rounds, no more than 10 rounds) until all tests pass
 
@@ -169,13 +176,7 @@ Temporary files should be written in the `tmp` directory.
 - Validate inputs early and explicitly
 - Avoid "silent failures" that mask bugs
 
-**DESIGN SYSTEM INTEGRITY:**
-- NEVER add new CSS components to `application.css` - the system is complete
-- ONLY modify existing CSS variable values (colors, fonts, spacing)
-- Use existing .btn-*, .card-*, .alert-*, .badge-*, .form-* classes
-- All colors must use semantic tokens (primary, secondary, text-*, surface-*)
-
-**COMMENTS:**
+**CODE COMMENTS:**
 - Minimal comments, focus on self-documenting code
 - English only, explain WHY not WHAT
 - No obvious comments that repeat the code
