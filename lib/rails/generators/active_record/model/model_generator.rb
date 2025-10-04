@@ -143,16 +143,17 @@ module ActiveRecord
             index: attr.has_index?,
             unique: attr.has_uniq_index?,
             null: attr_options[:null],
-            default: attr_options[:default]
+            default: attr_options[:default],
+            serialize: attr_options[:serialize]
           }
         end
       end
 
       def parse_raw_attribute_options(raw_attr)
-        options = { null: true, default: nil }
+        options = { null: true, default: nil, serialize: false }
         return options unless raw_attr
 
-        # Parse raw string like "name:string:default=draft:null"
+        # Parse raw string like "name:string:default=draft:null:serialize"
         parts = raw_attr.split(':')
 
         # Skip name and type, process remaining parts
@@ -161,6 +162,8 @@ module ActiveRecord
             options[:default] = part.split('=', 2)[1]
           elsif part == 'null'
             options[:null] = false
+          elsif part == 'serialize'
+            options[:serialize] = true
           end
         end
 
@@ -241,6 +244,21 @@ module ActiveRecord
         end
 
         validations.join("\n")
+      end
+
+      def serialized_attributes_declarations
+        # Only serialize text/string fields, not json/jsonb (they're handled automatically)
+        serialized_attrs = parsed_attributes.select do |attr|
+          attr[:serialize] && !['json', 'jsonb'].include?(attr[:type].to_s)
+        end
+
+        return "" if serialized_attrs.empty?
+
+        declarations = serialized_attrs.map do |attr|
+          "  serialize :#{attr[:name]}, coder: JSON"
+        end
+
+        declarations.join("\n")
       end
     end
   end

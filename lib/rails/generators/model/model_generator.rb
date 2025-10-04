@@ -6,6 +6,7 @@ Rails::Generators::GeneratedAttribute.singleton_class.prepend(Module.new do
   def valid_index_type?(index_type)
     return true if index_type&.start_with?('default=')
     return true if index_type == 'null'
+    return true if index_type == 'serialize'
     super
   end
 end)
