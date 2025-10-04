@@ -1,4 +1,8 @@
 class <%= class_name %> < ApplicationRecord
+<% if serialized_attributes_declarations.present? %>
+<%= serialized_attributes_declarations %>
+
+<% end %>
 <% if model_validations.present? %>
 <%= model_validations %>
 <% end %>

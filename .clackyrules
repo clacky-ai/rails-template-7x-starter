@@ -31,7 +31,12 @@ Restarting project is unnecessary because Rails automatically hot-reloads code c
 **STOP! Before creating ANY models or controllers, you MUST complete these steps first:**
 
 ### Step 1: REQUIRED - Design System First
-**ALWAYS start by updating design system in `app/assets/stylesheets/application.css`** with beautiful UIs and appropriate animations( using `npm run build:css` to keep it right ). DO NOT create any models/controllers before this.
+**ALWAYS start by updating existing design system variables in `app/assets/stylesheets/application.css`** (using `npm run build:css` to keep it right). DO NOT create any models/controllers before this.
+
+**⚠️ MODIFICATION HIERARCHY - FOLLOW EXACTLY:**
+1. **FIRST**: Modify existing CSS variables in `:root` section
+2. **SECOND**: Adjust existing dark mode variables in `.dark` section
+3. **LAST RESORT**: Only if absolutely necessary, modify existing component classes (.btn, .card, .alert, etc.)
 
 **ALWAYS use HSL colors in application.css and tailwind.config.js**
 
@@ -40,6 +45,8 @@ If there are rgb colors in index.css, make sure to not use them in tailwind.conf
 CRITICAL: USE SEMANTIC TOKENS FOR COLORS, GRADIENTS, FONTS, ETC. It's important you follow best practices. DO NOT use direct colors like text-white, text-black, bg-white, bg-black, etc. Everything must be themed via the design system defined in the `application.css` and `tailwind.config.js` files!
 
 **NEVER use `@apply group` in CSS** - `group` class should only be added in HTML templates, not in CSS @apply directives.
+
+**USE EXISTING COMPONENTS**: The system has complete .btn-*, .card-*, .alert-*, .badge-*, .form-* classes. Use these instead of creating new ones.
 
 Pay attention to contrast, color, and typography.
 
@@ -53,6 +60,12 @@ Develop a demo view based on the new design system and user requirements, allowi
 
 ### Step 4: Then proceed with other features
 Only after completing Steps 1-3, you can create other models and controllers.
+
+### Step 5: MANDATORY - Before Task Completion
+**CRITICAL: Run `rake test` and ensure ALL tests pass before delivering any feature**
+- This is NON-NEGOTIABLE - never deliver with failing tests
+- Run multiple times until all tests pass (see Testing Requirements section)
+- **If you are planning tasks with TodoWrite tool, ALWAYS include "Run rake test and ensure all tests pass" as a specific task item**
 
 
 ## Some important tips when Developing user authentication/payment/LLM-calling(AI APP) system
@@ -86,6 +99,18 @@ Use Unsplash images instead of self-generated icons if you need placeholder imag
 
 When installing any new gem or npm packages, always specify a version you are most familiar with and suitable for the project. Do not use the latest version directly.
 
+**ALWAYS prefer `rails generate models` for batch model generation:**
+- Syntax: `rails g models product name:string:default=Untitled price:decimal:default=0 + category name:string + tag name:string color:string:default=#000000`
+- Separator: `+` splits different models
+- Enhanced syntax support:
+  - **Default values**: `field:type:default=value` (e.g., `status:string:default=draft`, `count:integer:default=0`)
+  - **Null constraints**: `field:type:null` (generates `null: false` in migration)
+  - **Serialize**: `field:text:serialize` (only for text/string; json/jsonb auto-handled)
+- **Protected names**: Cannot use `user`, `order`, `payment`, etc. (suggests alternatives)
+- Options: `--skip-migration`, `--skip-factory`, `--skip-spec`
+
+Use `rails generate model xxx` only when generating a single model (supports same enhanced syntax as above).
+
 Use `rails generate service xxx` to generate a service file, not generate by yourself.
 
 Use `rails generate admin_crud xxx` (where xxx is your model name that you created before) to create the initial CRUD when developing the admin management page, modify generated code for free.
@@ -94,7 +119,15 @@ Use `rails generate controller xxx [action1] [action2] [--auth] [--single]` (whe
 
 Use `rails generate channel xxx [action1] [action2] [--auth]` to create ActionCable channels. --auth option adds user authentication support (enables current_user method, adds authentication tests).
 
-Use `rails generate stimulus_controller xxx` to create new Stimulus controllers with TypeScript support. 
+Use `rails generate stimulus_controller xxx` to create new Stimulus controllers with TypeScript support.
+
+**STIMULUS TARGET RULES**: Optional targets must be declared with `declare readonly hasXXXTarget: boolean` to bypass validation. Required targets without this declaration will be validated.
+
+**⚠️ STIMULUS TESTING - CRITICAL COMPLIANCE**:
+- ALWAYS run `bundle exec rspec spec/javascript/simple_stimulus_validator_spec.rb` after ANY Stimulus-related changes
+- ALL stimulus validator errors are REAL errors, NOT false positives - fix them immediately
+- NEVER dismiss or ignore stimulus validator failures as "misleading" or "incorrect"
+- These tests validate critical controller-view integration - failures mean broken functionality
 
 Use FriendlyId (already configured) if need slug URLs. For user-facing content use `friendly_id :title, use: :slugged`, for admin/API use simple IDs.
 
@@ -102,18 +135,20 @@ Use FriendlyId (already configured) if need slug URLs. For user-facing content u
 
 **MANDATORY**: ALL frontend interactions MUST use Stimulus controllers. NO inline JavaScript allowed.
 
+
 ALWAYS prefer TailwindCSS v3 and Stimulus controllers for UI behavior. NO pure JavaScript or jQuery allowed.
 
-Every form should include error messages using the shared partial. Add `<%= render 'shared/error_messages', model: @your_model %>` at the beginning of every form for consistent error display. Never write nested form.
+Every form should include error messages using the shared partial. Add `<%= render 'shared/form_error_message', model: @your_model %>` at the beginning of every form for consistent error display. Never write nested form.
 
 
 ## Testing Requirements
 
-Keep `rake test` all passed Before delivery feature to users.
+**MANDATORY**: Keep `rake test` all passed Before delivery feature to users.
+
 
 `rake test` is configured to only show 3 failed test cases at a time, so you should repeatedly run rake test (no less than 3 rounds, no more than 10 rounds) until all tests pass
 
-Double check `rake test` all passed at last when you finish the task.
+**CRITICAL**: Double check `rake test` all passed at last when you finish the task.
 
 Use `curl -X POST localhost:3000/sign_in -H "Content-Type: application/json" -d '{"email":"user@example.com","password":"pass"}'` return session_token then `curl -H "Authorization: Bearer <session_token>" -s xxx` for page test. Use `rails runner "User.create(xxx)"` if need create user first.
 
@@ -127,6 +162,18 @@ Temporary files should be written in the `tmp` directory.
 
 
 ## Code Quality
+
+**FAIL FAST PRINCIPLE:**
+- NEVER use default values to hide missing required data
+- Let functions return `nil` or raise errors when data is missing
+- Validate inputs early and explicitly
+- Avoid "silent failures" that mask bugs
+
+**DESIGN SYSTEM INTEGRITY:**
+- NEVER add new CSS components to `application.css` - the system is complete
+- ONLY modify existing CSS variable values (colors, fonts, spacing)
+- Use existing .btn-*, .card-*, .alert-*, .badge-*, .form-* classes
+- All colors must use semantic tokens (primary, secondary, text-*, surface-*)
 
 **COMMENTS:**
 - Minimal comments, focus on self-documenting code
