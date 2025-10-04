@@ -289,6 +289,29 @@
     box-shadow: none;
   }
 
+  .btn-accent {
+    @apply btn px-4 py-2 text-sm text-white;
+    background-color: hsl(var(--color-secondary));
+    box-shadow: var(--shadow-sm);
+  }
+
+  .btn-accent:hover:not(:disabled) {
+    background-color: hsl(var(--color-secondary-dark));
+    box-shadow: var(--shadow);
+  }
+
+  .btn-accent:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px hsl(var(--color-secondary) / 0.3);
+  }
+
+  .btn-accent:disabled {
+    background-color: hsl(var(--color-secondary) / 0.5);
+    color: hsl(0 0% 100% / 0.7);
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
   .btn-ghost {
     @apply btn px-4 py-2 text-sm text-text-secondary;
     background-color: transparent;
