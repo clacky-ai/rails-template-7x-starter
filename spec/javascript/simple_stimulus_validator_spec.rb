@@ -718,6 +718,7 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
   describe 'Core Validation: Targets and Actions' do
     it 'validates that controller targets exist in HTML and actions have methods' do
       target_errors = []
+      target_scope_errors = []
       action_errors = []
       scope_errors = []
       registration_errors = []
@@ -746,21 +747,21 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
             end
 
             controller_data[controller_name][:targets].each do |target|
-              target_found = false
+              target_found_in_scope = false
 
               # 1. Check if controller element itself has the target (HTML attribute)
               if controller_element["data-#{controller_name}-target"]&.include?(target)
-                target_found = true
+                target_found_in_scope = true
               end
 
               # 2. If not found on controller element, look inside it (HTML descendants)
-              unless target_found
+              unless target_found_in_scope
                 target_selector = "[data-#{controller_name}-target*='#{target}']"
-                target_found = controller_element.css(target_selector).any?
+                target_found_in_scope = controller_element.css(target_selector).any?
               end
 
               # 3. Use AST parser to find targets in ERB blocks within controller scope
-              unless target_found
+              unless target_found_in_scope
                 erb_parser = ErbAstParser.new(content)
                 erb_targets = erb_parser.find_stimulus_targets(controller_name, target)
 
@@ -768,18 +769,58 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
                 erb_targets.each do |erb_target|
                   # For now, consider ERB targets found if they exist anywhere in the file
                   # TODO: Implement proper scope checking for ERB blocks
-                  target_found = true
+                  target_found_in_scope = true
                   break
                 end
               end
 
-              unless target_found
-                target_errors << {
-                  controller: controller_name,
-                  target: target,
-                  file: relative_path,
-                  suggestion: "Add <div data-#{controller_name}-target=\"#{target}\">...</div> within controller scope or use ERB syntax: data: { \"#{controller_name}-target\" => \"#{target}\" }"
-                }
+              unless target_found_in_scope
+                # Check if target exists anywhere else in the file (out of scope)
+                target_exists_elsewhere = false
+
+                # Check HTML elements outside current controller scope
+                doc.css("[data-#{controller_name}-target*='#{target}']").each do |element|
+                  # Check if this element is outside the current controller scope
+                  is_outside_scope = true
+                  element.ancestors.each do |ancestor|
+                    if ancestor == controller_element
+                      is_outside_scope = false
+                      break
+                    end
+                  end
+
+                  if is_outside_scope
+                    target_exists_elsewhere = true
+                    break
+                  end
+                end
+
+                # Check ERB blocks for targets outside scope
+                unless target_exists_elsewhere
+                  erb_parser = ErbAstParser.new(content)
+                  erb_targets = erb_parser.find_stimulus_targets(controller_name, target)
+                  # If ERB targets exist, they might be outside scope
+                  # For simplicity, we consider them as potentially out of scope
+                end
+
+                if target_exists_elsewhere
+                  # Target exists but is out of scope
+                  target_scope_errors << {
+                    controller: controller_name,
+                    target: target,
+                    file: relative_path,
+                    error_type: "out_of_scope",
+                    suggestion: "Move <div data-#{controller_name}-target=\"#{target}\">...</div> inside controller scope or move controller definition to parent element"
+                  }
+                else
+                  # Target doesn't exist at all
+                  target_errors << {
+                    controller: controller_name,
+                    target: target,
+                    file: relative_path,
+                    suggestion: "Add <div data-#{controller_name}-target=\"#{target}\">...</div> within controller scope or use ERB syntax: data: { \"#{controller_name}-target\" => \"#{target}\" }"
+                  }
+                end
               end
             end
 
@@ -999,7 +1040,7 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
       # Remove duplicates from registration errors
       registration_errors = registration_errors.uniq { |error| [error[:controller], error[:file]] }
 
-      total_errors = target_errors.length + action_errors.length + scope_errors.length + registration_errors.length + value_errors.length
+      total_errors = target_errors.length + target_scope_errors.length + action_errors.length + scope_errors.length + registration_errors.length + value_errors.length
 
       puts "\n🔍 Simple Stimulus Validation Results:"
       puts "   📁 Scanned: #{view_files.length} views, #{controller_data.keys.length} controllers"
@@ -1020,6 +1061,13 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
           puts "\n   🎯 Missing Targets (#{target_errors.length}):"
           target_errors.each do |error|
             puts "     • #{error[:controller]}:#{error[:target]} missing in #{error[:file]}"
+          end
+        end
+
+        if target_scope_errors.any?
+          puts "\n   🎯 Target Out of Scope Errors (#{target_scope_errors.length}):"
+          target_scope_errors.each do |error|
+            puts "     • #{error[:controller]}:#{error[:target]} exists but is out of controller scope in #{error[:file]}"
           end
         end
 
@@ -1076,6 +1124,10 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
 
         target_errors.each do |error|
           error_details << "Missing target: #{error[:controller]}:#{error[:target]} in #{error[:file]} - #{error[:suggestion]}"
+        end
+
+        target_scope_errors.each do |error|
+          error_details << "Target out of scope: #{error[:controller]}:#{error[:target]} in #{error[:file]} - #{error[:suggestion]}"
         end
 
         value_errors.each do |error|
