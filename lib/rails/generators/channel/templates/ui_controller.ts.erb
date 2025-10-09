@@ -102,7 +102,7 @@ export default class extends Controller<HTMLElement> {
         suggestion: 'Connection lost - check network or server status'
       }
     }
-    this.handleGlobalError(disconnectionError)
+    this.reportError(disconnectionError)
 
     // Add your disconnection logic here
     this.onDisconnected()
@@ -118,7 +118,7 @@ export default class extends Controller<HTMLElement> {
 
     // Global error handling
     if (data.type === 'error' && data.success === false) {
-      this.handleGlobalError(data)
+      this.reportError(data)
       return
     }
 
@@ -197,15 +197,15 @@ export default class extends Controller<HTMLElement> {
   //   console.log('Status update received:', data)
   // }
 
-  // Global error handling for this channel
-  private handleGlobalError(errorData: any): void {
-    // Send to global error handler
-    if (window.errorHandler && window.errorHandler.handleActionCableError) {
-      window.errorHandler.handleActionCableError({
+  // Report error to error monitor
+  private reportError(errorData: any): void {
+    // Send to error monitor for display
+    if (window.errorHandler && window.errorHandler.captureActionCableError) {
+      window.errorHandler.captureActionCableError({
         ...errorData,
       })
     } else {
-      // Fallback error handling
+      // Fallback error logging
       console.error('Channel Error:', {
         ...errorData
       })

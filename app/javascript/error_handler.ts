@@ -392,8 +392,11 @@ class ErrorHandler {
   private pendingUIUpdates: boolean = false;
   private hasShownFirstError: boolean = false;
   private lastInteractionTime: number = 0;
+  private originalConsoleError: typeof console.error;
 
   constructor() {
+    // Save original console.error before any interception
+    this.originalConsoleError = console.error.bind(console);
     this.init();
   }
 
@@ -547,6 +550,59 @@ class ErrorHandler {
   }
 
   setupGlobalErrorHandlers() {
+    // Intercept console.error
+    console.error = (...args: any[]) => {
+      // Always call original console.error first
+      this.originalConsoleError(...args);
+
+      // Extract error message from arguments
+      const message = args.map(arg => {
+        if (arg instanceof Error) {
+          return arg.message;
+        } else if (typeof arg === 'object') {
+          try {
+            return JSON.stringify(arg);
+          } catch {
+            return String(arg);
+          }
+        }
+        return String(arg);
+      }).join(' ');
+
+      // Skip if message is empty or trivial
+      if (!message || message.trim().length === 0) {
+        return;
+      }
+
+      // Check for duplicate - if same message exists in recent errors, skip
+      const messageToCheck = `[console.error] ${message}`;
+      const isDuplicate = this.errors.some(error =>
+        error.message === messageToCheck &&
+        Date.now() - new Date(error.lastOccurred).getTime() < 5000 // 5 second window
+      );
+
+      if (!isDuplicate) {
+        // Create Error to capture stack trace if not already present
+        let errorObj = args.find(arg => arg instanceof Error);
+        if (!errorObj) {
+          errorObj = new Error(message);
+          // Remove first 2 lines from stack (Error creation and console.error wrapper)
+          if (errorObj.stack) {
+            const stackLines = errorObj.stack.split('\n');
+            errorObj.stack = [stackLines[0], ...stackLines.slice(3)].join('\n');
+          }
+        }
+
+        // Report to error handler with [console.error] prefix
+        this.handleError({
+          message: `[console.error] ${message}`,
+          type: 'javascript',
+          timestamp: new Date().toISOString(),
+          error: errorObj
+        });
+      }
+    };
+
     // Set window.onerror for compatibility with libraries like Stimulus that check for its existence
     if (!window.onerror) {
       window.onerror = (message: string | Event, source?: string, lineno?: number, colno?: number, error?: Error) => {
@@ -832,8 +888,8 @@ class ErrorHandler {
     // Clean up old debounce entries
     this.cleanupDebounceMap();
 
-    // Log to console for debugging
-    console.error('Captured Error:', errorInfo);
+    // Log to console for debugging using original console.error to avoid recursion
+    this.originalConsoleError('Captured Error:', errorInfo);
   }
 
   shouldIgnoreError(errorInfo: ErrorInfo): boolean {
@@ -1084,7 +1140,7 @@ class ErrorHandler {
     const button = document.querySelector(`[data-error-id="${errorId}"] .copy-error`) as HTMLElement;
 
     if (!window.copyToClipboard) {
-      console.error('window.copyToClipboard not found');
+      this.originalConsoleError('window.copyToClipboard not found');
       alert(`Copy failed. Error details:\n${  errorReport}`);
       return;
     }
@@ -1101,7 +1157,7 @@ class ErrorHandler {
         button.className = button.className.replace('text-green-400', 'text-blue-400');
       }, 2000);
     }).catch(err => {
-      console.error('Failed to copy error:', err);
+      this.originalConsoleError('Failed to copy error:', err);
       // Fallback: show error details in a modal or alert
       alert(`Copy failed. Error details:\n${  errorReport}`);
     });
@@ -1114,7 +1170,7 @@ class ErrorHandler {
     const button = document.getElementById('copy-all-errors') as HTMLElement;
 
     if (!window.copyToClipboard) {
-      console.error('window.copyToClipboard not found');
+      this.originalConsoleError('window.copyToClipboard not found');
       alert(`Copy failed. Error details:\n${allErrorsReport}`);
       return;
     }
@@ -1131,7 +1187,7 @@ class ErrorHandler {
         button.className = button.className.replace('text-green-400', 'text-yellow-400');
       }, 2000);
     }).catch(err => {
-      console.error('Failed to copy all errors:', err);
+      this.originalConsoleError('Failed to copy all errors:', err);
       // Fallback: show error details in a modal or alert
       alert(`Copy failed. Error details:\n${  allErrorsReport}`);
     });
@@ -1367,8 +1423,8 @@ ${error.message}`;
     });
   }
 
-  // ActionCable specific error handling
-  handleActionCableError(errorData: any): void {
+  // ActionCable specific error capturing
+  captureActionCableError(errorData: any): void {
     this.errorCounts.actioncable++;
 
     const errorInfo: ActionCableErrorInfo = {
