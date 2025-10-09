@@ -16,10 +16,22 @@ RSpec.describe "Home", type: :request do
     it "should not have demo.html.erb when home/index.html.erb exists" do
       index_template_path = Rails.root.join('app', 'views', 'home', 'index.html.erb')
       demo_template_path = Rails.root.join('app', 'views', 'shared', 'demo.html.erb')
-      
+
       if File.exist?(index_template_path)
-        expect(File.exist?(demo_template_path)).to be_falsey, 
+        expect(File.exist?(demo_template_path)).to be_falsey,
           "Demo file should be deleted when real homepage exists. Found both #{index_template_path} and #{demo_template_path}"
+      end
+    end
+
+    it "home views should not contain nav tags directly" do
+      # Navigation should be in shared/_navbar.html.erb, not in home views
+      index_template_path = Rails.root.join('app', 'views', 'home', 'index.html.erb')
+
+      if File.exist?(index_template_path)
+          content = File.read(index_template_path)
+          expect(content).not_to match(/<nav[\s>]/i),
+            "home/index.html.erb should not contain <nav> tags. " \
+            "Navigation should be implemented in app/views/shared/_navbar.html.erb instead. " \
       end
     end
   end
