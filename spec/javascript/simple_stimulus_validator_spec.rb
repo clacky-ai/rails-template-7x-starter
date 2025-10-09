@@ -516,7 +516,9 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
 
         data[controller_name] = {
           targets: parsed_data['targets'] || [],
+          optional_targets: parsed_data['optionalTargets'] || [],
           values: parsed_data['values'] || [],
+          values_with_defaults: parsed_data['valuesWithDefaults'] || [],
           methods: parsed_data['methods'] || [],
           file: file
         }
@@ -747,6 +749,9 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
             end
 
             controller_data[controller_name][:targets].each do |target|
+              # Skip optional targets (those with hasXXXTarget declaration)
+              next if controller_data[controller_name][:optional_targets].include?(target)
+
               target_found_in_scope = false
 
               # 1. Check if controller element itself has the target (HTML attribute)
@@ -826,6 +831,9 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
 
             # Check for missing or incorrectly formatted values using AST parser
             controller_data[controller_name][:values].each do |value_name|
+              # Skip values with default values
+              next if controller_data[controller_name][:values_with_defaults].include?(value_name)
+
               kebab_value_name = value_name.gsub(/([a-z])([A-Z])/, '\1-\2').downcase
               expected_attr = "data-#{controller_name}-#{kebab_value_name}-value"
               value_found = false
