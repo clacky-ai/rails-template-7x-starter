@@ -19,6 +19,12 @@ RSpec.describe "Authenticated Access", type: :request do
         expect(response.body).not_to include('Sign in')
       end
 
+      it "displays navbar with sign out link" do
+        get root_path
+        expect(response.body).to match(/<nav|data-navbar|class="navbar"/),
+          "Navbar not found. Please update app/views/shared/_navbar.html.erb with navigation links"
+      end
+
       it "allows access to profile page" do
         get profile_path
         expect(response).to have_http_status(:ok)
