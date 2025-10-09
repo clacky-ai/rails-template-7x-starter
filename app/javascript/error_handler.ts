@@ -1,6 +1,8 @@
 // Enhanced JavaScript Error Handler with Persistent Status Bar
 // Provides user-friendly error monitoring with permanent visibility
 
+import { SourceMapConsumer } from 'source-map-js'
+
 // Error type definitions
 type ErrorType = 'javascript' | 'interaction' | 'network' | 'promise' | 'http' | 'actioncable' | 'manual' | 'stimulus';
 
@@ -95,13 +97,13 @@ const ERROR_TYPE_CONFIGS: { [key: string]: ErrorTypeConfig } = {
       filename: {
         label: 'File',
         priority: 10,
-        htmlFormatter: (value: string) => `<div class="mb-2"><strong>File:</strong> ${value}</div>`,
+        htmlFormatter: (value: string) => `<div class="my-1"><strong>File:</strong> ${value}</div>`,
         textFormatter: (value: string) => `File: ${value}`
       },
       lineno: {
         label: 'Line',
         priority: 9,
-        htmlFormatter: (value: number) => `<div class="mb-2"><strong>Line:</strong> ${value}</div>`,
+        htmlFormatter: (value: number) => `<div class="mb-1"><strong>Line:</strong> ${value}</div>`,
         textFormatter: (value: number) => `Line: ${value}`
       },
       'error.stack': {
@@ -110,7 +112,7 @@ const ERROR_TYPE_CONFIGS: { [key: string]: ErrorTypeConfig } = {
         condition: (error) => error.error?.stack,
         htmlFormatter: (value: string) => {
           const preClass = 'text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed';
-          return `<div class="mb-3"><div class="mb-2"><strong>Stack Trace:</strong></div><pre class="${preClass}">${value}</pre></div>`;
+          return `<div class=""><div class="mb-1"><strong>Stack Trace:</strong></div><pre class="${preClass}">${value}</pre></div>`;
         },
         textFormatter: (value: string) => `Stack Trace:\n${value}`
       }
@@ -393,6 +395,8 @@ class ErrorHandler {
   private hasShownFirstError: boolean = false;
   private lastInteractionTime: number = 0;
   private originalConsoleError: typeof console.error;
+  private sourceMapCache: Map<string, SourceMapConsumer> = new Map();
+  private sourceMapPending: Map<string, Promise<SourceMapConsumer | null>> = new Map();
 
   constructor() {
     // Save original console.error before any interception
@@ -606,6 +610,7 @@ class ErrorHandler {
     // Set window.onerror for compatibility with libraries like Stimulus that check for its existence
     if (!window.onerror) {
       window.onerror = (message: string | Event, source?: string, lineno?: number, colno?: number, error?: Error) => {
+        this.originalConsoleError('🔔 window.onerror triggered:', { message, source, lineno, colno, error });
         this.handleError({
           message: typeof message === 'string' ? message : 'Script error',
           filename: source,
@@ -815,12 +820,22 @@ class ErrorHandler {
   }
 
   handleError(errorInfo: ErrorInfo): void {
-    console.log('handleError called with:', errorInfo.message, errorInfo.type);
     // Filter out browser-specific errors we can't control
     if (this.shouldIgnoreError(errorInfo)) {
-      console.log('Error ignored due to filter');
       return;
     }
+
+    // Enrich error with source map asynchronously
+    this.enrichErrorWithSourceMap(errorInfo).then(enrichedError => {
+      this.processError(enrichedError);
+    }).catch(err => {
+      this.originalConsoleError('Failed to enrich error with source map', err);
+      // Fall back to processing original error
+      this.processError(errorInfo);
+    });
+  }
+
+  private processError(errorInfo: ErrorInfo): void {
 
     // Create a debounce key for similar errors
     const debounceKey = `${errorInfo.type}_${errorInfo.message}_${errorInfo.filename}_${errorInfo.lineno}`;
@@ -1439,6 +1454,155 @@ ${error.message}`;
     };
 
     this.handleError(errorInfo);
+  }
+
+  // Source Map related methods
+  private async getSourceMapConsumer(fileUrl: string): Promise<SourceMapConsumer | null> {
+    // Check cache first
+    if (this.sourceMapCache.has(fileUrl)) {
+      return this.sourceMapCache.get(fileUrl)!;
+    }
+
+    // Check if already pending
+    if (this.sourceMapPending.has(fileUrl)) {
+      return this.sourceMapPending.get(fileUrl)!;
+    }
+
+    // Create new promise
+    const promise = this.loadSourceMap(fileUrl);
+    this.sourceMapPending.set(fileUrl, promise);
+
+    const consumer = await promise;
+    this.sourceMapPending.delete(fileUrl);
+
+    if (consumer) {
+      this.sourceMapCache.set(fileUrl, consumer);
+    }
+
+    return consumer;
+  }
+
+  private async loadSourceMap(fileUrl: string): Promise<SourceMapConsumer | null> {
+    try {
+      const response = await fetch(fileUrl);
+      const sourceCode = await response.text();
+
+      // Extract inline source map (base64 encoded)
+      const sourceMapMatch = sourceCode.match(/\/\/# sourceMappingURL=data:application\/json;base64,([^\s]+)/);
+      if (!sourceMapMatch) {
+        return null;
+      }
+
+      const base64SourceMap = sourceMapMatch[1];
+      const sourceMapJson = atob(base64SourceMap);
+      const sourceMap = JSON.parse(sourceMapJson);
+
+      return await new SourceMapConsumer(sourceMap);
+    } catch (error) {
+      this.originalConsoleError('Failed to load source map for', fileUrl, error);
+      return null;
+    }
+  }
+
+  private normalizeSourcePath(sourcePath: string): string {
+    if (!sourcePath) return sourcePath;
+
+    // Remove leading "../" or "./" patterns
+    let normalized = sourcePath.replace(/^(?:\.\.\/)+/, '').replace(/^\.\//, '');
+
+    // Prepend "app/" if it starts with "javascript/"
+    if (normalized.startsWith('javascript/')) {
+      normalized = `app/${normalized}`;
+    }
+
+    return normalized;
+  }
+
+  async mapStackTrace(stack: string): Promise<string> {
+    if (!stack) return stack;
+
+    const lines = stack.split('\n');
+    const mappedLines = await Promise.all(lines.map(async (line) => {
+      // Parse stack trace line - handle multiple formats
+      // Format 1: "at functionName (http://localhost:3000/assets/application.js:123:45)"
+      // Format 2: "at http://localhost:3000/assets/application.js:123:45"
+      const match = line.match(/^\s*at\s+(?:(.+?)\s+\()?(.+?):(\d+):(\d+)\)?$/);
+      if (!match) return line;
+
+      const [, functionName, fileUrl, lineStr, columnStr] = match;
+      const line_num = parseInt(lineStr, 10);
+      const column = parseInt(columnStr, 10);
+
+      // Skip if fileUrl doesn't look like a valid URL
+      if (!fileUrl || (!fileUrl.startsWith('http://') && !fileUrl.startsWith('https://'))) {
+        return line;
+      }
+
+      const consumer = await this.getSourceMapConsumer(fileUrl);
+      if (!consumer) return line;
+
+      const originalPosition = consumer.originalPositionFor({
+        line: line_num,
+        column: column
+      });
+
+      if (originalPosition.source) {
+        const normalizedSource = this.normalizeSourcePath(originalPosition.source);
+        const prefix = functionName ? `at ${functionName} (` : 'at ';
+        const suffix = functionName ? ')' : '';
+        return `${prefix}${normalizedSource}:${originalPosition.line}:${originalPosition.column}${suffix}`;
+      }
+
+      return line;
+    }));
+
+    return mappedLines.join('\n');
+  }
+
+  async enrichErrorWithSourceMap(errorInfo: ErrorInfo): Promise<ErrorInfo> {
+    let enriched = { ...errorInfo };
+
+    // Map filename and line number if available
+    if (errorInfo.filename && errorInfo.lineno && errorInfo.colno) {
+      try {
+        const consumer = await this.getSourceMapConsumer(errorInfo.filename);
+        if (consumer) {
+          const originalPosition = consumer.originalPositionFor({
+            line: errorInfo.lineno,
+            column: errorInfo.colno
+          });
+
+          if (originalPosition.source) {
+            enriched = {
+              ...enriched,
+              filename: this.normalizeSourcePath(originalPosition.source),
+              lineno: originalPosition.line || errorInfo.lineno,
+              colno: originalPosition.column !== null ? originalPosition.column : errorInfo.colno
+            };
+          }
+        }
+      } catch (error) {
+        this.originalConsoleError('Failed to map error position', error);
+      }
+    }
+
+    // Map stack trace if available
+    if (errorInfo.error?.stack) {
+      try {
+        const mappedStack = await this.mapStackTrace(errorInfo.error.stack);
+        enriched = {
+          ...enriched,
+          error: {
+            ...errorInfo.error,
+            stack: mappedStack
+          }
+        };
+      } catch (error) {
+        this.originalConsoleError('Failed to map stack trace', error);
+      }
+    }
+
+    return enriched;
   }
 }
 
