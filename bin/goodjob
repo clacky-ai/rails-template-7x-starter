@@ -4,10 +4,8 @@ APP_PATH = File.expand_path('../config/application', __dir__)
 require_relative '../config/boot'
 require APP_PATH
 
-# 启动 GoodJob 工作进程
 Rails.application.initialize!
 
-# 设置信号处理
 Signal.trap('INT') { exit }
 Signal.trap('TERM') { exit }
 
@@ -15,5 +13,4 @@ puts "Starting GoodJob worker..."
 puts "Environment: #{Rails.env}"
 puts "Database: #{Rails.configuration.database_configuration[Rails.env]['database']}"
 
-# 启动 GoodJob
 exec 'bundle', 'exec', 'good_job', 'start'
