@@ -11,6 +11,9 @@ require_relative '../lib/env_config'
 module Myapp
   class Application < Rails::Application
 
+    # check environment variables in production
+    EnvConfig.check_required_env_vars if Rails.env.production?
+
     config.generators do |g|
       g.test_framework :rspec,
         fixtures: true,

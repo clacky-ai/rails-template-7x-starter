@@ -559,31 +559,67 @@ class ErrorHandler {
       // Always call original console.error first
       this.originalConsoleError(...args);
 
-      // Extract error message from arguments
-      const message = args.map(arg => {
-        if (arg instanceof Error) {
-          return arg.message;
-        } else if (typeof arg === 'object') {
-          try {
-            return JSON.stringify(arg);
-          } catch {
-            return String(arg);
+      // Extract and format error message from arguments
+      let message = '';
+
+      if (args.length === 0) return;
+
+      // Check if first argument is a format string (contains %s, %o, %d, etc.)
+      const firstArg = args[0];
+      if (typeof firstArg === 'string' && /%[sodifcO]/.test(firstArg)) {
+        // Format string detected - apply basic formatting
+        message = firstArg;
+        let argIndex = 1;
+
+        // Replace format specifiers with actual values
+        message = message.replace(/%[sodifcO]/g, (match) => {
+          if (argIndex >= args.length) return match;
+          const arg = args[argIndex++];
+
+          if (arg instanceof Error) {
+            return arg.message;
+          } else if (typeof arg === 'object') {
+            try {
+              return JSON.stringify(arg);
+            } catch {
+              return String(arg);
+            }
           }
-        }
-        return String(arg);
-      }).join(' ');
+          return String(arg);
+        });
+      } else {
+        // No format string - join all arguments
+        message = args.map(arg => {
+          if (arg instanceof Error) {
+            return arg.message;
+          } else if (typeof arg === 'object') {
+            try {
+              return JSON.stringify(arg);
+            } catch {
+              return String(arg);
+            }
+          }
+          return String(arg);
+        }).join(' ');
+      }
 
       // Skip if message is empty or trivial
       if (!message || message.trim().length === 0) {
         return;
       }
 
-      // Check for duplicate - if same message exists in recent errors, skip
-      const messageToCheck = `[console.error] ${message}`;
-      const isDuplicate = this.errors.some(error =>
-        error.message === messageToCheck &&
-        Date.now() - new Date(error.lastOccurred).getTime() < 5000 // 5 second window
-      );
+      // Check for duplicate using partial matching
+      const isDuplicate = this.errors.some(error => {
+        // Remove [console.error] prefix for comparison
+        const existingMsg = error.message.replace(/^\[console\.error\]\s*/, '');
+        const newMsg = message;
+
+        // Consider it duplicate if one message contains the other
+        const isSimilar = existingMsg.includes(newMsg) || newMsg.includes(existingMsg);
+        const isRecent = Date.now() - new Date(error.lastOccurred).getTime() < 5000; // 5 second window
+
+        return isSimilar && isRecent;
+      });
 
       if (!isDuplicate) {
         // Create Error to capture stack trace if not already present
@@ -902,9 +938,6 @@ class ErrorHandler {
 
     // Clean up old debounce entries
     this.cleanupDebounceMap();
-
-    // Log to console for debugging using original console.error to avoid recursion
-    this.originalConsoleError('Captured Error:', errorInfo);
   }
 
   shouldIgnoreError(errorInfo: ErrorInfo): boolean {
@@ -939,12 +972,33 @@ class ErrorHandler {
   }
 
   findDuplicateError(errorInfo: ErrorInfo): StoredError | undefined {
-    return this.errors.find(error =>
-      error.message === errorInfo.message &&
-      error.type === errorInfo.type &&
-      error.filename === errorInfo.filename &&
-      error.lineno === errorInfo.lineno
-    );
+    return this.errors.find(error => {
+      // Use partial message matching to handle variations
+      const existingMsg = error.message.replace(/^\[console\.error\]\s*/, '');
+      const newMsg = errorInfo.message.replace(/^\[console\.error\]\s*/, '');
+
+      // Consider it duplicate if one message contains the other
+      const messagesMatch = existingMsg.includes(newMsg) || newMsg.includes(existingMsg);
+      if (!messagesMatch) return false;
+
+      // Type matching: javascript and interaction are considered similar
+      const typesMatch = error.type === errorInfo.type ||
+                        (error.type === 'javascript' && errorInfo.type === 'interaction') ||
+                        (error.type === 'interaction' && errorInfo.type === 'javascript');
+      if (!typesMatch) return false;
+
+      // Only check filename/lineno if both errors have them
+      // If one has them and the other doesn't, still consider it a match based on message
+      const bothHaveLocation = error.filename && errorInfo.filename;
+      if (bothHaveLocation) {
+        // If both have location info, they should match
+        if (error.filename !== errorInfo.filename || error.lineno !== errorInfo.lineno) {
+          return false;
+        }
+      }
+
+      return true;
+    });
   }
 
   generateErrorId() {

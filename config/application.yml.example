@@ -1,5 +1,4 @@
-# Use `rake secret` to generate one key, Only needed in production environment
-SECRET_KEY_BASE: ''
+# Production environment will check all required variables. Variables are optional if: 1) name ends with '_OPTIONAL' or 2) value uses ENV.fetch('CLACKY_xxx') pattern.
 
 # CLACKY_XX variables, will be imported by Clacky CDE environments
 # CLACKY_PREVIEW_DOMAIN_BASE
@@ -9,16 +8,24 @@ SECRET_KEY_BASE: ''
 # CLACKY_EMAIL_SMTP_API_KEY
 # CLACKY_EMAIL_SMTP_DOMAIN
 
+# Use `rake secret` to generate one key
+# production need!!!
+SECRET_KEY_BASE: ''
+
 # Set this value to generate email sending URLs and callback URLs
-CLACKY_PUBLIC_HOST: ''
+# production need!!!
+PUBLIC_HOST: '<%= ENV.fetch('CLACKY_PUBLIC_HOST', '') %>'
+DATABASE_URL: '<%= ENV.fetch('CLACKY_DATABASE_URL', '') %>'
 
 # Browser base title
 APPNAME: 'ClackyAI APP'
 
-# SMTP
-# TODO only need when user system is ready
-SMTP_ADDRESS: '<%= ENV.fetch("CLACKY_EMAIL_SMTP_ADDRESS", '') %>'
-SMTP_PORT: '<%= ENV.fetch("CLACKY_EMAIL_SMTP_PORT", '') %>'
-SMTP_USERNAME: '<%= ENV.fetch("CLACKY_EMAIL_SMTP_USERNAME", '') %>'
-SMTP_PASSWORD: '<%= ENV.fetch("CLACKY_EMAIL_API_KEY", '') %>'
-SMTP_DOMAIN: '<%= ENV.fetch("CLACKY_EMAIL_SMTP_DOMAIN", '') %>'
+# SMTP for email
+EMAIL_SMTP_ADDRESS: '<%= ENV.fetch("CLACKY_EMAIL_SMTP_ADDRESS", '') %>'
+EMAIL_SMTP_PORT: '<%= ENV.fetch("CLACKY_EMAIL_SMTP_PORT", '') %>'
+EMAIL_SMTP_USERNAME: '<%= ENV.fetch("CLACKY_EMAIL_SMTP_USERNAME", '') %>'
+EMAIL_SMTP_PASSWORD: '<%= ENV.fetch("CLACKY_EMAIL_API_KEY", '') %>'
+EMAIL_SMTP_DOMAIN: '<%= ENV.fetch("CLACKY_EMAIL_SMTP_DOMAIN", '') %>'
+
+# xxx_OPTIONAL is optional
+# XXX_OPTIONAL: ''

@@ -21,7 +21,7 @@ module EnvConfig
       default_port = 3000
 
       if ENV['CLACKY_PUBLIC_HOST'].present?
-        return { host: ENV.fetch('CLACKY_PUBLIC_HOST'), port: 443, protocol: 'https' }
+        return { host: ENV.fetch('PUBLIC_HOST'), port: 443, protocol: 'https' }
       end
 
       if ENV['CLACKY_PREVIEW_DOMAIN_BASE'].present?
@@ -36,25 +36,45 @@ module EnvConfig
     end
 
     # Load environment variable names from application.yml.example
+    # Returns an array of hashes: [{ name: 'VAR_NAME', optional: true/false }, ...]
     def load_example_env_vars(example_file = 'config/application.yml.example')
       return [] unless File.exist?(example_file)
 
       lines = File.readlines(example_file)
-      env_var_names = lines
+      env_var_configs = lines
         .map(&:strip)
         .reject { |line| line.empty? || line.start_with?('#') }
-        .map { |line| line.split(':')[0].strip }
+        .map do |line|
+          parts = line.split(':', 2)
+          next nil if parts.size != 2
 
-      env_var_names.uniq
+          var_name = parts[0].strip
+          var_value = parts[1].strip
+
+          # Check if value uses ERB template with ENV.fetch or Env.fetch
+          # Pattern: <%= ENV.fetch('CLACKY_xxx') %> or <%= Env.fetch('CLACKY_xxx') %>
+          optional = var_value.match?(/<%=\s*(?:ENV|Env)\.fetch\(['"]CLACKY_/)
+
+          { name: var_name, optional: optional }
+        end
+        .compact
+
+      env_var_configs.uniq { |config| config[:name] }
     end
 
-    # Check if all required environment variables (non _OPTIONAL suffix) exist and have values
-    def check_required_env_vars(example_env_vars = nil)
-      example_env_vars ||= load_example_env_vars
+    # Check if all required environment variables exist and have values
+    # Variables are considered optional if:
+    # 1. They end with '_OPTIONAL' suffix
+    # 2. Their value in application.yml.example uses <%= ENV.fetch('CLACKY_xxx') %>
+    def check_required_env_vars(example_env_configs = nil)
+      example_env_configs ||= load_example_env_vars
 
-      missing_vars = example_env_vars.reject do |key|
-        key.end_with?('_OPTIONAL') || get_env_var(key).present?
-      end
+      missing_vars = example_env_configs.reject do |config|
+        var_name = config[:name]
+        is_optional = config[:optional] || var_name.end_with?('_OPTIONAL')
+
+        is_optional || get_env_var(var_name).present?
+      end.map { |config| config[:name] }
 
       if missing_vars.any?
         raise "Config error, missing these env keys: #{missing_vars.join(', ')}"
@@ -62,5 +82,3 @@ module EnvConfig
     end
   end
 end
-
-# EnvConfig.check_required_env_vars if Rails.env.production?
