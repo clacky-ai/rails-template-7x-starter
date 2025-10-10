@@ -2,13 +2,14 @@ class Identity::PasswordResetsController < ApplicationController
   before_action :set_user, only: %i[ edit update ]
 
   def new
+    @user = User.new
   end
 
   def edit
   end
 
   def create
-    if @user = User.find_by(email: params[:email], verified: true)
+    if @user = User.find_by(email: params[:user][:email], verified: true)
       send_password_reset_email
       redirect_to sign_in_path, notice: "Check your email for reset instructions"
     else
@@ -34,7 +35,7 @@ class Identity::PasswordResetsController < ApplicationController
   end
 
   def user_params
-    params.permit(:password, :password_confirmation)
+    params.require(:user).permit(:password, :password_confirmation)
   end
 
   def send_password_reset_email

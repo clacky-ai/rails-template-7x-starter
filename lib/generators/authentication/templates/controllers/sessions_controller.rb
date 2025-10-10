@@ -11,12 +11,13 @@ class SessionsController < ApplicationController
   end
 
   def new
+    @user = User.new
   end
 
   def create
-    if user = User.authenticate_by(email: params[:email], password: params[:password])
+    if user = User.authenticate_by(email: params[:user][:email], password: params[:user][:password])
       @session = user.sessions.create!
-      
+
       respond_to do |format|
         format.html do
           cookies.signed.permanent[:session_token] = { value: @session.id, httponly: true }
@@ -37,7 +38,7 @@ class SessionsController < ApplicationController
     else
       respond_to do |format|
         format.html do
-          redirect_to sign_in_path(email_hint: params[:email]), alert: "That email or password is incorrect"
+          redirect_to sign_in_path(email_hint: params[:user][:email]), alert: "That email or password is incorrect"
         end
         format.json do
           render json: {

@@ -31,7 +31,7 @@ class ProfilesController < ApplicationController
   def update_password
     @user = current_user
 
-    unless @user.authenticate(params[:current_password])
+    unless @user.authenticate(params[:user][:current_password])
       flash.now[:alert] = "Password not correct"
       render :edit_password, status: :unprocessable_entity
       return

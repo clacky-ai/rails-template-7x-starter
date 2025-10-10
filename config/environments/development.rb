@@ -45,14 +45,16 @@ Rails.application.configure do
   config.default_url_options = host_and_port_and_protocol
   config.action_mailer.default_url_options = host_and_port_and_protocol
 
-  config.action_mailer.smtp_settings = {
-    address: ENV.fetch("SMTP_ADDRESS"),
-    port: ENV.fetch("SMTP_PORT"),
-    user_name: ENV.fetch("SMTP_USERNAME"),
-    password: ENV.fetch("SMTP_PASSWORD"),
-    tls: true
+  if ENV["EMAIL_SMTP_PASSWORD"].present?
+    config.action_mailer.smtp_settings = {
+      address: ENV.fetch("EMAIL_SMTP_ADDRESS"),
+      port: ENV.fetch("EMAIL_SMTP_PORT"),
+      user_name: ENV.fetch("EMAIL_SMTP_USERNAME"),
+      password: ENV.fetch("EMAIL_SMTP_PASSWORD"),
+      tls: true
   }
-  config.action_mailer.delivery_method = :smtp
+    config.action_mailer.delivery_method = :smtp
+  end
 
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log

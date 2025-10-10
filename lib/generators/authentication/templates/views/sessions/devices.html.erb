@@ -1,6 +1,6 @@
 <div class="container-lg py-12">
     <h1 class="text-3xl font-bold text-text-primary mb-8">Active Sessions</h1>
-    
+
     <div class="space-y-4">
       <% Current.user.sessions.order(created_at: :desc).each do |session| %>
         <div id="<%= dom_id session %>" class="card">
@@ -34,7 +34,7 @@
               </div>
               <% unless session == Current.session %>
                 <div class="flex-shrink-0">
-                  <%= button_to "Log out", session_destroy_one_path(id: session.id), method: :delete, 
+                  <%= button_to "Log out", destroy_one_session_path(id: session.id), method: :delete,
                       class: "btn-danger btn-sm",
                       data: { confirm: "Are you sure you want to sign out this session?" } %>
                 </div>

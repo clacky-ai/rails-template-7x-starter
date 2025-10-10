@@ -21,7 +21,7 @@ class Identity::EmailsController < ApplicationController
   end
 
   def user_params
-    params.permit(:email, :password_challenge).with_defaults(password_challenge: "")
+    params.require(:user).permit(:email, :password_challenge).with_defaults(password_challenge: "")
   end
 
   def redirect_to_root

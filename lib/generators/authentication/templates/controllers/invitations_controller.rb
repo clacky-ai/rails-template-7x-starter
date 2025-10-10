@@ -4,7 +4,7 @@ class InvitationsController < ApplicationController
   end
 
   def create
-    @user = User.create_with(user_params).find_or_initialize_by(email: params[:email])
+    @user = User.create_with(user_params).find_or_initialize_by(email: params[:user][:email])
 
     if @user.save
       send_invitation_instructions
@@ -18,7 +18,7 @@ class InvitationsController < ApplicationController
   private
 
   def user_params
-    params.permit(:email).merge(password: SecureRandom.base58, verified: true)
+    params.require(:user).permit(:email).merge(password: SecureRandom.base58, verified: true)
   end
 
   def send_invitation_instructions

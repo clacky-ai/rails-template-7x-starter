@@ -3,19 +3,19 @@
     <div class="card-body">
       <h1 class="text-3xl font-bold text-center text-text-primary mb-8">Sign up</h1>
 
-      <%= form_with(url: sign_up_path, class: "space-y-6") do |form| %>
+      <%= form_with(model: @user, url: sign_up_path, class: "space-y-6") do |form| %>
         <div>
           <%= form.label :name, class: "form-label" do %>
             Name
           <% end %>
-          <%= form.text_field :name, value: @user.name, required: true, autofocus: true, autocomplete: "name", class: "form-input" %>
+          <%= form.text_field :name, required: true, autofocus: true, autocomplete: "name", class: "form-input" %>
         </div>
 
         <div>
           <%= form.label :email, class: "form-label" do %>
             Email
           <% end %>
-          <%= form.email_field :email, value: @user.email, required: true, autocomplete: "email", class: "form-input" %>
+          <%= form.email_field :email, required: true, autocomplete: "email", class: "form-input" %>
         </div>
 
         <div>
