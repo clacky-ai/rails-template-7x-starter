@@ -1,0 +1,11 @@
+require 'rails_helper'
+
+RSpec.describe <%= class_name %>, type: :job do
+  describe '#perform' do
+    it 'executes successfully' do
+      expect {
+        <%= class_name %>.perform_now
+      }.not_to raise_error
+    end
+  end
+end
