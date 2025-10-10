@@ -7,6 +7,7 @@ class LlmGenerator < Rails::Generators::Base
   class_option :skip_job, type: :boolean, default: false, desc: "Skip job file generation"
   class_option :skip_model, type: :boolean, default: false, desc: "Skip model file generation"
   class_option :skip_migration, type: :boolean, default: false, desc: "Skip migration file generation"
+  class_option :skip_admin, type: :boolean, default: false, desc: "Skip admin CRUD generation"
 
   def create_service_file
     return if options[:skip_service]
@@ -43,6 +44,21 @@ class LlmGenerator < Rails::Generators::Base
 
     # Update application.yml if it exists
     add_llm_config_to_file('config/application.yml', llm_config)
+  end
+
+  def generate_admin_crud
+    return if options[:skip_admin]
+
+    say "\nGenerating admin CRUD for LlmRequest...", :green
+    Rails::Generators.invoke("admin_crud", ["LlmRequest"], behavior: behavior)
+  end
+
+  def customize_admin_views
+    return if options[:skip_admin]
+
+    say "Customizing admin views for LLM requests...", :green
+    template 'admin_index.html.erb', 'app/views/admin/llm_requests/index.html.erb'
+    template 'admin_show.html.erb', 'app/views/admin/llm_requests/show.html.erb'
   end
 
   def show_usage_instructions
@@ -86,6 +102,12 @@ class LlmGenerator < Rails::Generators::Base
     say "  1. Run migrations: rails db:migrate"
     say "  2. Configure your API keys in config/application.yml"
     say "  3. Try streaming: LlmService.call(prompt: 'Hi!') { |c| print c }"
+
+    unless options[:skip_admin]
+      say "\n📊 Admin Dashboard:"
+      say "  View LLM request history at /admin/llm_requests"
+      say "  Track usage, costs, and debug failed requests"
+    end
 
     say "\n" + "=" * 80 + "\n"
   end
