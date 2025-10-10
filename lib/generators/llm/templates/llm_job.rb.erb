@@ -8,79 +8,47 @@ class LlmJob < ApplicationJob
 
   discard_on ActiveJob::DeserializationError
 
-  def perform(request_id:, prompt:, system: nil, options: {}, callback_info: nil)
-    request = LlmRequest.find(request_id)
-
-    return if request.finished?
-
-    request.mark_as_processing!
-
-    # Call LlmService core API
-    response = LlmService.call_api(
+  def perform(prompt:, system: nil, options: {}, callback_class: nil)
+    # Call LlmService - will use blocking mode since no block passed
+    result = LlmService.call(
       prompt: prompt,
       system: system,
       **options.symbolize_keys
     )
 
-    # Parse and save result
-    content = response.dig("choices", 0, "message", "content")
-    usage = response["usage"] || {}
-
-    request.mark_as_completed!(
-      content: content,
-      prompt_tokens: usage["prompt_tokens"] || 0,
-      completion_tokens: usage["completion_tokens"] || 0,
-      total_tokens: usage["total_tokens"] || 0
-    )
-
-    # Execute callback
-    execute_callback(request, callback_info, error: nil)
+    if result.success?
+      # Execute callback if provided
+      execute_callback(result, callback_class, error: nil) if callback_class
+    else
+      error = StandardError.new(result.error)
+      execute_callback(result, callback_class, error: error) if callback_class
+      raise error
+    end
 
   rescue => e
-    request.mark_as_failed!(e)
-    Rails.logger.error("LlmJob failed for request #{request_id}: #{e.class} - #{e.message}")
-
-    # Execute error callback
-    execute_callback(request, callback_info, error: e)
-
-    raise # Let GoodJob record the error
+    Rails.logger.error("LlmJob failed: #{e.class} - #{e.message}")
+    execute_callback(nil, callback_class, error: e) if callback_class
+    raise
   end
 
   private
 
-  def execute_callback(request, callback_info, error: nil)
-    return unless callback_info.present?
-
-    case callback_info[:type]
-    when 'block'
-      # Block callback (only valid in same process)
-      execute_block_callback(request, error)
-    when 'class'
-      # Class callback
-      execute_class_callback(request, callback_info[:class_name], error)
-    end
-  end
-
-  def execute_block_callback(request, error)
-    # Try to get saved block from LlmService
-    callback_block = LlmService.get_callback(request.id)
-    return unless callback_block
+  def execute_callback(result, callback_class_name, error: nil)
+    return unless callback_class_name.present?
 
     begin
-      callback_block.call(request, error)
-    rescue => e
-      Rails.logger.error("Block callback execution failed: #{e.class} - #{e.message}")
-      raise
-    end
-  end
+      callback_class = callback_class_name.constantize
+      callback = callback_class.new(result, error)
 
-  def execute_class_callback(request, class_name, error)
-    begin
-      callback_class = class_name.constantize
-      callback = callback_class.new(request, error)
-      callback.call if callback.respond_to?(:call)
+      if callback.respond_to?(:call)
+        callback.call
+      elsif error && callback.respond_to?(:on_error)
+        callback.on_error
+      elsif !error && callback.respond_to?(:on_success)
+        callback.on_success
+      end
     rescue NameError => e
-      Rails.logger.error("Callback class not found: #{class_name} - #{e.message}")
+      Rails.logger.error("Callback class not found: #{callback_class_name} - #{e.message}")
       raise
     rescue => e
       Rails.logger.error("Callback execution failed: #{e.class} - #{e.message}")

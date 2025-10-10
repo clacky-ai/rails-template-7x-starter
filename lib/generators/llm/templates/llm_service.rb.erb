@@ -1,6 +1,6 @@
 # LLM Service - Unified LLM API wrapper
-# Supports synchronous call and asynchronous call_async
-# call_async supports do...end block callbacks
+# Default streaming API with blocking fallback
+# call(&block) - streaming by default, blocking if no block given
 class LlmService < ApplicationService
   class LlmError < StandardError; end
   class TimeoutError < LlmError; end
@@ -14,11 +14,19 @@ class LlmService < ApplicationService
     @temperature = options[:temperature]&.to_f || 0.7
     @max_tokens = options[:max_tokens] || 4000
     @timeout = options[:timeout] || 30
-    @callback_block = options[:callback_block]
   end
 
-  # Synchronous call
-  def call
+  # Default call - streaming if block given, blocking otherwise
+  def call(&block)
+    if block_given?
+      call_stream(&block)
+    else
+      call_blocking
+    end
+  end
+
+  # Explicit blocking call (returns full response)
+  def call_blocking
     return failure("Prompt cannot be blank") if @prompt.blank?
 
     request = create_request_record
@@ -41,7 +49,8 @@ class LlmService < ApplicationService
       success(
         content: content,
         request_id: request.id,
-        tokens: usage["total_tokens"]
+        tokens: usage["total_tokens"],
+        request: request
       )
     rescue => e
       request.mark_as_failed!(e)
@@ -50,64 +59,65 @@ class LlmService < ApplicationService
     end
   end
 
-  # Asynchronous call - supports block callbacks
-  def call_async(&block)
+  # Explicit streaming call (yields chunks as they arrive)
+  def call_stream(&block)
     return failure("Prompt cannot be blank") if @prompt.blank?
+    return failure("Block required for streaming") unless block_given?
 
     request = create_request_record
 
-    # If block provided, serialize and store it
-    callback_info = if block_given?
-      {
-        type: 'block',
-        source_location: block.source_location,
-        block: block
-      }
-    elsif @options[:callback_class].present?
-      {
-        type: 'class',
-        class_name: @options[:callback_class]
-      }
+    begin
+      request.mark_as_processing!
+
+      full_content = ""
+      prompt_tokens = 0
+      completion_tokens = 0
+
+      make_stream_request do |chunk|
+        full_content += chunk
+        block.call(chunk)
+      end
+
+      # Estimate tokens (rough approximation)
+      prompt_tokens = (@prompt.length / 4.0).ceil
+      completion_tokens = (full_content.length / 4.0).ceil
+      total_tokens = prompt_tokens + completion_tokens
+
+      request.mark_as_completed!(
+        content: full_content,
+        prompt_tokens: prompt_tokens,
+        completion_tokens: completion_tokens,
+        total_tokens: total_tokens
+      )
+
+      success(
+        content: full_content,
+        request_id: request.id,
+        tokens: total_tokens,
+        request: request
+      )
+    rescue => e
+      request.mark_as_failed!(e)
+      Rails.logger.error("LLM Stream Error: #{e.class} - #{e.message}")
+      failure("LLM stream failed: #{e.message}")
     end
-
-    # Submit to job queue
-    LlmJob.perform_later(
-      request_id: request.id,
-      prompt: @prompt,
-      system: @system,
-      options: @options.except(:callback_block),
-      callback_info: callback_info&.except(:block)
-    )
-
-    # Save block reference (only valid in current process)
-    if block_given?
-      @@callbacks ||= {}
-      @@callbacks[request.id] = block
-    end
-
-    success(request: request, request_id: request.id)
   end
 
   # Class method shortcuts
   class << self
-    def call(prompt:, system: nil, **options)
-      new(prompt: prompt, system: system, **options).call
+    # Default: streaming if block, blocking otherwise
+    def call(prompt:, system: nil, **options, &block)
+      new(prompt: prompt, system: system, **options).call(&block)
     end
 
-    def call_async(prompt:, system: nil, **options, &block)
-      service = new(prompt: prompt, system: system, **options)
-      service.call_async(&block)
+    # Explicit blocking call
+    def call_blocking(prompt:, system: nil, **options)
+      new(prompt: prompt, system: system, **options).call_blocking
     end
 
-    # Get callback block
-    def get_callback(request_id)
-      @@callbacks ||= {}
-      @@callbacks.delete(request_id)
-    end
-
-    # Core API call method (used by LlmJob)
-    def call_api(prompt:, system: nil, **options)
-      new(prompt: prompt, system: system, **options).send(:make_api_request)
+    # Explicit streaming call
+    def call_stream(prompt:, system: nil, **options, &block)
+      new(prompt: prompt, system: system, **options).call_stream(&block)
     end
   end
 
@@ -117,7 +127,7 @@ class LlmService < ApplicationService
     LlmRequest.create!(
       prompt: @prompt,
       model: @model,
-      metadata: @options.except(:callback_block, :callback_class)
+      metadata: @options
     )
   end
 
@@ -128,8 +138,9 @@ class LlmService < ApplicationService
 
     base_url = ENV.fetch('LLM_BASE_URL')
     uri = URI.parse("#{base_url}/chat/completions")
+
     http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl = true
+    http.use_ssl = (uri.scheme == 'https')
     http.read_timeout = @timeout
     http.open_timeout = 10
 
@@ -154,6 +165,62 @@ class LlmService < ApplicationService
     raise TimeoutError, "Request timed out after #{@timeout}s"
   rescue JSON::ParserError => e
     raise ApiError, "Invalid JSON response: #{e.message}"
+  end
+
+  def make_stream_request(&block)
+    require 'net/http'
+    require 'uri'
+    require 'json'
+
+    base_url = ENV.fetch('LLM_BASE_URL')
+    uri = URI.parse("#{base_url}/chat/completions")
+
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = (uri.scheme == 'https')
+    http.read_timeout = @timeout
+    http.open_timeout = 10
+
+    request = Net::HTTP::Post.new(uri.path)
+    request["Content-Type"] = "application/json"
+    request["Authorization"] = "Bearer #{api_key}"
+    request["Accept"] = "text/event-stream"
+
+    body = build_request_body
+    body[:stream] = true
+    request.body = body.to_json
+
+    http.request(request) do |response|
+      unless response.code.to_i == 200
+        raise ApiError, "API error: #{response.code} - #{response.body}"
+      end
+
+      buffer = ""
+      response.read_body do |chunk|
+        buffer += chunk
+
+        while (line_end = buffer.index("\n"))
+          line = buffer[0...line_end].strip
+          buffer = buffer[(line_end + 1)..-1]
+
+          next if line.empty?
+          next unless line.start_with?("data: ")
+
+          data = line[6..-1]
+          next if data == "[DONE]"
+
+          begin
+            json = JSON.parse(data)
+            if content = json.dig("choices", 0, "delta", "content")
+              block.call(content)
+            end
+          rescue JSON::ParserError => e
+            Rails.logger.warn("Failed to parse SSE chunk: #{e.message}")
+          end
+        end
+      end
+    end
+  rescue Net::ReadTimeout
+    raise TimeoutError, "Request timed out after #{@timeout}s"
   end
 
   def build_request_body

@@ -1,7 +1,7 @@
 class LlmGenerator < Rails::Generators::Base
   source_root File.expand_path('templates', __dir__)
 
-  desc "Generate LLM service with clean async callback support"
+  desc "Generate LLM service with streaming and blocking API support"
 
   class_option :skip_service, type: :boolean, default: false, desc: "Skip service file generation"
   class_option :skip_job, type: :boolean, default: false, desc: "Skip job file generation"
@@ -59,32 +59,33 @@ class LlmGenerator < Rails::Generators::Base
 
     say "\n🚀 Usage Examples:"
 
-    say "\n  1. Synchronous call:"
-    say "     result = LlmService.call(prompt: 'Explain quantum computing')"
+    say "\n  1. Streaming call (default, real-time response):"
+    say "     LlmService.call(prompt: 'Explain quantum computing') do |chunk|"
+    say "       print chunk  # Prints each chunk as it arrives"
+    say "     end"
+
+    say "\n  2. Blocking call (wait for full response):"
+    say "     result = LlmService.call_blocking(prompt: 'Hello AI')"
     say "     if result.success?"
     say "       puts result.data[:content]"
-    say "       puts result.data[:tokens]"
     say "     end"
 
-    say "\n  2. Asynchronous call (fire and forget):"
-    say "     result = LlmService.call_async(prompt: 'Analyze this data...')"
-    say "     request = result.data[:request]  # LlmRequest object"
-
-    say "\n  3. Async with block callback:"
-    say "     LlmService.call_async(prompt: 'Hello AI') do |request, error|"
-    say "       if error"
-    say "         Rails.logger.error \"LLM Error: \#{error.message}\""
-    say "       else"
-    say "         puts \"Result: \#{request.response}\""
-    say "         # Process request.response here"
+    say "\n  3. Background job with callback:"
+    say "     class MyCallback"
+    say "       def initialize(result, error)"
+    say "         @result, @error = result, error"
+    say "       end"
+    say "       def call"
+    say "         # Process @result or @error"
     say "       end"
     say "     end"
+    say ""
+    say "     LlmJob.perform_later(prompt: '...', callback_class: 'MyCallback')"
 
     say "\n📚 Next Steps:"
     say "  1. Run migrations: rails db:migrate"
     say "  2. Configure your API keys in config/application.yml"
-    say "  3. Try it in console: rails c"
-    say "     > LlmService.call(prompt: 'Say hello!')"
+    say "  3. Try streaming: LlmService.call(prompt: 'Hi!') { |c| print c }"
 
     say "\n" + "=" * 80 + "\n"
   end
