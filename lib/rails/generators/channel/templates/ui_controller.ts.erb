@@ -1,19 +1,19 @@
-import { Controller } from "@hotwired/stimulus"
-import consumer from "../channels/consumer"
+import BaseChannelController from "../base_channel_controller"
 import Rails from "@rails/ujs"
 
 /**
  * 🏗️ <%= file_name.camelize %> Controller - Handles WebSocket + UI for <%= file_name.humanize.downcase %>
+ * Extends BaseChannelController for error reporting and WebSocket management
  *
  * ADD YOUR UI HERE:
  * - static targets = ["messageInput", "messagesContainer", "sendButton"]
  * - Add UI methods like sendMessage(), displayMessage()
- * - Use channelReceived() to handle real-time updates
+ * - Override channelReceived() to handle real-time updates
  *
  * DON'T create separate controllers - extend this one!
  * HTML: <div data-controller="<%= file_name.dasherize %>">...</div>
  */
-export default class extends Controller<HTMLElement> {
+export default class extends BaseChannelController {
   static targets = [
     // 💡 EXAMPLE: Common targets for your UI
     // "messageInput",     // <input data-<%= file_name.dasherize %>-target="messageInput">
@@ -30,97 +30,41 @@ export default class extends Controller<HTMLElement> {
   // Must-having target
   // declare readonly messageInputTarget: HTMLInputElement
   // Optional target
-  // declare readonly hasMessagesContainerTarget: HTMLElement
+  // declare readonly hasMessagesContainerTarget: boolean
   // declare readonly messagesContainerTarget: HTMLElement
   // declare readonly roomIdValue: string
 
-  private subscription: any = null
-  private isConnected: boolean = false
-
   connect(): void {
     console.log("<%= file_name.camelize %> controller connected")
-    this.createSubscription()
+
+    // Create subscription using base class method
+    this.createSubscription("<%= channel_name %>", {
+      // Add subscription parameters here, e.g.:
+      // room_id: this.roomIdValue
+    })
   }
 
   disconnect(): void {
     console.log("<%= file_name.camelize %> controller disconnected")
+    // Destroy subscription using base class method
     this.destroySubscription()
   }
 
-  // WebSocket subscription management
-  private createSubscription(): void {
-    if (this.subscription) return
-
-    this.subscription = consumer.subscriptions.create(
-      {
-        channel: "<%= channel_name %>",
-        // Add subscription parameters here, e.g.:
-        // room_id: this.roomIdValue
-      },
-      {
-        connected: this.channelConnected.bind(this),
-        disconnected: this.channelDisconnected.bind(this),
-        received: this.channelReceived.bind(this)
-      }
-    )
-  }
-
-  private destroySubscription(): void {
-    if (this.subscription) {
-      this.subscription.unsubscribe()
-      this.subscription = null
-      this.isConnected = false
-    }
-  }
-
-  // WebSocket event handlers
-  private channelConnected(): void {
-    console.log("Connected to <%= channel_name %>")
-    this.isConnected = true
-
-    // Restore any disabled buttons when connecting
-    if (typeof window.restoreButtonStates === 'function') {
-      window.restoreButtonStates()
-    }
-
+  // Override: Called when channel connects (from base class)
+  protected channelConnected(): void {
     // Add your connection logic here
-    this.onConnected()
+    // Example: Enable send button, show connected status
   }
 
-  private channelDisconnected(): void {
-    console.log("Disconnected from <%= channel_name %>")
-    this.isConnected = false
-
-    // Create detailed disconnection error information
-    const disconnectionError = {
-      type: 'error',
-      message: '<%= channel_name %> connection was disconnected',
-      channel: '<%= channel_name %>',
-      details: {
-        connectionType: 'ActionCable WebSocket',
-        event: 'disconnected',
-        suggestion: 'Connection lost - check network or server status'
-      }
-    }
-    this.reportError(disconnectionError)
-
+  // Override: Called when channel disconnects (from base class)
+  protected channelDisconnected(): void {
     // Add your disconnection logic here
-    this.onDisconnected()
+    // Example: Disable send button, show disconnected status
   }
 
-  private channelReceived(data: any): void {
+  // Override: Called when data received (from base class)
+  protected channelReceived(data: any): void {
     console.log("Received data:", data)
-
-    // Restore any disabled buttons when receiving ActionCable messages
-    if (typeof window.restoreButtonStates === 'function') {
-      window.restoreButtonStates()
-    }
-
-    // Global error handling
-    if (data.type === 'error' && data.success === false) {
-      this.reportError(data)
-      return
-    }
 
     // Handle different types of messages
     switch(data.type) {
@@ -134,27 +78,13 @@ export default class extends Controller<HTMLElement> {
     //   break
     default:
       console.warn("Unknown message type:", data.type)
-      this.handleUnknownMessage(data)
     }
-  }
-
-  // Override these methods in your implementation
-  protected onConnected(): void {
-    // Add your connection logic here
-  }
-
-  protected onDisconnected(): void {
-    // Add your disconnection logic here
-  }
-
-  protected handleUnknownMessage(data: any): void {
-    // Handle unknown message types
   }
 
   // 🎮 ADD YOUR UI METHODS HERE
   // Example: data-action="click-><%= file_name.dasherize %>#sendMessage"
   // sendMessage(data: any = {}): void {
-  //   if (!this.isConnected) return
+  //   if (!this.connected) return
   //   this.subscription?.perform('send_message', data)
   // }
 
@@ -178,42 +108,21 @@ export default class extends Controller<HTMLElement> {
   //   })
   // }
 
-  // 📊 EXAMPLE: Send status update to server
+  // 📊 EXAMPLE: Send action to server via ActionCable
   // updateStatus(data: any = {}): void {
-  //   if (!this.isConnected) return
+  //   if (!this.connected) return
   //   this.subscription?.perform('update_status', data)
   // }
 
-  // 📨 EXAMPLE: Handle message from server
   // 💡 UI HELPER METHODS - Add methods to update your interface
   // private handleMessage(data: any): void {
   //   console.log('Message received:', data)
-  //   TODO: Create message HTML element and add to container
-  //   TODO: Scroll to bottom, update UI state
+  //   // TODO: Create message HTML element and add to container
+  //   // TODO: Scroll to bottom, update UI state
   // }
 
-  // 📊 EXAMPLE: Handle status update from server
   // private handleStatusUpdate(data: any): void {
   //   console.log('Status update received:', data)
+  //   // TODO: Update status indicator in UI
   // }
-
-  // Report error to error monitor
-  private reportError(errorData: any): void {
-    // Send to error monitor for display
-    if (window.errorHandler && window.errorHandler.captureActionCableError) {
-      window.errorHandler.captureActionCableError({
-        ...errorData,
-      })
-    } else {
-      // Fallback error logging
-      console.error('Channel Error:', {
-        ...errorData
-      })
-    }
-  }
-
-  // Check if WebSocket is connected
-  get connected(): boolean {
-    return this.isConnected
-  }
 }
