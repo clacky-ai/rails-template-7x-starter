@@ -27,7 +27,8 @@ const result = {
   optionalTargets: [],
   values: [],
   valuesWithDefaults: [],
-  methods: []
+  methods: [],
+  querySelectors: []
 };
 
 // Helper function to extract string literals from array
@@ -73,6 +74,53 @@ function extractValuesWithDefaults(node) {
   }
 
   return { values, valuesWithDefaults };
+}
+
+// Helper function to extract querySelector calls
+function extractQuerySelectors(node, methodName = null) {
+  if (ts.isCallExpression(node)) {
+    // Check if it's this.element.querySelector or this.element.querySelectorAll
+    if (ts.isPropertyAccessExpression(node.expression)) {
+      const propAccess = node.expression;
+      const methodCall = propAccess.name.text;
+
+      if (methodCall === 'querySelector' || methodCall === 'querySelectorAll') {
+        // Check if it's this.element.querySelector
+        if (ts.isPropertyAccessExpression(propAccess.expression)) {
+          const elementAccess = propAccess.expression;
+          if (elementAccess.name.text === 'element' &&
+              elementAccess.expression.kind === ts.SyntaxKind.ThisKeyword) {
+
+            // Extract the selector argument
+            if (node.arguments.length > 0) {
+              const selectorArg = node.arguments[0];
+              if (ts.isStringLiteral(selectorArg)) {
+                result.querySelectors.push({
+                  selector: selectorArg.text,
+                  method: methodCall,
+                  inMethod: methodName,
+                  line: sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1
+                });
+              } else if (ts.isTemplateExpression(selectorArg) || ts.isNoSubstitutionTemplateLiteral(selectorArg)) {
+                // Handle template literals
+                const selectorText = selectorArg.getText(sourceFile);
+                result.querySelectors.push({
+                  selector: selectorText,
+                  method: methodCall,
+                  inMethod: methodName,
+                  line: sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1,
+                  isTemplate: true
+                });
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Continue traversing child nodes
+  ts.forEachChild(node, child => extractQuerySelectors(child, methodName));
 }
 
 // Traverse AST to find class members
@@ -121,6 +169,11 @@ function visitNode(node) {
         // Exclude lifecycle methods
         if (!['connect', 'disconnect', 'constructor'].includes(methodName)) {
           result.methods.push(methodName);
+        }
+
+        // Extract querySelector calls from method body
+        if (member.body) {
+          extractQuerySelectors(member.body, methodName);
         }
       }
     });

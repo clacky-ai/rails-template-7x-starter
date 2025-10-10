@@ -520,6 +520,7 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
           values: parsed_data['values'] || [],
           values_with_defaults: parsed_data['valuesWithDefaults'] || [],
           methods: parsed_data['methods'] || [],
+          querySelectors: parsed_data['querySelectors'] || [],
           file: file
         }
       else
@@ -1331,6 +1332,154 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
         expect(turbo_violations).to be_empty, "Turbo technologies are not allowed in this project:\n#{error_details.join("\n")}"
       else
         puts "\n✅ No Turbo usage detected - project is Turbo-free!"
+      end
+    end
+  end
+
+  describe 'QuerySelector Validation' do
+    it 'validates that querySelector calls target elements within controller scope' do
+      selector_errors = []
+      selector_scope_errors = []
+
+      controller_data.each do |controller_name, data|
+        query_selectors = data[:querySelectors] || []
+        next if query_selectors.empty?
+
+        # Find view files that use this controller
+        view_files.each do |view_file|
+          content = File.read(view_file)
+          relative_path = view_file.sub(Rails.root.to_s + '/', '')
+          doc = Nokogiri::HTML::DocumentFragment.parse(content)
+
+          # Find all elements with this controller
+          controller_elements = doc.css("[data-controller]").select do |element|
+            element['data-controller'].split(/\s+/).include?(controller_name)
+          end
+
+          next if controller_elements.empty?
+
+          # Check each querySelector call
+          query_selectors.each do |qs|
+            selector = qs['selector']
+            method = qs['method']
+            in_method = qs['inMethod']
+            line = qs['line']
+            is_template = qs['isTemplate']
+
+            # Skip template literals for now (they're dynamic)
+            if is_template
+              next
+            end
+
+            # Track if we found the selector in at least one controller scope
+            found_in_scope = false
+            found_outside_scope = false
+
+            controller_elements.each do |controller_element|
+              # Try to find elements matching the selector within the controller scope
+              begin
+                matching_elements = controller_element.css(selector)
+                if matching_elements.any?
+                  found_in_scope = true
+                  break
+                end
+              rescue Nokogiri::CSS::SyntaxError
+                # Invalid CSS selector, skip
+                next
+              end
+            end
+
+            # Check if selector exists elsewhere in the document (outside controller scope)
+            unless found_in_scope
+              begin
+                matching_elements = doc.css(selector)
+                if matching_elements.any?
+                  # Check if these elements are outside all controller scopes
+                  matching_elements.each do |element|
+                    is_outside = controller_elements.all? do |controller_element|
+                      !controller_element.css('*').include?(element) && element != controller_element
+                    end
+                    if is_outside
+                      found_outside_scope = true
+                      break
+                    end
+                  end
+                end
+              rescue Nokogiri::CSS::SyntaxError
+                # Invalid CSS selector, skip
+                next
+              end
+            end
+
+            unless found_in_scope
+              controller_file = data[:file].sub(Rails.root.to_s + '/', '')
+
+              if found_outside_scope
+                # Selector exists but is out of scope
+                selector_scope_errors << {
+                  controller: controller_name,
+                  selector: selector,
+                  method: in_method,
+                  line: line,
+                  controller_file: controller_file,
+                  view_file: relative_path,
+                  suggestion: "Selector '#{selector}' exists in #{relative_path} but is outside the '#{controller_name}' controller scope. Move the element(s) inside <div data-controller=\"#{controller_name}\">...</div> or adjust the selector."
+                }
+              else
+                # Selector doesn't exist at all
+                selector_errors << {
+                  controller: controller_name,
+                  selector: selector,
+                  method: in_method,
+                  line: line,
+                  controller_file: controller_file,
+                  view_file: relative_path,
+                  suggestion: "Selector '#{selector}' not found in #{relative_path}. Add an element with this selector within the '#{controller_name}' controller scope, or the querySelector call in #{in_method}() may fail at runtime."
+                }
+              end
+            end
+          end
+        end
+      end
+
+      total_errors = selector_errors.length + selector_scope_errors.length
+
+      puts "\n🔍 QuerySelector Validation Results:"
+      total_selectors = controller_data.values.map { |d| (d[:querySelectors] || []).length }.sum
+      puts "   📁 Found: #{total_selectors} querySelector calls across #{controller_data.keys.length} controllers"
+
+      if total_errors == 0
+        puts "   ✅ All querySelector calls are valid!"
+      else
+        puts "\n   ❌ Found #{total_errors} issue(s):"
+
+        if selector_errors.any?
+          puts "\n   🔍 Missing Selectors (#{selector_errors.length}):"
+          selector_errors.each do |error|
+            puts "     • #{error[:controller]}##{error[:method]}() at #{error[:controller_file]}:#{error[:line]}"
+            puts "       Selector '#{error[:selector]}' not found in #{error[:view_file]}"
+          end
+        end
+
+        if selector_scope_errors.any?
+          puts "\n   🔍 Selector Out of Scope Errors (#{selector_scope_errors.length}):"
+          selector_scope_errors.each do |error|
+            puts "     • #{error[:controller]}##{error[:method]}() at #{error[:controller_file]}:#{error[:line]}"
+            puts "       Selector '#{error[:selector]}' exists but is out of scope in #{error[:view_file]}"
+          end
+        end
+
+        error_details = []
+
+        selector_errors.each do |error|
+          error_details << "Missing selector: #{error[:controller]}##{error[:method]}() uses '#{error[:selector]}' at #{error[:controller_file]}:#{error[:line]} - #{error[:suggestion]}"
+        end
+
+        selector_scope_errors.each do |error|
+          error_details << "Selector out of scope: #{error[:controller]}##{error[:method]}() uses '#{error[:selector]}' at #{error[:controller_file]}:#{error[:line]} - #{error[:suggestion]}"
+        end
+
+        expect(total_errors).to eq(0), "QuerySelector validation failed:\n#{error_details.join("\n")}"
       end
     end
   end
