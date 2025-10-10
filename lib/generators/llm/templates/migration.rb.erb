@@ -1,0 +1,31 @@
+class CreateLlmRequests < ActiveRecord::Migration[7.0]
+  def change
+    create_table :llm_requests do |t|
+      t.text :prompt, null: false
+      t.text :response
+      t.string :model, null: false
+      t.string :status, default: 'pending', null: false
+
+      # Token usage tracking
+      t.integer :prompt_tokens, default: 0
+      t.integer :completion_tokens, default: 0
+      t.integer :total_tokens, default: 0
+
+      # Error tracking
+      t.text :error_message
+      t.string :error_class
+
+      # Metadata for additional options
+      t.json :metadata
+
+      # Timing
+      t.datetime :started_at
+      t.datetime :completed_at
+
+      t.timestamps
+    end
+
+    add_index :llm_requests, :status
+    add_index :llm_requests, :created_at
+  end
+end

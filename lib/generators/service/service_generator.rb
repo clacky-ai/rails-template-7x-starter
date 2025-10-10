@@ -4,6 +4,7 @@ class ServiceGenerator < Rails::Generators::NamedBase
   desc "Generate a service class"
 
   def create_service_file
+    check_protected_names
     template 'service.rb.erb', "app/services/#{file_name}.rb"
   end
 
@@ -38,4 +39,21 @@ class ServiceGenerator < Rails::Generators::NamedBase
   def standardize_class_name(name)
     name.underscore.classify
   end
+
+  def check_protected_names
+    base_name = name.gsub(/service$/i, '').underscore
+
+    if base_name == 'llm'
+      say "Error: Cannot generate service with name 'llm'.", :red
+      say "Use the dedicated LLM generator instead:", :yellow
+      say "  rails generate llm", :blue
+      say "\nThis will generate:", :green
+      say "  - LlmService for synchronous/asynchronous API calls", :green
+      say "  - LlmJob for background processing", :green
+      say "  - LlmRequest model for tracking requests", :green
+      say "  - Auto-configure LLM environment variables", :green
+      exit(1)
+    end
+  end
+
 end

@@ -1,0 +1,71 @@
+class LlmRequest < ApplicationRecord
+  # Status enum
+  enum :status, {
+    pending: 'pending',
+    processing: 'processing',
+    completed: 'completed',
+    failed: 'failed'
+  }, default: :pending
+
+  # Scopes
+  scope :recent, -> { order(created_at: :desc) }
+  scope :successful, -> { where(status: :completed) }
+  scope :failed_requests, -> { where(status: :failed) }
+
+  # Validations
+  validates :prompt, presence: true
+  validates :model, presence: true
+  validates :status, presence: true
+
+  # Status check methods
+  def finished?
+    completed? || failed?
+  end
+
+  def in_progress?
+    pending? || processing?
+  end
+
+  # State transition methods
+  def mark_as_processing!
+    update!(status: :processing, started_at: Time.current)
+  end
+
+  def mark_as_completed!(content:, prompt_tokens: 0, completion_tokens: 0, total_tokens: 0)
+    update!(
+      status: :completed,
+      response: content,
+      prompt_tokens: prompt_tokens,
+      completion_tokens: completion_tokens,
+      total_tokens: total_tokens,
+      completed_at: Time.current
+    )
+  end
+
+  def mark_as_failed!(error)
+    update!(
+      status: :failed,
+      error_message: error.message,
+      error_class: error.class.name,
+      completed_at: Time.current
+    )
+  end
+
+  # Cost calculation (override this based on your pricing)
+  def cost
+    return 0 if total_tokens.nil? || total_tokens.zero?
+
+    # Example: OpenAI pricing for gpt-4o-mini
+    # Input: $0.150 / 1M tokens, Output: $0.600 / 1M tokens
+    input_cost = (prompt_tokens.to_f / 1_000_000) * 0.150
+    output_cost = (completion_tokens.to_f / 1_000_000) * 0.600
+
+    input_cost + output_cost
+  end
+
+  # Duration in seconds
+  def duration
+    return nil unless started_at && completed_at
+    completed_at - started_at
+  end
+end

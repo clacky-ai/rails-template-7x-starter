@@ -77,6 +77,8 @@ when developing order/payment system, don't write it yourself. Use `rails genera
 
 Should only need to support Stripe payments by default.
 
+**LLM Integration:** Use `rails generate llm` to generate LLM service infrastructure. It creates LlmService for synchronous/asynchronous API calls, LlmJob for background processing, and auto-configures LLM_BASE_URL, LLM_API_KEY, LLM_MODEL in application.yml. Supports both `call` and `call_async` with block callbacks.
+
 Do not recreate administrator functionality in User model. Administrator system already exists. Adding admin page low priority.
 
 

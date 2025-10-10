@@ -1,0 +1,177 @@
+# LLM Service - Unified LLM API wrapper
+# Supports synchronous call and asynchronous call_async
+# call_async supports do...end block callbacks
+class LlmService < ApplicationService
+  class LlmError < StandardError; end
+  class TimeoutError < LlmError; end
+  class ApiError < LlmError; end
+
+  def initialize(prompt:, system: nil, **options)
+    @prompt = prompt
+    @system = system
+    @options = options
+    @model = options[:model] || ENV.fetch('LLM_MODEL')
+    @temperature = options[:temperature]&.to_f || 0.7
+    @max_tokens = options[:max_tokens] || 4000
+    @timeout = options[:timeout] || 30
+    @callback_block = options[:callback_block]
+  end
+
+  # Synchronous call
+  def call
+    return failure("Prompt cannot be blank") if @prompt.blank?
+
+    request = create_request_record
+
+    begin
+      request.mark_as_processing!
+
+      response = make_api_request
+
+      content = response.dig("choices", 0, "message", "content")
+      usage = response["usage"] || {}
+
+      request.mark_as_completed!(
+        content: content,
+        prompt_tokens: usage["prompt_tokens"] || 0,
+        completion_tokens: usage["completion_tokens"] || 0,
+        total_tokens: usage["total_tokens"] || 0
+      )
+
+      success(
+        content: content,
+        request_id: request.id,
+        tokens: usage["total_tokens"]
+      )
+    rescue => e
+      request.mark_as_failed!(e)
+      Rails.logger.error("LLM Error: #{e.class} - #{e.message}")
+      failure("LLM request failed: #{e.message}")
+    end
+  end
+
+  # Asynchronous call - supports block callbacks
+  def call_async(&block)
+    return failure("Prompt cannot be blank") if @prompt.blank?
+
+    request = create_request_record
+
+    # If block provided, serialize and store it
+    callback_info = if block_given?
+      {
+        type: 'block',
+        source_location: block.source_location,
+        block: block
+      }
+    elsif @options[:callback_class].present?
+      {
+        type: 'class',
+        class_name: @options[:callback_class]
+      }
+    end
+
+    # Submit to job queue
+    LlmJob.perform_later(
+      request_id: request.id,
+      prompt: @prompt,
+      system: @system,
+      options: @options.except(:callback_block),
+      callback_info: callback_info&.except(:block)
+    )
+
+    # Save block reference (only valid in current process)
+    if block_given?
+      @@callbacks ||= {}
+      @@callbacks[request.id] = block
+    end
+
+    success(request: request, request_id: request.id)
+  end
+
+  # Class method shortcuts
+  class << self
+    def call(prompt:, system: nil, **options)
+      new(prompt: prompt, system: system, **options).call
+    end
+
+    def call_async(prompt:, system: nil, **options, &block)
+      service = new(prompt: prompt, system: system, **options)
+      service.call_async(&block)
+    end
+
+    # Get callback block
+    def get_callback(request_id)
+      @@callbacks ||= {}
+      @@callbacks.delete(request_id)
+    end
+
+    # Core API call method (used by LlmJob)
+    def call_api(prompt:, system: nil, **options)
+      new(prompt: prompt, system: system, **options).send(:make_api_request)
+    end
+  end
+
+  private
+
+  def create_request_record
+    LlmRequest.create!(
+      prompt: @prompt,
+      model: @model,
+      metadata: @options.except(:callback_block, :callback_class)
+    )
+  end
+
+  def make_api_request
+    require 'net/http'
+    require 'uri'
+    require 'json'
+
+    base_url = ENV.fetch('LLM_BASE_URL')
+    uri = URI.parse("#{base_url}/chat/completions")
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = true
+    http.read_timeout = @timeout
+    http.open_timeout = 10
+
+    request = Net::HTTP::Post.new(uri.path)
+    request["Content-Type"] = "application/json"
+    request["Authorization"] = "Bearer #{api_key}"
+    request.body = build_request_body.to_json
+
+    response = http.request(request)
+
+    case response.code.to_i
+    when 200
+      JSON.parse(response.body)
+    when 429
+      raise ApiError, "Rate limit exceeded"
+    when 500..599
+      raise ApiError, "Server error: #{response.code}"
+    else
+      raise ApiError, "API error: #{response.code} - #{response.body}"
+    end
+  rescue Net::ReadTimeout
+    raise TimeoutError, "Request timed out after #{@timeout}s"
+  rescue JSON::ParserError => e
+    raise ApiError, "Invalid JSON response: #{e.message}"
+  end
+
+  def build_request_body
+    messages = []
+    messages << { role: "system", content: @system } if @system.present?
+    messages << { role: "user", content: @prompt }
+
+    {
+      model: @model,
+      messages: messages,
+      temperature: @temperature,
+      max_tokens: @max_tokens
+    }
+  end
+
+  def api_key
+    ENV.fetch('LLM_API_KEY') do
+      raise LlmError, "LLM_API_KEY not configured"
+    end
+  end
+end
