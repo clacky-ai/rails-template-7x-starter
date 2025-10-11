@@ -1,0 +1,43 @@
+class LlmStreamJob < ApplicationJob
+  queue_as :llm
+
+  # Retry strategy configuration
+  retry_on Net::ReadTimeout, wait: 5.seconds, attempts: 3
+  retry_on LlmService::TimeoutError, wait: 5.seconds, attempts: 3
+  retry_on LlmService::ApiError, wait: 10.seconds, attempts: 2
+
+  discard_on ActiveJob::DeserializationError
+
+  # Streaming LLM responses via ActionCable
+  # Usage: LlmStreamJob.perform_later(channel_name: "chat_#{user_id}", prompt: "Hello")
+  def perform(channel_name:, prompt:, system: nil, **options)
+    full_content = ""
+
+    # Stream LLM response chunk by chunk
+    LlmService.call(prompt: prompt, system: system, **options) do |chunk|
+      full_content += chunk
+
+      # Broadcast each chunk to ActionCable
+      ActionCable.server.broadcast(channel_name, {
+        type: 'chunk',
+        chunk: chunk
+      })
+    end
+
+    # Broadcast completion
+    ActionCable.server.broadcast(channel_name, {
+      type: 'done',
+      content: full_content
+    })
+  rescue => e
+    Rails.logger.error("LlmStreamJob failed: #{e.class} - #{e.message}")
+
+    # Broadcast error to frontend
+    ActionCable.server.broadcast(channel_name, {
+      type: 'error',
+      message: e.message
+    })
+
+    raise
+  end
+end

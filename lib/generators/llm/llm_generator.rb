@@ -13,7 +13,7 @@ class LlmGenerator < Rails::Generators::Base
 
   def create_job_file
     return if options[:skip_job]
-    template 'llm_job.rb.erb', 'app/jobs/llm_job.rb'
+    template 'llm_stream_job.rb.erb', 'app/jobs/llm_stream_job.rb'
   end
 
   def update_application_yml
@@ -46,32 +46,21 @@ class LlmGenerator < Rails::Generators::Base
 
     say "\n🚀 Usage Examples:"
 
-    say "\n  1. Streaming call (default, real-time response):"
-    say "     LlmService.call(prompt: 'Explain quantum computing') do |chunk|"
-    say "       print chunk  # Prints each chunk as it arrives"
-    say "     end"
+    say "\n  1. Streaming via ActionCable (recommended for real-time UI):"
+    say "     LlmStreamJob.perform_later("
+    say "       channel_name: \"chat_\#{user_id}\","
+    say "       prompt: 'Explain quantum computing',"
+    say "       system: 'You are a helpful assistant'"
+    say "     )"
 
     say "\n  2. Blocking call (wait for full response):"
-    say "     result = LlmService.call_blocking(prompt: 'Hello AI')"
-    say "     if result.success?"
-    say "       puts result.data[:content]"
-    say "     end"
-
-    say "\n  3. Background job with callback:"
-    say "     class MyCallback"
-    say "       def initialize(result, error)"
-    say "         @result, @error = result, error"
-    say "       end"
-    say "       def call"
-    say "         # Process @result or @error"
-    say "       end"
-    say "     end"
-    say ""
-    say "     LlmJob.perform_later(prompt: '...', callback_class: 'MyCallback')"
+    say "     content = LlmService.call_blocking(prompt: 'Hello AI')"
+    say "     puts content"
 
     say "\n📚 Next Steps:"
     say "  1. Configure your API keys in config/application.yml"
-    say "  2. Try streaming: LlmService.call(prompt: 'Hi!') { |c| print c }"
+    say "  2. For streaming UI: Use LlmStreamJob with ActionCable"
+    say "  3. For simple sync calls: Use LlmService.call_blocking"
   end
 
   private

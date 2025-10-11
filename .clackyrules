@@ -169,6 +169,13 @@ Use `bundle exec rspec spec/requests/xxx_spec.rb --format documentation`( not -v
 
 Temporary files should be written in the `tmp` directory.
 
+## Debugging Frontend Errors
+
+**Frontend Error Report Protocol:**
+1. **Read logs FIRST** - Don't guess, check Run project output and stack traces
+2. **Identify root cause** - What action triggered it? What's the actual error?
+3. **Minimal fix** - Fix only what's broken based on logs
+4. **Test** - Verify the exact scenario that failed
 
 ## Code Quality
 

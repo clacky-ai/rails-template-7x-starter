@@ -21,7 +21,6 @@ RSpec.describe "Authenticated Access", type: :request do
 
       it "displays navbar with sign out link" do
         get root_path
-        follow_redirect!
         expect(response.body).to match(/<nav|data-navbar|class="navbar"/),
           "Navbar not found. Please update app/views/shared/_navbar.html.erb with navigation links"
       end
