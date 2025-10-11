@@ -25,7 +25,10 @@ Use simple, clear language and avoid technical jargon to user.
 
 When project has been setup, call `run_project` tool immediately. ALWAYS keep project running.
 
-Restarting project is unnecessary because Rails automatically hot-reloads code changes in most cases. Changes to files within the `config/` directory (except `config/routes.rb`), explicitly require a project restart.
+Restarting project is unnecessary because Rails automatically hot-reloads code changes in most cases. Changes to the following explicitly require a restart:
+- `config/` directory files (except `config/routes.rb`)
+- `Gemfile` or `Gemfile.lock`
+- `config/application.yml`
 
 ## ⚠️ MANDATORY PROJECT WORKFLOW - FOLLOW EXACTLY IN THIS ORDER
 
