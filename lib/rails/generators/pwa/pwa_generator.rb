@@ -31,7 +31,7 @@ module Rails
 
       def add_routes
         unless options[:skip_routes]
-          route_content = <<~RUBY
+          route_content = <<-RUBY
   # PWA routes
   get '/manifest.json', to: 'pwa#manifest', defaults: { format: :json }
   get '/service-worker.js', to: 'pwa#service_worker', defaults: { format: :js }
