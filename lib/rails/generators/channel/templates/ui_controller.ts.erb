@@ -68,16 +68,16 @@ export default class extends BaseChannelController {
 
     // Handle different types of messages
     switch(data.type) {
-    // 📨 EXAMPLE: Handle incoming message
-    // case 'message':
-    //   this.handleMessage(data)
-    //   break
-    // 📊 EXAMPLE: Handle status update
-    // case 'status_update':
-    //   this.handleStatusUpdate(data)
-    //   break
-    default:
-      console.warn("Unknown message type:", data.type)
+      // 📨 EXAMPLE: Handle incoming message
+      // case 'message':
+      //   this.handleMessage(data)
+      //   break
+      // 📊 EXAMPLE: Handle status update
+      // case 'status_update':
+      //   this.handleStatusUpdate(data)
+      //   break
+      default:
+        console.warn("Unknown message type:", data.type)
     }
   }
 
