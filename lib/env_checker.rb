@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module EnvConfig
+module EnvChecker
   class << self
     # Get environment variable value, return default value if not exists
     def get_env_var(var_name, default: nil, must: false)
@@ -31,7 +31,7 @@ module EnvConfig
       end
 
       # Rails.logger is not ready here, use puts instead.
-      puts "EnvConfig: public host fallback to localhost..."
+      puts "EnvChecker: public host fallback to localhost..."
       return { host: 'localhost', port: default_port, protocol: 'http' }
     end
 

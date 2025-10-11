@@ -6,13 +6,13 @@ require "rails/all"
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
 
-require_relative '../lib/env_config'
+require_relative '../lib/env_checker'
 
 module Myapp
   class Application < Rails::Application
 
     # check environment variables in production
-    EnvConfig.check_required_env_vars if Rails.env.production?
+    EnvChecker.check_required_env_vars if Rails.env.production?
 
     config.generators do |g|
       g.test_framework :rspec,

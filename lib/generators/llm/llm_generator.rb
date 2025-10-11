@@ -5,9 +5,6 @@ class LlmGenerator < Rails::Generators::Base
 
   class_option :skip_service, type: :boolean, default: false, desc: "Skip service file generation"
   class_option :skip_job, type: :boolean, default: false, desc: "Skip job file generation"
-  class_option :skip_model, type: :boolean, default: false, desc: "Skip model file generation"
-  class_option :skip_migration, type: :boolean, default: false, desc: "Skip migration file generation"
-  class_option :skip_admin, type: :boolean, default: false, desc: "Skip admin CRUD generation"
 
   def create_service_file
     return if options[:skip_service]
@@ -17,16 +14,6 @@ class LlmGenerator < Rails::Generators::Base
   def create_job_file
     return if options[:skip_job]
     template 'llm_job.rb.erb', 'app/jobs/llm_job.rb'
-  end
-
-  def create_model_file
-    return if options[:skip_model]
-    template 'llm_request.rb.erb', 'app/models/llm_request.rb'
-  end
-
-  def create_migration_file
-    return if options[:skip_migration]
-    template 'migration.rb.erb', "db/migrate/#{timestamp}_create_llm_requests.rb"
   end
 
   def update_application_yml
@@ -46,25 +33,9 @@ class LlmGenerator < Rails::Generators::Base
     add_llm_config_to_file('config/application.yml', llm_config)
   end
 
-  def generate_admin_crud
-    return if options[:skip_admin]
-
-    say "\nGenerating admin CRUD for LlmRequest...", :green
-    Rails::Generators.invoke("admin_crud", ["LlmRequest"], behavior: behavior)
-  end
-
-  def customize_admin_views
-    return if options[:skip_admin]
-
-    say "Customizing admin views for LLM requests...", :green
-    template 'admin_index.html.erb', 'app/views/admin/llm_requests/index.html.erb'
-    template 'admin_show.html.erb', 'app/views/admin/llm_requests/show.html.erb'
-  end
 
   def show_usage_instructions
-    say "\n" + "=" * 80
     say "LLM Generator completed successfully!", :green
-    say "=" * 80
 
     say "\n📝 Configuration:"
     say "  Environment variables added to config/application.yml.example"
@@ -99,24 +70,11 @@ class LlmGenerator < Rails::Generators::Base
     say "     LlmJob.perform_later(prompt: '...', callback_class: 'MyCallback')"
 
     say "\n📚 Next Steps:"
-    say "  1. Run migrations: rails db:migrate"
-    say "  2. Configure your API keys in config/application.yml"
-    say "  3. Try streaming: LlmService.call(prompt: 'Hi!') { |c| print c }"
-
-    unless options[:skip_admin]
-      say "\n📊 Admin Dashboard:"
-      say "  View LLM request history at /admin/llm_requests"
-      say "  Track usage, costs, and debug failed requests"
-    end
-
-    say "\n" + "=" * 80 + "\n"
+    say "  1. Configure your API keys in config/application.yml"
+    say "  2. Try streaming: LlmService.call(prompt: 'Hi!') { |c| print c }"
   end
 
   private
-
-  def timestamp
-    Time.now.utc.strftime("%Y%m%d%H%M%S")
-  end
 
   def add_llm_config_to_file(file_path, llm_config)
     if File.exist?(file_path)

@@ -41,7 +41,7 @@ Rails.application.configure do
   # caching is enabled.
   config.action_mailer.perform_caching = false
 
-  host_and_port_and_protocol = EnvConfig.get_public_host_and_port_and_protocol
+  host_and_port_and_protocol = EnvChecker.get_public_host_and_port_and_protocol
   config.default_url_options = host_and_port_and_protocol
   config.action_mailer.default_url_options = host_and_port_and_protocol
 

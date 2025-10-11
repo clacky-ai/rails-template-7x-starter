@@ -27,80 +27,35 @@ class LlmService < ApplicationService
 
   # Explicit blocking call (returns full response)
   def call_blocking
-    return failure("Prompt cannot be blank") if @prompt.blank?
+    raise LlmError, "Prompt cannot be blank" if @prompt.blank?
 
-    request = create_request_record
+    response = make_http_request(stream: false)
+    content = response.dig("choices", 0, "message", "content")
 
-    begin
-      request.mark_as_processing!
+    raise LlmError, "No content in response" if content.blank?
 
-      response = make_api_request
-
-      content = response.dig("choices", 0, "message", "content")
-      usage = response["usage"] || {}
-
-      request.mark_as_completed!(
-        content: content,
-        prompt_tokens: usage["prompt_tokens"] || 0,
-        completion_tokens: usage["completion_tokens"] || 0,
-        total_tokens: usage["total_tokens"] || 0
-      )
-
-      success(
-        content: content,
-        request_id: request.id,
-        tokens: usage["total_tokens"],
-        request: request
-      )
-    rescue => e
-      request.mark_as_failed!(e)
-      Rails.logger.error("LLM Error: #{e.class} - #{e.message}")
-      failure("LLM request failed: #{e.message}")
-    end
+    content
+  rescue => e
+    Rails.logger.error("LLM Error: #{e.class} - #{e.message}")
+    raise
   end
 
   # Explicit streaming call (yields chunks as they arrive)
   def call_stream(&block)
-    return failure("Prompt cannot be blank") if @prompt.blank?
-    return failure("Block required for streaming") unless block_given?
+    raise LlmError, "Prompt cannot be blank" if @prompt.blank?
+    raise LlmError, "Block required for streaming" unless block_given?
 
-    request = create_request_record
+    full_content = ""
 
-    begin
-      request.mark_as_processing!
-
-      full_content = ""
-      prompt_tokens = 0
-      completion_tokens = 0
-
-      make_stream_request do |chunk|
-        full_content += chunk
-        block.call(chunk)
-      end
-
-      # Estimate tokens (rough approximation)
-      prompt_tokens = (@prompt.length / 4.0).ceil
-      completion_tokens = (full_content.length / 4.0).ceil
-      total_tokens = prompt_tokens + completion_tokens
-
-      request.mark_as_completed!(
-        content: full_content,
-        prompt_tokens: prompt_tokens,
-        completion_tokens: completion_tokens,
-        total_tokens: total_tokens
-      )
-
-      success(
-        content: full_content,
-        request_id: request.id,
-        tokens: total_tokens,
-        request: request
-      )
-    rescue => e
-      request.mark_as_failed!(e)
-      Rails.logger.error("LLM Stream Error: #{e.class} - #{e.message}")
-      failure("LLM stream failed: #{e.message}")
+    make_http_request(stream: true) do |chunk|
+      full_content += chunk
+      block.call(chunk)
     end
+
+    full_content
+  rescue => e
+    Rails.logger.error("LLM Stream Error: #{e.class} - #{e.message}")
+    raise
   end
 
   # Class method shortcuts
@@ -123,19 +78,23 @@ class LlmService < ApplicationService
 
   private
 
-  def create_request_record
-    LlmRequest.create!(
-      prompt: @prompt,
-      model: @model,
-      metadata: @options
-    )
-  end
-
-  def make_api_request
+  def make_http_request(stream: false, &block)
     require 'net/http'
     require 'uri'
     require 'json'
 
+    http, request = prepare_http_request(stream)
+
+    if stream
+      handle_stream_response(http, request, &block)
+    else
+      handle_blocking_response(http, request)
+    end
+  rescue Net::ReadTimeout
+    raise TimeoutError, "Request timed out after #{@timeout}s"
+  end
+
+  def prepare_http_request(stream)
     base_url = ENV.fetch('LLM_BASE_URL')
     uri = URI.parse("#{base_url}/chat/completions")
 
@@ -147,8 +106,18 @@ class LlmService < ApplicationService
     request = Net::HTTP::Post.new(uri.path)
     request["Content-Type"] = "application/json"
     request["Authorization"] = "Bearer #{api_key}"
-    request.body = build_request_body.to_json
 
+    body = build_request_body
+    if stream
+      request["Accept"] = "text/event-stream"
+      body[:stream] = true
+    end
+    request.body = body.to_json
+
+    [http, request]
+  end
+
+  def handle_blocking_response(http, request)
     response = http.request(request)
 
     case response.code.to_i
@@ -161,34 +130,11 @@ class LlmService < ApplicationService
     else
       raise ApiError, "API error: #{response.code} - #{response.body}"
     end
-  rescue Net::ReadTimeout
-    raise TimeoutError, "Request timed out after #{@timeout}s"
   rescue JSON::ParserError => e
     raise ApiError, "Invalid JSON response: #{e.message}"
   end
 
-  def make_stream_request(&block)
-    require 'net/http'
-    require 'uri'
-    require 'json'
-
-    base_url = ENV.fetch('LLM_BASE_URL')
-    uri = URI.parse("#{base_url}/chat/completions")
-
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl = (uri.scheme == 'https')
-    http.read_timeout = @timeout
-    http.open_timeout = 10
-
-    request = Net::HTTP::Post.new(uri.path)
-    request["Content-Type"] = "application/json"
-    request["Authorization"] = "Bearer #{api_key}"
-    request["Accept"] = "text/event-stream"
-
-    body = build_request_body
-    body[:stream] = true
-    request.body = body.to_json
-
+  def handle_stream_response(http, request, &block)
     http.request(request) do |response|
       unless response.code.to_i == 200
         raise ApiError, "API error: #{response.code} - #{response.body}"
@@ -219,8 +165,6 @@ class LlmService < ApplicationService
         end
       end
     end
-  rescue Net::ReadTimeout
-    raise TimeoutError, "Request timed out after #{@timeout}s"
   end
 
   def build_request_body

@@ -10,21 +10,14 @@ class LlmJob < ApplicationJob
 
   def perform(prompt:, system: nil, options: {}, callback_class: nil)
     # Call LlmService - will use blocking mode since no block passed
-    result = LlmService.call(
+    content = LlmService.call(
       prompt: prompt,
       system: system,
       **options.symbolize_keys
     )
 
-    if result.success?
-      # Execute callback if provided
-      execute_callback(result, callback_class, error: nil) if callback_class
-    else
-      error = StandardError.new(result.error)
-      execute_callback(result, callback_class, error: error) if callback_class
-      raise error
-    end
-
+    # Execute callback if provided
+    execute_callback(content, callback_class, error: nil) if callback_class
   rescue => e
     Rails.logger.error("LlmJob failed: #{e.class} - #{e.message}")
     execute_callback(nil, callback_class, error: e) if callback_class
@@ -33,12 +26,12 @@ class LlmJob < ApplicationJob
 
   private
 
-  def execute_callback(result, callback_class_name, error: nil)
+  def execute_callback(content, callback_class_name, error: nil)
     return unless callback_class_name.present?
 
     begin
       callback_class = callback_class_name.constantize
-      callback = callback_class.new(result, error)
+      callback = callback_class.new(content, error)
 
       if callback.respond_to?(:call)
         callback.call
