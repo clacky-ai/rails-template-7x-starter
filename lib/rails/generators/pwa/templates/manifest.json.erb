@@ -1,0 +1,25 @@
+{
+  "name": "<%= app_name %>",
+  "short_name": "<%= short_name %>",
+  "icons": [
+    {
+      "src": "<%%= asset_path('app-favicon.svg') %>",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    },
+    {
+      "src": "<%%= asset_path('app-favicon.svg') %>",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "maskable"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "scope": "/",
+  "description": "<%= app_name %> - A Progressive Web App built with Rails",
+  "theme_color": "<%= theme_color %>",
+  "background_color": "<%= theme_color %>",
+  "orientation": "any",
+  "categories": ["productivity", "utilities"]
+}

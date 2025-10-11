@@ -125,6 +125,8 @@ Use `rails generate controller xxx [action1] [action2] [--auth] [--single]` (whe
 
 Use `rails generate channel xxx [action1] [action2] [--auth]` to create ActionCable channels, --auth means need current_user and authenticate_user!
 
+Use `rails generate pwa` to generate Progressive Web App setup with manifest, service worker, and install controller. Auto-detects app name from ENV['APPNAME'] and theme color from application.css --color-primary.
+
 Use `rails generate stimulus_controller xxx` to create new Stimulus controller. please use `Rails.ajax` for form handling if need.
 
 **STIMULUS TARGET RULES**: Optional targets must be declared with `declare readonly hasXXXTarget: boolean` to bypass validation. Required targets without this declaration will be validated.
