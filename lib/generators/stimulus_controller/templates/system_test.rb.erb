@@ -1,6 +1,13 @@
 require 'rails_helper'
 
 RSpec.describe '<%= class_name.camelize %>Controller', type: :system, js: true do
+  # Uncomment these code if controller need authenticate_user!
+  # let(:user) { create(:user) }
+
+  # before do
+  #  sign_in_system user
+  # end
+
   describe 'Basic Initialization' do
     it 'loads page without JavaScript errors' do
       visit page_with_controller_path

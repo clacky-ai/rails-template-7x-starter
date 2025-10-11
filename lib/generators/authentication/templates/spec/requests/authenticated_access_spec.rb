@@ -44,10 +44,12 @@ RSpec.describe "Authenticated Access", type: :request do
     it "complete sign up and immediate access flow" do
       # Sign up
       post sign_up_path, params: {
-        name: 'New User',
-        email: 'newuser@example.com',
-        password: 'password123',
-        password_confirmation: 'password123'
+        user: {
+          name: 'New User',
+          email: 'newuser@example.com',
+          password: 'password123',
+          password_confirmation: 'password123'
+        }
       }
 
       expect(response).to redirect_to(root_path)
@@ -64,8 +66,10 @@ RSpec.describe "Authenticated Access", type: :request do
     it "complete sign in and access flow" do
       # Sign in
       post sign_in_path, params: {
-        email: user.email,
-        password: user.password
+        user: {
+          email: user.email,
+          password: user.password
+        }
       }
 
       expect(response).to redirect_to(root_path)

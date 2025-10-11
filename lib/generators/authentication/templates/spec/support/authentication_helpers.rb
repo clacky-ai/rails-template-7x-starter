@@ -1,9 +1,19 @@
 module AuthenticationHelpers
   def sign_in_as(user)
     post sign_in_path, params: {
-      email: user.email,
-      password: user.password
+      user: {
+        email: user.email,
+        password: user.password
+      }
     }
+  end
+
+  def sign_in_system(user)
+    # For system tests
+    visit sign_in_path
+    fill_in 'user[email]', with: user.email
+    fill_in 'user[password]', with: user.password
+    click_button 'Sign in'
   end
 
   def current_user
@@ -22,4 +32,5 @@ end
 RSpec.configure do |config|
   config.include AuthenticationHelpers, type: :request
   config.include AuthenticationHelpers, type: :feature
+  config.include AuthenticationHelpers, type: :system
 end
