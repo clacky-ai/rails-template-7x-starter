@@ -7,6 +7,9 @@
 # CLACKY_EMAIL_SMTP_USERNAME
 # CLACKY_EMAIL_SMTP_API_KEY
 # CLACKY_EMAIL_SMTP_DOMAIN
+#
+# DATABASE_URL will be setted in production, Rails will check it automatically!
+
 
 # Use `rake secret` to generate one key
 # production need!!!
@@ -15,7 +18,6 @@ SECRET_KEY_BASE: ''
 # Set this value to generate email sending URLs and callback URLs
 # production need!!!
 PUBLIC_HOST: '<%= ENV.fetch('CLACKY_PUBLIC_HOST', '') %>'
-DATABASE_URL: '<%= ENV.fetch('CLACKY_DATABASE_URL', '') %>'
 
 # Browser base title
 APPNAME: 'ClackyAI APP'

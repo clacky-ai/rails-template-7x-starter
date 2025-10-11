@@ -1281,7 +1281,17 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
         'format.turbo_stream' => 'Turbo Stream response format',
         'turbo_stream' => 'Turbo Stream response',
         'turbo_frame_request?' => 'Turbo Frame request check',
-        'turbo:' => 'Turbo configuration'
+        'turbo:' => 'Turbo configuration',
+        'broadcast_append_to' => 'Turbo Stream broadcast_append_to',
+        'broadcast_prepend_to' => 'Turbo Stream broadcast_prepend_to',
+        'broadcast_replace_to' => 'Turbo Stream broadcast_replace_to',
+        'broadcast_update_to' => 'Turbo Stream broadcast_update_to',
+        'broadcast_remove_to' => 'Turbo Stream broadcast_remove_to',
+        'broadcast_before_to' => 'Turbo Stream broadcast_before_to',
+        'broadcast_after_to' => 'Turbo Stream broadcast_after_to',
+        'broadcast_action_to' => 'Turbo Stream broadcast_action_to',
+        'broadcast_render_to' => 'Turbo Stream broadcast_render_to',
+        'broadcast_refresh_to' => 'Turbo Stream broadcast_refresh_to'
       }
 
       # Check view files
