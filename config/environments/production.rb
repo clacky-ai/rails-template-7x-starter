@@ -40,7 +40,8 @@ Rails.application.configure do
   # config.action_cable.allowed_request_origins = [ "http://example.com", /http:\/\/example.*/ ]
 
   host_and_port_and_protocol = EnvChecker.get_public_host_and_port_and_protocol
-  config.default_url_options = host_and_port_and_protocol
+  # Use Rails.application.routes not config.default_url_options
+  Rails.application.routes.default_url_options = host_and_port_and_protocol
   config.action_mailer.default_url_options = host_and_port_and_protocol
 
   if ENV["EMAIL_SMTP_PASSWORD"].present?
