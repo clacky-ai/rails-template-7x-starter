@@ -21,11 +21,6 @@ module.exports = {
           light: 'hsl(var(--color-secondary-light) / <alpha-value>)',
           dark: 'hsl(var(--color-secondary-dark) / <alpha-value>)',
         },
-        text: {
-          primary: 'hsl(var(--color-text-primary) / <alpha-value>)',
-          secondary: 'hsl(var(--color-text-secondary) / <alpha-value>)',
-          muted: 'hsl(var(--color-text-muted) / <alpha-value>)',
-        },
         surface: {
           DEFAULT: 'hsl(var(--color-surface) / <alpha-value>)',
           elevated: 'hsl(var(--color-surface-elevated) / <alpha-value>)',
@@ -52,6 +47,11 @@ module.exports = {
           DEFAULT: 'hsl(var(--color-info) / <alpha-value>)',
           bg: 'hsl(var(--color-info-bg) / <alpha-value>)',
         },
+      },
+      textColor: {
+        primary: 'hsl(var(--color-text-primary) / <alpha-value>)',
+        secondary: 'hsl(var(--color-text-secondary) / <alpha-value>)',
+        muted: 'hsl(var(--color-text-muted) / <alpha-value>)',
       },
       fontFamily: {
         sans: ['var(--font-family-sans)', 'ui-sans-serif', 'system-ui'],

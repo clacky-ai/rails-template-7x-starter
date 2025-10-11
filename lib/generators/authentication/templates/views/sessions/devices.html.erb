@@ -1,5 +1,5 @@
 <div class="container-lg py-12">
-    <h1 class="text-3xl font-bold text-text-primary mb-8">Active Sessions</h1>
+    <h1 class="text-3xl font-bold text-primary mb-8">Active Sessions</h1>
 
     <div class="space-y-4">
       <% Current.user.sessions.order(created_at: :desc).each do |session| %>
@@ -9,12 +9,12 @@
               <div class="flex-1">
                 <div class="flex items-center space-x-4">
                   <div class="flex-shrink-0">
-                    <svg class="w-8 h-8 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-8 h-8 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                     </svg>
                   </div>
                   <div>
-                    <h3 class="text-lg font-medium text-text-primary mb-2">
+                    <h3 class="text-lg font-medium text-primary mb-2">
                       <%= session.user_agent.present? ? session.user_agent.split(" ").first : "Unknown Device" %>
                       <% if session == Current.session %>
                         <span class="badge-success ml-2">
@@ -22,11 +22,11 @@
                         </span>
                       <% end %>
                     </h3>
-                    <p class="text-sm text-text-secondary mb-1">
+                    <p class="text-sm text-secondary mb-1">
                       IP: <span class="font-mono"><%= session.ip_address %></span> •
                       Last active: <%= time_ago_in_words(session.updated_at) %> ago
                     </p>
-                    <p class="text-sm text-text-muted">
+                    <p class="text-sm text-muted">
                       Created: <%= session.created_at.strftime("%B %d, %Y at %l:%M %p") %>
                     </p>
                   </div>

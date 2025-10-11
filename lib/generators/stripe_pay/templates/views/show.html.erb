@@ -3,8 +3,8 @@
         <!-- Header -->
         <div class="flex items-center justify-between">
           <div>
-            <h1 class="text-3xl font-bold text-text-primary">Order #<%%= @order.id %></h1>
-            <p class="text-text-secondary mt-2">Order details and payment information</p>
+            <h1 class="text-3xl font-bold text-primary">Order #<%%= @order.id %></h1>
+            <p class="text-secondary mt-2">Order details and payment information</p>
           </div>
           <div class="flex items-center space-x-4">
             <span class="<%%= case @order.status
@@ -21,32 +21,32 @@
         <!-- Order Details -->
         <div class="card">
           <div class="card-body">
-            <h2 class="text-xl font-semibold text-text-primary mb-6">Order Information</h2>
+            <h2 class="text-xl font-semibold text-primary mb-6">Order Information</h2>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label class="form-label">Product</label>
-                <p class="text-lg text-text-primary font-medium"><%%= @order.product_name %></p>
+                <p class="text-lg text-primary font-medium"><%%= @order.product_name %></p>
               </div>
 
               <div>
                 <label class="form-label">Amount</label>
-                <p class="text-lg text-text-primary font-medium"><%%= number_to_currency(@order.amount, unit: @order.currency.upcase + ' ') %></p>
+                <p class="text-lg text-primary font-medium"><%%= number_to_currency(@order.amount, unit: @order.currency.upcase + ' ') %></p>
               </div>
 
               <div>
                 <label class="form-label">Customer Name</label>
-                <p class="text-lg text-text-primary font-medium"><%%= @order.customer_name %></p>
+                <p class="text-lg text-primary font-medium"><%%= @order.customer_name %></p>
               </div>
 
               <div>
                 <label class="form-label">Customer Email</label>
-                <p class="text-lg text-text-primary font-medium"><%%= @order.customer_email %></p>
+                <p class="text-lg text-primary font-medium"><%%= @order.customer_email %></p>
               </div>
 
               <div>
                 <label class="form-label">Order Date</label>
-                <p class="text-lg text-text-primary font-medium"><%%= @order.created_at.strftime("%B %d, %Y at %l:%M %p") %></p>
+                <p class="text-lg text-primary font-medium"><%%= @order.created_at.strftime("%B %d, %Y at %l:%M %p") %></p>
               </div>
 
               <div>

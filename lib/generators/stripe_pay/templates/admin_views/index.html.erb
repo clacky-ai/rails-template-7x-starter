@@ -2,8 +2,8 @@
   <!-- Header -->
   <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
     <div>
-      <h1 class="text-3xl font-bold text-text-primary">Orders Management</h1>
-      <p class="text-text-secondary mt-1">Manage and track all customer orders</p>
+      <h1 class="text-3xl font-bold text-primary">Orders Management</h1>
+      <p class="text-secondary mt-1">Manage and track all customer orders</p>
     </div>
   </div>
 
@@ -18,8 +18,8 @@
             </svg>
           </div>
           <div class="ml-4">
-            <p class="text-sm font-medium text-text-secondary">Total Orders</p>
-            <p class="text-2xl font-semibold text-text-primary"><%%= @stats[:total_orders] %></p>
+            <p class="text-sm font-medium text-secondary">Total Orders</p>
+            <p class="text-2xl font-semibold text-primary"><%%= @stats[:total_orders] %></p>
           </div>
         </div>
       </div>
@@ -34,8 +34,8 @@
             </svg>
           </div>
           <div class="ml-4">
-            <p class="text-sm font-medium text-text-secondary">Paid Orders</p>
-            <p class="text-2xl font-semibold text-text-primary"><%%= @stats[:paid_orders] %></p>
+            <p class="text-sm font-medium text-secondary">Paid Orders</p>
+            <p class="text-2xl font-semibold text-primary"><%%= @stats[:paid_orders] %></p>
           </div>
         </div>
       </div>
@@ -50,8 +50,8 @@
             </svg>
           </div>
           <div class="ml-4">
-            <p class="text-sm font-medium text-text-secondary">Pending Orders</p>
-            <p class="text-2xl font-semibold text-text-primary"><%%= @stats[:pending_orders] %></p>
+            <p class="text-sm font-medium text-secondary">Pending Orders</p>
+            <p class="text-2xl font-semibold text-primary"><%%= @stats[:pending_orders] %></p>
           </div>
         </div>
       </div>
@@ -67,8 +67,8 @@
             </svg>
           </div>
           <div class="ml-4">
-            <p class="text-sm font-medium text-text-secondary">Total Revenue</p>
-            <p class="text-2xl font-semibold text-text-primary"><%%= number_to_currency(@stats[:total_revenue]) %></p>
+            <p class="text-sm font-medium text-secondary">Total Revenue</p>
+            <p class="text-2xl font-semibold text-primary"><%%= number_to_currency(@stats[:total_revenue]) %></p>
           </div>
         </div>
       </div>
@@ -97,20 +97,20 @@
               <%% @orders.each do |order| %>
                 <tr class="table-row">
                   <td class="table-cell">
-                    <div class="text-sm font-medium text-text-primary">#<%%= order.id %></div>
+                    <div class="text-sm font-medium text-primary">#<%%= order.id %></div>
                     <%% if order.stripe_payment_intent_id %>
-                      <div class="text-sm text-text-muted">Has Payment Intent</div>
+                      <div class="text-sm text-muted">Has Payment Intent</div>
                     <%% end %>
                   </td>
                   <td class="table-cell">
-                    <div class="text-sm font-medium text-text-primary"><%%= order.customer_name %></div>
-                    <div class="text-sm text-text-secondary"><%%= order.customer_email %></div>
+                    <div class="text-sm font-medium text-primary"><%%= order.customer_name %></div>
+                    <div class="text-sm text-secondary"><%%= order.customer_email %></div>
                   </td>
                   <td class="table-cell">
-                    <div class="text-sm text-text-primary"><%%= order.product_name %></div>
+                    <div class="text-sm text-primary"><%%= order.product_name %></div>
                   </td>
                   <td class="table-cell">
-                    <div class="text-sm font-medium text-text-primary">
+                    <div class="text-sm font-medium text-primary">
                       <%%= number_to_currency(order.amount, unit: order.currency.upcase + ' ') %>
                     </div>
                   </td>
@@ -124,7 +124,7 @@
                       <%%= order.display_status %>
                     </span>
                   </td>
-                  <td class="table-cell text-text-secondary">
+                  <td class="table-cell text-secondary">
                     <%%= order.created_at.strftime("%m/%d/%Y") %>
                   </td>
                   <td class="table-cell text-right">
@@ -147,11 +147,11 @@
 
       <%% else %>
         <div class="text-center py-12">
-          <svg class="mx-auto h-12 w-12 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg class="mx-auto h-12 w-12 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
           </svg>
-          <h3 class="mt-2 text-sm font-medium text-text-primary">No orders found</h3>
-          <p class="mt-1 text-sm text-text-muted">No orders have been created yet.</p>
+          <h3 class="mt-2 text-sm font-medium text-primary">No orders found</h3>
+          <p class="mt-1 text-sm text-muted">No orders have been created yet.</p>
         </div>
       <%% end %>
     </div>

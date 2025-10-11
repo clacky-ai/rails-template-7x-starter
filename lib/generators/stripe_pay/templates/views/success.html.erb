@@ -9,29 +9,29 @@
       </div>
 
       <!-- Title -->
-      <h1 class="text-2xl font-bold text-text-primary mb-2">Payment Successful!</h1>
-      <p class="text-text-secondary mb-6">Your payment has been processed successfully.</p>
+      <h1 class="text-2xl font-bold text-primary mb-2">Payment Successful!</h1>
+      <p class="text-secondary mb-6">Your payment has been processed successfully.</p>
 
       <!-- Order Details -->
       <div class="card-flat mb-6 text-left">
         <div class="card-body">
-          <h3 class="font-semibold text-text-primary mb-3">Order Summary</h3>
+          <h3 class="font-semibold text-primary mb-3">Order Summary</h3>
           <div class="space-y-2 text-sm">
             <div class="flex justify-between">
-              <span class="text-text-secondary">Order ID:</span>
-              <span class="font-medium text-text-primary">#<%%= @order.id %></span>
+              <span class="text-secondary">Order ID:</span>
+              <span class="font-medium text-primary">#<%%= @order.id %></span>
             </div>
             <div class="flex justify-between">
-              <span class="text-text-secondary">Product:</span>
-              <span class="font-medium text-text-primary"><%%= @order.product_name %></span>
+              <span class="text-secondary">Product:</span>
+              <span class="font-medium text-primary"><%%= @order.product_name %></span>
             </div>
             <div class="flex justify-between">
-              <span class="text-text-secondary">Amount:</span>
-              <span class="font-medium text-text-primary"><%%= number_to_currency(@order.amount, unit: @order.currency.upcase + ' ') %></span>
+              <span class="text-secondary">Amount:</span>
+              <span class="font-medium text-primary"><%%= number_to_currency(@order.amount, unit: @order.currency.upcase + ' ') %></span>
             </div>
             <div class="flex justify-between">
-              <span class="text-text-secondary">Customer:</span>
-              <span class="font-medium text-text-primary"><%%= @order.customer_name %></span>
+              <span class="text-secondary">Customer:</span>
+              <span class="font-medium text-primary"><%%= @order.customer_name %></span>
             </div>
           </div>
         </div>
@@ -48,7 +48,7 @@
       </div>
 
       <!-- Additional Info -->
-      <div class="mt-6 text-xs text-text-muted">
+      <div class="mt-6 text-xs text-muted">
         <p>A confirmation email has been sent to <%%= @order.customer_email %></p>
       </div>
     </div>

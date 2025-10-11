@@ -313,7 +313,7 @@
   }
 
   .btn-ghost {
-    @apply btn px-4 py-2 text-sm text-text-secondary;
+    @apply btn px-4 py-2 text-sm text-secondary;
     background-color: transparent;
     border: 1px solid hsl(var(--color-border));
   }

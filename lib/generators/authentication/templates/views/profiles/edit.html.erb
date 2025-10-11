@@ -1,7 +1,7 @@
 <div class="container-sm py-12">
     <div class="card-elevated">
       <div class="card-body">
-        <h1 class="text-2xl font-bold text-text-primary mb-8">Edit Profile</h1>
+        <h1 class="text-2xl font-bold text-primary mb-8">Edit Profile</h1>
 
         <%= form_with model: @user, url: profile_path, method: :patch, local: true, class: "space-y-6" do |form| %>
           <%= render 'shared/form_error_message', model: @user %>

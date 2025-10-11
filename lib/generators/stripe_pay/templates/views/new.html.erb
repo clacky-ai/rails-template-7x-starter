@@ -1,7 +1,7 @@
 <div class="container-md flex items-center justify-center min-h-screen py-12">
   <div class="card w-full">
     <div class="card-body">
-      <h1 class="text-3xl font-bold text-text-primary mb-8 text-center">Create New Order</h1>
+      <h1 class="text-3xl font-bold text-primary mb-8 text-center">Create New Order</h1>
 
     <%%= form_with model: @order, local: true, class: "space-y-6" do |form| %>
       <%%= render 'shared/form_error_message', model: @order %>
