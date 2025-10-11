@@ -32,7 +32,14 @@ export default class extends Controller<HTMLElement> {
   //   console.log("Button clicked")
   // }
 
-  // 📤 EXAMPLE: Submit form data via Rails.ajax
+  // REQUIRED PATTERN: Form submission in this project
+  // This project uses Rails.ajax for form handling. DO NOT use:
+  // - fetch()
+  // - axios
+  // - form.requestSubmit()
+  // - Custom submit handlers
+  //
+  // CORRECT way to submit forms:
   // submitForm(event: Event): void {
   //   event.preventDefault()
   //   const form = event.target as HTMLFormElement
