@@ -38,25 +38,13 @@ module OmniAuth
     # Enhance OAuth provider configuration
     def enhance_oauth_provider(klass, args, user_opts = {}, &block)
       # Apply Clacky Auth fallback logic
-      client_id, client_secret = apply_clacky_auth_fallback(args[0], args[1])
+      client_id, client_secret = args[0], args[1]
 
       # Build final options
       enhanced_opts = build_provider_options(klass, user_opts, client_id)
 
       # Call original provider method
       original_provider(klass, client_id, client_secret, **enhanced_opts, &block)
-    end
-
-    # Apply Clacky Auth fallback logic
-    def apply_clacky_auth_fallback(client_id, client_secret)
-      clacky_auth_client_id = ENV['CLACKY_AUTH_CLIENT_ID']
-      clacky_auth_client_secret = ENV['CLACKY_AUTH_CLIENT_SECRET']
-
-      # Fallback to Clacky Auth if environment variables are empty
-      final_client_id = client_id.presence || clacky_auth_client_id
-      final_client_secret = client_secret.presence || clacky_auth_client_secret
-
-      [final_client_id, final_client_secret]
     end
 
     # Build provider options

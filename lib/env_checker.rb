@@ -15,15 +15,15 @@ module EnvChecker
       env_var
     end
 
-    # If CLACKY_PUBLIC_HOST is blank and CLACKY_PREVIEW_DOMAIN_BASE is present,
-    # use APP_PORT (default 3000) + CLACKY_PREVIEW_DOMAIN_BASE
     def get_public_host_and_port_and_protocol
       default_port = 3000
 
-      if ENV['CLACKY_PUBLIC_HOST'].present?
+      if ENV['PUBLIC_HOST'].present?
         return { host: ENV.fetch('PUBLIC_HOST'), port: 443, protocol: 'https' }
       end
 
+      # If CLACKY_PUBLIC_HOST is blank and CLACKY_PREVIEW_DOMAIN_BASE is present,
+      # use APP_PORT (default 3000) + CLACKY_PREVIEW_DOMAIN_BASE
       if ENV['CLACKY_PREVIEW_DOMAIN_BASE'].present?
         port = ENV.fetch('APP_PORT', default_port)
         domain_base = ENV.fetch('CLACKY_PREVIEW_DOMAIN_BASE')
