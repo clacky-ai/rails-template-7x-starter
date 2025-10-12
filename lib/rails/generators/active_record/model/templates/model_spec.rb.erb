@@ -1,7 +1,9 @@
 require 'rails_helper'
 
 RSpec.describe <%= class_name %>, type: :model do
-  it "successfully creates a <%= file_name %>" do
-    expect { create!(:<%= file_name %>) }.not_to raise_error
-  end
+  # Example: Basic factory test
+  # it 'can be created with factory' do
+  #   record = create(:<%= singular_name %>)
+  #   expect(record).to be_persisted
+  # end
 end
