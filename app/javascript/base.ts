@@ -1,5 +1,8 @@
 // base dependency library, it should be only imported by `admin.ts` and `application.ts`.
 //
+// Global patches (must be first)
+import './form_data_patch'
+
 import RailsUjs from '@rails/ujs'
 import * as ActiveStorage from '@rails/activestorage'
 import Alpine from 'alpinejs'
