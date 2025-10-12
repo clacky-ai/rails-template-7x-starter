@@ -33,7 +33,67 @@ class ErbAstParser
       }
     end
 
-    blocks.sort_by { |block| block[:position][0] }
+    blocks = blocks.sort_by { |block| block[:position][0] }
+
+    # Merge blocks that form complete Ruby structures
+    merge_block_pairs(blocks)
+  end
+
+  # Merge ERB blocks that should be parsed together (e.g., form_with...do and end)
+  def merge_block_pairs(blocks)
+    merged = []
+    skip_indices = Set.new
+
+    blocks.each_with_index do |block, i|
+      next if skip_indices.include?(i)
+
+      code = block[:code]
+
+      # Check if this block opens a Ruby block structure (do, do |...|, {, etc.)
+      # and doesn't close it
+      opens_block = code.match(/\b(do\s*(\|[^|]*\|)?)\s*$/) ||
+                    code.match(/\{\s*(\|[^|]*\|)?\s*$/)
+
+      # Check if the block has an unmatched 'do' by looking for standalone 'end' keyword
+      has_unmatched_do = opens_block && !has_end_keyword?(code)
+
+      if has_unmatched_do
+        # Look for the matching end/} block
+        merged_code = code.dup
+        j = i + 1
+
+        # Find all blocks until we find the matching closer
+        while j < blocks.length
+          next_block = blocks[j]
+          next_code = next_block[:code]
+
+          # Add a newline between merged blocks for proper Ruby syntax
+          merged_code += "\n" + next_code
+          skip_indices.add(j)
+
+          # Check if this closes the block
+          if next_code.strip == 'end' || next_code.strip.end_with?('}')
+            break
+          end
+
+          j += 1
+        end
+
+        # Create merged block
+        merged << {
+          type: block[:type],
+          code: merged_code,
+          full_match: block[:full_match],
+          position: block[:position],
+          merged: true
+        }
+      else
+        # Keep block as-is
+        merged << block
+      end
+    end
+
+    merged
   end
 
   # Find Stimulus targets in ERB blocks
@@ -113,6 +173,11 @@ class ErbAstParser
 
   private
 
+  # Check if code has an unmatched 'end' keyword (word boundary check to avoid "sendMessage")
+  def has_end_keyword?(code)
+    code.match?(/\bend\b/)
+  end
+
   # Check if ERB block should be parsed for targets
   def should_parse_for_targets?(code, controller_name, target_name)
     # Must contain 'data' and either 'target' or the specific target name
@@ -159,10 +224,12 @@ class ErbAstParser
     return code if processed.strip.match?(/^@?\w+\s*[=\[]/) || processed.strip.match?(/^[\w\.\[\]"']+$/)
 
     # For method calls with blocks, try to make them parseable
-    if processed.include?(' do |') && !processed.include?('end')
-      processed += "\nend"
-    elsif processed.include?(' do') && !processed.include?('end') && !processed.include?('|')
-      processed += "\nend"
+    unless has_end_keyword?(processed)
+      if processed.include?(' do |')
+        processed += "\nend"
+      elsif processed.include?(' do') && !processed.include?('|')
+        processed += "\nend"
+      end
     end
 
     # Handle incomplete hash literals
