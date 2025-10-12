@@ -6,6 +6,7 @@ declare global {
     Stimulus: Application;
     Alpine: any;
     ActionCable: any;
+    Turbo: any;
     App: {
       cable: any;
       adminSidebar?: any;

@@ -1328,37 +1328,20 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
     end
   end
 
-  describe 'Turbo-Free Validation' do
-    it 'ensures no Turbo technologies are used in the project' do
+  describe 'Turbo Frame Prohibition Validation' do
+    it 'ensures Turbo Frames are not used (Turbo Streams are allowed)' do
       turbo_violations = []
 
-      # Turbo-related patterns to check in views
+      # Turbo Frame patterns to check in views (FORBIDDEN)
       view_turbo_patterns = {
         'turbo_frame_tag' => 'Turbo Frame helper',
-        'turbo_stream_from' => 'Turbo Stream helper',
         'data-turbo-frame' => 'Turbo Frame data attribute',
-        'data-turbo-stream' => 'Turbo Stream data attribute',
-        'turbo:' => 'Turbo event listener',
-        '<turbo-frame' => 'Turbo Frame HTML tag',
-        '<turbo-stream' => 'Turbo Stream HTML tag'
+        '<turbo-frame' => 'Turbo Frame HTML tag'
       }
 
-      # Turbo-related patterns to check in controllers
+      # Turbo Frame patterns to check in controllers (FORBIDDEN)
       controller_turbo_patterns = {
-        'format.turbo_stream' => 'Turbo Stream response format',
-        'turbo_stream' => 'Turbo Stream response',
-        'turbo_frame_request?' => 'Turbo Frame request check',
-        'turbo:' => 'Turbo configuration',
-        'broadcast_append_to' => 'Turbo Stream broadcast_append_to',
-        'broadcast_prepend_to' => 'Turbo Stream broadcast_prepend_to',
-        'broadcast_replace_to' => 'Turbo Stream broadcast_replace_to',
-        'broadcast_update_to' => 'Turbo Stream broadcast_update_to',
-        'broadcast_remove_to' => 'Turbo Stream broadcast_remove_to',
-        'broadcast_before_to' => 'Turbo Stream broadcast_before_to',
-        'broadcast_after_to' => 'Turbo Stream broadcast_after_to',
-        'broadcast_action_to' => 'Turbo Stream broadcast_action_to',
-        'broadcast_render_to' => 'Turbo Stream broadcast_render_to',
-        'broadcast_refresh_to' => 'Turbo Stream broadcast_refresh_to'
+        'turbo_frame_request?' => 'Turbo Frame request check'
       }
 
       # Check view files
@@ -1372,7 +1355,7 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
               file: relative_path,
               pattern: pattern,
               description: description,
-              suggestion: "Remove #{description} - use Stimulus controllers + RailsUJS instead"
+              suggestion: "Remove #{description} - use Turbo Streams instead (format.turbo_stream)"
             }
           end
         end
@@ -1390,14 +1373,14 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
               file: relative_path,
               pattern: pattern,
               description: description,
-              suggestion: "Remove #{description} - use format.json or format.html with Stimulus instead"
+              suggestion: "Remove #{description} - Turbo Frames not allowed (use format.turbo_stream instead)"
             }
           end
         end
       end
 
       if turbo_violations.any?
-        puts "\n🚫 Turbo Usage Detected (#{turbo_violations.length}):"
+        puts "\n🚫 Turbo Frame Usage Detected (#{turbo_violations.length}):"
         turbo_violations.each do |violation|
           puts "   • #{violation[:file]}: Found '#{violation[:pattern]}' (#{violation[:description]})"
         end
@@ -1406,9 +1389,9 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
           "#{v[:file]}: #{v[:pattern]} - #{v[:suggestion]}"
         end
 
-        expect(turbo_violations).to be_empty, "Turbo technologies are not allowed in this project:\n#{error_details.join("\n")}"
+        expect(turbo_violations).to be_empty, "Turbo Frames are not allowed (Turbo Streams are OK):\n#{error_details.join("\n")}"
       else
-        puts "\n✅ No Turbo usage detected - project is Turbo-free!"
+        puts "\n✅ No Turbo Frame usage detected - Turbo Streams enabled!"
       end
     end
   end

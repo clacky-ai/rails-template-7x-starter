@@ -13,8 +13,9 @@ Kaminari
 FriendlyId (for SEO-friendly URLs)
 Puma
 RSpec
-Stimulus( no turbo/turbo-stream/turbo-frame )
+Stimulus
 RailsUjs
+TurboStreams (ONLY for responses, Drive/Frames disabled)
 ActionCable( solid_queue, no redis )
 
 Do not add or remove any components and avoid upgrading or downgrading components.
@@ -143,13 +144,13 @@ Use FriendlyId (already configured) if need slug URLs. For user-facing content u
 
 **MANDATORY**: ALL frontend interactions MUST use Stimulus controllers. NO inline JavaScript allowed.
 
-**CRITICAL - NO TURBO TECHNOLOGIES**:
-- ❌ NEVER use Turbo, Turbo Drive, Turbo Frames, or Turbo Streams
-- ❌ DO NOT use `turbo_frame_tag`, `turbo_stream_from`, or any turbo helpers
-- ❌ DO NOT use `data-turbo-frame`, `data-turbo-stream`, or turbo data attributes
-- ✅ Use Stimulus controllers + RailsUJS for all dynamic interactions
-- ✅ Use ActionCable for real-time features (not Turbo Streams)
-- This project keeps frontend simple and stable by avoiding Turbo completely
+**CRITICAL - TURBO STREAMS ONLY**:
+- ❌ NEVER use Turbo Drive, Turbo Frames (`turbo_frame_tag`, `<turbo-frame>`, `data-turbo-frame`)
+- ❌ NEVER use `format.json` - ALL server responses use `format.turbo_stream` only
+- ✅ All server-client interactions: Use `format.turbo_stream` + turbo_stream.erb templates
+- ✅ 7 stream actions: append/prepend/update/replace/remove/before/after
+- ✅ Real-time: Use `broadcast_*_to` in ActionCable
+- No JavaScript JSON parsing needed - server sends HTML via turbo streams
 
 ALWAYS prefer TailwindCSS v3 and Stimulus controllers for UI behavior. NO pure JavaScript or jQuery allowed.
 

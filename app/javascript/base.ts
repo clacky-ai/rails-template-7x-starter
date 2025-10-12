@@ -5,6 +5,7 @@ import * as ActiveStorage from '@rails/activestorage'
 import Alpine from 'alpinejs'
 import * as ActionCable from "@rails/actioncable"
 import { createConsumer } from "@rails/actioncable"
+import * as Turbo from "@hotwired/turbo"
 import './controllers'
 import './clipboard_utils'
 import './sdk_utils'
@@ -21,6 +22,10 @@ window.Alpine = Alpine
 
 window.App = window.App || { cable: null }
 window.App.cable = createConsumer()
+
+// Turbo configuration: ONLY enable Turbo Streams, disable Drive and Frames
+Turbo.session.drive = false  // Disable automatic page navigation interception
+window.Turbo = Turbo
 
 // Global function to restore disabled buttons (for ActionCable callbacks)
 window.restoreButtonStates = function(): void {

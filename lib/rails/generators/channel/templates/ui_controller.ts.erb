@@ -64,65 +64,57 @@ export default class extends BaseChannelController {
 
   // Override: Called when data received (from base class)
   protected channelReceived(data: any): void {
-    console.log("Received data:", data)
+    // ⚡ STREAMING PATTERN 1: Character Stream (for LLM, logs, etc.)
+    // Server sends plain string: ActionCable.server.broadcast("channel", "text chunk")
+    if (typeof data === 'string') {
+      this.handleTextChunk(data)
+      return
+    }
 
-    // Handle different types of messages
+    // ⚡ STREAMING PATTERN 2: Turbo Stream HTML (for DOM updates)
+    // Server sends turbo_stream HTML: ApplicationController.render(turbo_stream: ...)
+    // Turbo automatically processes and updates DOM
+    // No manual handling needed - just let it flow through
+
+    // 📨 STRUCTURED DATA: Handle typed messages
     switch(data.type) {
-      // 📨 EXAMPLE: Handle incoming message
       // case 'message':
       //   this.handleMessage(data)
       //   break
-      // 📊 EXAMPLE: Handle status update
       // case 'status_update':
       //   this.handleStatusUpdate(data)
       //   break
       default:
-        console.warn("Unknown message type:", data.type)
+        console.log("Received data:", data)
     }
   }
 
   // 🎮 ADD YOUR UI METHODS HERE
-  // Example: data-action="click-><%= file_name.dasherize %>#sendMessage"
-  // sendMessage(data: any = {}): void {
+  // Example: data-action="click-><%= file_name.dasherize %>#sendAction"
+  // sendAction(event: Event): void {
   //   if (!this.connected) return
-  //   this.subscription?.perform('send_message', data)
+  //   this.subscription?.perform('action_name', { param: 'value' })
   // }
 
-  // 📤 EXAMPLE: Submit form data via Rails.ajax
-  // submitForm(event: Event): void {
-  //   event.preventDefault()
-  //   const form = event.target as HTMLFormElement
-  //
-  //   Rails.ajax({
-  //     type: form.method || 'POST',
-  //     url: form.action,
-  //     data: new FormData(form),
-  //     success: (data: any) => {
-  //       // Update UI after successful submission
-  //       console.log('Form submitted successfully:', data)
-  //     },
-  //     error: (xhr: XMLHttpRequest) => {
-  //       // Update UI to show error message
-  //       console.error('Form submission failed:', xhr.responseText)
-  //     }
-  //   })
+  // ⚡ STREAMING: Handle character stream (LLM, logs, real-time text)
+  // private handleTextChunk(chunk: string): void {
+  //   if (this.hasOutputTarget) {
+  //     this.outputTarget.textContent += chunk
+  //     // Auto-scroll to bottom
+  //     this.outputTarget.scrollTop = this.outputTarget.scrollHeight
+  //   }
   // }
 
-  // 📊 EXAMPLE: Send action to server via ActionCable
-  // updateStatus(data: any = {}): void {
-  //   if (!this.connected) return
-  //   this.subscription?.perform('update_status', data)
-  // }
+  // 📨 FORMS: Use RailsUJS + Turbo Streams (no manual code needed)
+  // Forms with data-remote="true" automatically:
+  // - Submit via AJAX
+  // - Receive format.turbo_stream response
+  // - Update DOM via Turbo Streams
+  // Use Stimulus only for UI interactions (validation, show/hide, etc.)
 
   // 💡 UI HELPER METHODS - Add methods to update your interface
   // private handleMessage(data: any): void {
   //   console.log('Message received:', data)
-  //   // TODO: Create message HTML element and add to container
-  //   // TODO: Scroll to bottom, update UI state
-  // }
-
-  // private handleStatusUpdate(data: any): void {
-  //   console.log('Status update received:', data)
-  //   // TODO: Update status indicator in UI
+  //   // Update UI based on message data
   // }
 }
