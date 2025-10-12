@@ -19,12 +19,12 @@ class StimulusControllerGenerator < Rails::Generators::NamedBase
     say "📄 Added to: app/javascript/controllers/index.ts", :blue
   end
 
-  def create_system_test
-    controller_name = file_name_without_controller
-    template 'system_test.rb.erb', "spec/system/#{controller_name}_controller_spec.rb"
+  # def create_system_test
+    # controller_name = file_name_without_controller
+    # template 'system_test.rb.erb', "spec/system/#{controller_name}_controller_spec.rb"
 
-    say "📋 System test created: spec/system/#{controller_name}_controller_spec.rb", :blue
-  end
+    # say "📋 System test created: spec/system/#{controller_name}_controller_spec.rb", :blue
+  # end
 
   private
 

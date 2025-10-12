@@ -9,11 +9,11 @@ module AuthenticationHelpers
   end
 
   def sign_in_system(user)
-    # For system tests
+    # For system tests - finds submit button regardless of text/translation
     visit sign_in_path
     fill_in 'user[email]', with: user.email
     fill_in 'user[password]', with: user.password
-    click_button 'Sign in'
+    find('button[type="submit"]').click
   end
 
   def current_user
