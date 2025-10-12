@@ -2,6 +2,14 @@ module ApplicationCable
   class Channel < ActionCable::Channel::Base
     rescue_from Exception, with: :handle_channel_error
 
+    # Generate broadcasting name for a given record
+    def self.broadcasting_for(record)
+      raise ArgumentError, "Record cannot be nil" if record.nil?
+
+      model_name = record.class.name.underscore
+      "#{model_name}_#{record.id}"
+    end
+
     private
 
     def handle_channel_error(e)
