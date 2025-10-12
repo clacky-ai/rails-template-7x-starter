@@ -8,9 +8,22 @@ Path: <%= request.path.sub('/', '') %>
 I need to create the view template and controller for this page."
      data-sdk-integration-action-value="sendMessage">
   <div class="max-w-md mx-auto text-center px-4">
-    <!-- Icon -->
+    <!-- Icon with Animation -->
+    <style>
+      @keyframes spin-slow {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .animate-spin-slow {
+        animation: spin-slow 3s linear infinite;
+      }
+    </style>
     <div class="mx-auto mb-8 w-24 h-24 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-      <svg class="w-12 h-12 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg class="w-12 h-12 text-blue-600 dark:text-blue-400 animate-spin-slow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
       </svg>
     </div>
@@ -25,9 +38,18 @@ I need to create the view template and controller for this page."
       <button type="button"
               data-sdk-integration-target="sdkButton"
               data-action="click->sdk-integration#sendToChatbox"
-              class="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium py-2 px-4 rounded-lg transition-colors duration-200"
+              class="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium py-2 px-4 rounded-md transition-colors duration-200"
               style="display: none;">
         Develop in Chatbox
+      </button>
+      <button type="button"
+              data-sdk-integration-target="refreshButton"
+              onclick="window.location.reload()"
+              class="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center gap-2 justify-center">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        Refresh Page
       </button>
     </div>
 
@@ -36,7 +58,29 @@ I need to create the view template and controller for this page."
       <div class="text-sm text-gray-500 dark:text-gray-400">
         <p>Generated view template</p>
         <p>Generated at: <span class="text-gray-900 dark:text-gray-200"><%= Time.current.strftime("%Y-%m-%d %H:%M:%S") %></span></p>
+        <p class="mt-2">Auto-refreshing in <span id="countdown" class="text-blue-600 dark:text-blue-400 font-semibold">10</span> seconds...</p>
       </div>
     </div>
   </div>
 </div>
+
+<script>
+  let countdown = 10;
+  const countdownElement = document.getElementById('countdown');
+
+  const intervalId = setInterval(() => {
+    countdown--;
+    if (countdownElement) {
+      countdownElement.textContent = countdown;
+    }
+
+    if (countdown <= 0) {
+      window.location.reload();
+    }
+  }, 1000);
+
+  // Clear interval if user navigates away
+  window.addEventListener('beforeunload', () => {
+    clearInterval(intervalId);
+  });
+</script>
