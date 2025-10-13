@@ -81,7 +81,7 @@ when developing order/payment system, don't write it yourself. Use `rails genera
 
 Should only need to support Stripe payments by default.
 
-**LLM Integration:** Use `rails generate llm` to generate LLM service infrastructure. Default streaming API - `LlmService.call(prompt:) { |chunk| }` for real-time streaming, `call_blocking` for full response. Auto-configures LLM_BASE_URL, LLM_API_KEY, LLM_MODEL in application.yml.
+**LLM Integration:** Use `rails generate llm` to generate LLM service infrastructure. Always prefer streaming via ActionCable - use `LlmStreamJob.perform_later(channel_name:, prompt:, system:)` for real-time streaming responses. Auto-configures LLM_BASE_URL, LLM_API_KEY, LLM_MODEL in application.yml. When storing LLM messages, include `LlmMessageValidationConcern` - don't validate role & content yourself.
 
 Do not recreate administrator functionality in User model. Administrator system already exists. Adding admin page low priority.
 

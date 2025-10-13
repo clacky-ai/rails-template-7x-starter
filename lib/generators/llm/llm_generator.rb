@@ -16,6 +16,10 @@ class LlmGenerator < Rails::Generators::Base
     template 'llm_stream_job.rb.erb', 'app/jobs/llm_stream_job.rb'
   end
 
+  def create_llm_message_validation_concern
+    template 'llm_message_validation_concern.rb.erb', 'app/models/concerns/llm_message_validation_concern.rb'
+  end
+
   def update_application_yml
     llm_config = <<~YAML
 
@@ -44,23 +48,20 @@ class LlmGenerator < Rails::Generators::Base
     say "    LLM_API_KEY      - Your API key"
     say "    LLM_MODEL        - Model name (e.g., gpt-4o-mini, deepseek-chat)"
 
-    say "\n🚀 Usage Examples:"
-
-    say "\n  1. Streaming via ActionCable (recommended for real-time UI):"
+    say "\n🚀 Usage (Streaming via ActionCable):"
     say "     LlmStreamJob.perform_later("
     say "       channel_name: \"chat_\#{user_id}\","
     say "       prompt: 'Explain quantum computing',"
     say "       system: 'You are a helpful assistant'"
     say "     )"
 
-    say "\n  2. Blocking call (wait for full response):"
-    say "     content = LlmService.call_blocking(prompt: 'Hello AI')"
-    say "     puts content"
-
     say "\n📚 Next Steps:"
     say "  1. Configure your API keys in config/application.yml"
-    say "  2. For streaming UI: Use LlmStreamJob with ActionCable"
-    say "  3. For simple sync calls: Use LlmService.call_blocking"
+    say "  2. Use LlmStreamJob with ActionCable for real-time streaming"
+
+    say "\n🤖 AI Assistant Note:"
+    say "  When storing LLM messages, include LlmMessageValidationConcern."
+    say "  Don't validate role & content yourself - the concern handles it."
   end
 
   private
