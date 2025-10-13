@@ -7,6 +7,7 @@ import * as ActiveStorage from '@rails/activestorage'
 import Alpine from 'alpinejs'
 import * as ActionCable from "@rails/actioncable"
 import { createConsumer } from "@rails/actioncable"
+// @ts-ignore - @hotwired/turbo-rails has no type definitions, uses @hotwired/turbo types
 import { Turbo } from "@hotwired/turbo-rails"
 import { StreamActions } from "@hotwired/turbo"
 import './controllers'
