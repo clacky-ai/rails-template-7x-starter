@@ -110,5 +110,9 @@
       </div>
 
     <%- end %>
+
+    <% if Rails.env.development? %>
+      <%= turbo_stream_from "global_errors" %>
+    <% end %>
   </body>
 </html>

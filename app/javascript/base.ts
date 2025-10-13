@@ -7,7 +7,8 @@ import * as ActiveStorage from '@rails/activestorage'
 import Alpine from 'alpinejs'
 import * as ActionCable from "@rails/actioncable"
 import { createConsumer } from "@rails/actioncable"
-import * as Turbo from "@hotwired/turbo"
+import { Turbo } from "@hotwired/turbo-rails"
+import { StreamActions } from "@hotwired/turbo"
 import './controllers'
 import './clipboard_utils'
 import './sdk_utils'
@@ -84,3 +85,22 @@ function convertLegacyAttributes(): void {
 document.addEventListener('DOMContentLoaded', convertLegacyAttributes)
 document.addEventListener('turbo:load', convertLegacyAttributes)
 document.addEventListener('turbo:frame-load', convertLegacyAttributes)
+
+// Register custom Turbo Stream action for async job errors
+StreamActions.report_async_error = function(this: any) {
+  const errorData = JSON.parse(this.getAttribute('data-error') || '{}')
+
+  if (window.errorHandler) {
+    window.errorHandler.handleError({
+      type: 'asyncjob',
+      message: errorData.message || 'Async job error occurred',
+      timestamp: new Date().toISOString(),
+      job_class: errorData.job_class,
+      job_id: errorData.job_id,
+      queue: errorData.queue,
+      exception_class: errorData.exception_class,
+      backtrace: errorData.backtrace,
+      details: errorData
+    })
+  }
+}
