@@ -225,17 +225,11 @@ module ActiveRecord
       end
 
       def model_validations
-        validations = []
-
-        parsed_attributes.each do |attr|
-          next if attr[:type] == 'references' || attr[:type] == 'belongs_to'
-
-          if !attr[:null]
-            validations << "  validates :#{attr[:name]}, presence: true"
-          end
-        end
-
-        validations.join("\n")
+        # Don't auto-generate presence validations
+        # Database null: false constraint prevents NULL, but allows empty strings ''
+        # This is important for scenarios like streaming where content starts empty
+        # Developers should add explicit validations in models or concerns as needed
+        ""
       end
 
       def serialized_attributes_declarations
