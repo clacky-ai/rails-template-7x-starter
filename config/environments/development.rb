@@ -51,9 +51,8 @@ Rails.application.configure do
       address: ENV.fetch("EMAIL_SMTP_ADDRESS"),
       port: ENV.fetch("EMAIL_SMTP_PORT"),
       user_name: ENV.fetch("EMAIL_SMTP_USERNAME"),
-      password: ENV.fetch("EMAIL_SMTP_PASSWORD"),
-      tls: true
-  }
+      password: ENV.fetch("EMAIL_SMTP_PASSWORD")
+    }
     config.action_mailer.delivery_method = :smtp
   end
 
