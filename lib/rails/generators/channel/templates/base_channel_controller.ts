@@ -5,7 +5,7 @@ import consumer from "../channels/consumer"
  * BaseChannelController - Base class for all ActionCable channel controllers
  * Provides error reporting, WebSocket management, and button state restoration
  *
- * CRITICAL: Do not modify reportError and restoreButtonStates - these prevent
+ * CRITICAL: Do not modify reportError - these prevent
  * errors from being lost and UI from getting stuck
  *
  * Usage:
@@ -41,16 +41,6 @@ export class BaseChannelController extends Controller<HTMLElement> {
   }
 
   /**
-   * Restore button states after operations
-   * CRITICAL: Do not remove - prevents stuck UI states
-   */
-  protected restoreButtonStates(): void {
-    if (typeof window.restoreButtonStates === 'function') {
-      window.restoreButtonStates()
-    }
-  }
-
-  /**
    * Create ActionCable subscription
    * Override channelConnected/channelDisconnected/channelReceived to handle events
    */
@@ -79,12 +69,11 @@ export class BaseChannelController extends Controller<HTMLElement> {
   }
 
   /**
-   * Internal: Handle connection - restores button states
+   * Internal: Handle connection
    */
   private handleChannelConnected(): void {
     console.log(`[${this.identifier}] Connected to channel`)
     this.isConnected = true
-    this.restoreButtonStates()
     this.channelConnected()
   }
 
@@ -94,28 +83,15 @@ export class BaseChannelController extends Controller<HTMLElement> {
   private handleChannelDisconnected(): void {
     console.log(`[${this.identifier}] Disconnected from channel`)
     this.isConnected = false
-
-    this.reportError({
-      type: 'error',
-      message: 'ActionCable connection was disconnected',
-      channel: this.identifier,
-      details: {
-        connectionType: 'ActionCable WebSocket',
-        event: 'disconnected'
-      }
-    })
-
-    this.channelDisconnected()
   }
 
   /**
-   * Internal: Handle received data - restores button states and handles errors
+   * Internal: Handle received data - handles errors
    */
   private handleChannelReceived(data: any): void {
-    this.restoreButtonStates()
 
-    // Global error handling
-    if (data.type === 'error' && data.success === false) {
+    // report Global error handling
+    if (data.type === 'system-error') {
       this.reportError(data)
       return
     }

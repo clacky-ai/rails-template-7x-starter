@@ -32,9 +32,9 @@ class LlmStreamJob < ApplicationJob
   rescue => e
     Rails.logger.error("LlmStreamJob failed: #{e.class} - #{e.message}")
 
-    # Broadcast error to frontend
+    # Broadcast error to frontend, system-error will be handle by error_handler.ts
     ActionCable.server.broadcast(channel_name, {
-      type: 'error',
+      type: 'system-error',
       message: e.message
     })
 

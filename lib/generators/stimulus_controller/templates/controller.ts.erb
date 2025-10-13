@@ -1,5 +1,4 @@
 import { Controller } from "@hotwired/stimulus"
-import Rails from "@rails/ujs"
 
 export default class extends Controller<HTMLElement> {
   static targets = [
@@ -32,8 +31,8 @@ export default class extends Controller<HTMLElement> {
   //   console.log("Button clicked")
   // }
 
-  // FORMS: Rails UJS + Turbo Streams handle everything automatically
-  // - Forms with data-remote="true" submit via AJAX
+  // FORMS: Turbo + Turbo Streams handle everything automatically
+  // - Forms submit via AJAX (Turbo Drive)
   // - Server responds with format.turbo_stream
   // - Turbo Streams update DOM automatically
   // - NO manual form handling needed in Stimulus

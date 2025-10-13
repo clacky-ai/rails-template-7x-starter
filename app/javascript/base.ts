@@ -3,7 +3,6 @@
 // Global patches (must be first)
 import './form_data_patch'
 
-import RailsUjs from '@rails/ujs'
 import * as ActiveStorage from '@rails/activestorage'
 import Alpine from 'alpinejs'
 import * as ActionCable from "@rails/actioncable"
@@ -15,8 +14,6 @@ import './sdk_utils'
 import './stimulus_validator'
 import './channels'
 
-RailsUjs.start()
-
 ActiveStorage.start()
 window.ActionCable = ActionCable
 
@@ -26,45 +23,45 @@ window.Alpine = Alpine
 window.App = window.App || { cable: null }
 window.App.cable = createConsumer()
 
-// Turbo configuration: ONLY enable Turbo Streams, disable Drive and Frames
-Turbo.session.drive = false  // Disable automatic page navigation interception
+// Turbo configuration: Enable Drive for full SPA experience
+// Turbo Drive is now enabled by default (replaced Rails-UJS)
 window.Turbo = Turbo
 
-// Global function to restore disabled buttons (for ActionCable callbacks)
-window.restoreButtonStates = function(): void {
-  const disabledButtons = document.querySelectorAll<HTMLInputElement | HTMLButtonElement>(
-    'input[type="submit"][disabled], button[type="submit"][disabled], button:not([type])[disabled]'
-  );
-
-  disabledButtons.forEach((button: HTMLInputElement | HTMLButtonElement) => {
-    button.disabled = false;
-    // Restore original text if data-disable-with was used
-    const originalText = button.dataset.originalText;
-    if (originalText) {
-      button.textContent = originalText;
-      delete button.dataset.originalText;
+// Legacy Rails-UJS compatibility: auto-convert attributes to Turbo equivalents
+function convertLegacyAttributes(): void {
+  // data-method → data-turbo-method
+  document.querySelectorAll<HTMLElement>('[data-method]:not([data-turbo-method])').forEach(el => {
+    const method = el.getAttribute('data-method')
+    if (method && method !== 'get') {
+      el.setAttribute('data-turbo-method', method)
+      el.removeAttribute('data-method')
     }
-    // Remove loading class if present
-    button.classList.remove('loading');
-  });
+  })
+
+  // data-confirm → data-turbo-confirm
+  document.querySelectorAll<HTMLElement>('[data-confirm]:not([data-turbo-confirm])').forEach(el => {
+    const confirm = el.getAttribute('data-confirm')
+    if (confirm) {
+      el.setAttribute('data-turbo-confirm', confirm)
+      el.removeAttribute('data-confirm')
+    }
+  })
+
+  // Remove data-remote="true" (Turbo handles by default)
+  document.querySelectorAll<HTMLElement>('[data-remote="true"]').forEach(el => {
+    el.removeAttribute('data-remote')
+  })
+
+  // data-disable-with → data-turbo-submits-with
+  document.querySelectorAll<HTMLElement>('[data-disable-with]:not([data-turbo-submits-with])').forEach(el => {
+    const text = el.getAttribute('data-disable-with')
+    if (text) {
+      el.setAttribute('data-turbo-submits-with', text)
+      el.removeAttribute('data-disable-with')
+    }
+  })
 }
 
-document.addEventListener('DOMContentLoaded', (): void => {
-  const disableRemoteForms = document.querySelectorAll<HTMLFormElement>('form[data-remote="true"]');
-
-  disableRemoteForms.forEach((form: HTMLFormElement) => {
-    form.removeAttribute('data-remote');
-  });
-
-  const turboElements = document.querySelectorAll<HTMLElement>('[data-turbo-method], [data-turbo-confirm]');
-  turboElements.forEach((element: HTMLElement) => {
-    if (element.hasAttribute('data-turbo-method')) {
-      const method = element.getAttribute('data-turbo-method');
-      if (method) element.setAttribute('data-method', method);
-    }
-    if (element.hasAttribute('data-turbo-confirm')) {
-      const confirm = element.getAttribute('data-turbo-confirm');
-      if (confirm) element.setAttribute('data-confirm', confirm);
-    }
-  });
-});
+document.addEventListener('DOMContentLoaded', convertLegacyAttributes)
+document.addEventListener('turbo:load', convertLegacyAttributes)
+document.addEventListener('turbo:frame-load', convertLegacyAttributes)

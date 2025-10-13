@@ -1,5 +1,4 @@
 import BaseChannelController from "./base_channel_controller"
-import Rails from "@rails/ujs"
 
 /**
  * 🏗️ <%= file_name.camelize %> Controller - Handles WebSocket + UI for <%= file_name.humanize.downcase %>
@@ -105,9 +104,9 @@ export default class extends BaseChannelController {
   //   }
   // }
 
-  // 📨 FORMS: Use RailsUJS + Turbo Streams (no manual code needed)
-  // Forms with data-remote="true" automatically:
-  // - Submit via AJAX
+  // 📨 FORMS: Use Turbo + Turbo Streams (no manual code needed)
+  // Forms automatically:
+  // - Submit via AJAX (Turbo Drive)
   // - Receive format.turbo_stream response
   // - Update DOM via Turbo Streams
   // Use Stimulus only for UI interactions (validation, show/hide, etc.)

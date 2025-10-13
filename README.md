@@ -58,6 +58,9 @@ Default password: admin
 
 * Ruby on Rails 7.x
 * Tailwind CSS 3 (with custom design system)
+* Hotwire Turbo (Drive, Frames, Streams)
+* Stimulus
+* ActionCable
 * figaro
 * postgres
 * active_storage

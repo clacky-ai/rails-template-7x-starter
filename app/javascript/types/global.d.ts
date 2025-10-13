@@ -11,7 +11,6 @@ declare global {
       cable: any;
       adminSidebar?: any;
     };
-    restoreButtonStates: () => void;
     errorHandler: ErrorHandler;
     stimulusValidator: any;
     copyToClipboard: (text: string) => Promise<boolean>;
@@ -28,12 +27,6 @@ declare global {
     cable: any;
     adminSidebar?: any;
   };
-}
-
-// Rails UJS types
-declare module '@rails/ujs' {
-  export function start(): void;
-  export default any;
 }
 
 // ActionCable types
@@ -62,7 +55,7 @@ declare module 'alpinejs' {
     start(): void;
     data(name: string, callback: () => any): void;
   }
-  
+
   const Alpine: Alpine;
   export default Alpine;
 }
