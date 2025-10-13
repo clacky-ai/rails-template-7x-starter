@@ -61,32 +61,12 @@ export default class extends BaseChannelController {
     // Example: Disable send button, show disconnected status
   }
 
-  // Override: Called when data received (from base class)
-  protected channelReceived(data: any): void {
-    // ⚡ STREAMING PATTERN 1: Character Stream (for LLM, logs, etc.)
-    // Server sends plain string: ActionCable.server.broadcast("channel", "text chunk")
-    if (typeof data === 'string') {
-      this.handleTextChunk(data)
-      return
-    }
-
-    // ⚡ STREAMING PATTERN 2: Turbo Stream HTML (for DOM updates)
-    // Server sends turbo_stream HTML: ApplicationController.render(turbo_stream: ...)
-    // Turbo automatically processes and updates DOM
-    // No manual handling needed - just let it flow through
-
-    // 📨 STRUCTURED DATA: Handle typed messages
-    switch(data.type) {
-      // case 'message':
-      //   this.handleMessage(data)
-      //   break
-      // case 'status_update':
-      //   this.handleStatusUpdate(data)
-      //   break
-      default:
-        console.log("Received data:", data)
-    }
-  }
+  // ⚡ AUTO-ROUTED HANDLERS: Base controller routes messages by type
+  // Server sends: { type: 'chunk', content: 'text' } → calls handleChunk(data)
+  //
+  // protected handleChunk(data: any): void {
+  //   console.log('Chunk received:', data.content)
+  // }
 
   // 🎮 ADD YOUR UI METHODS HERE
   // Example: data-action="click-><%= file_name.dasherize %>#sendAction"

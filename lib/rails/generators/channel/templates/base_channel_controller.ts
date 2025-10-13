@@ -97,18 +97,57 @@ export class BaseChannelController extends Controller<HTMLElement> {
   }
 
   /**
-   * Internal: Handle received data - restores button states and handles errors
+   * Internal: Handle received data - restores button states and auto-routes by type
+   *
+   * AUTO-ROUTING: Messages are automatically routed to handler methods
+   * - type: 'chunk' → calls handleChunk(data)
+   * - type: 'complete' → calls handleComplete(data)
+   * - type: 'error' → calls handleError(data)
+   * - type: 'status-update' → calls handleStatusUpdate(data)
+   *
+   * CRITICAL: All messages MUST have 'type' field as object
    */
   private handleChannelReceived(data: any): void {
     this.restoreButtonStates()
 
-    // report Global error handling
-    if (data.type === 'system-error') {
-      this.reportError(data)
+    // Enforce structured message format
+    if (typeof data !== 'object' || data === null) {
+      console.error(`[${this.identifier}] REJECTED: Message must be object, got ${typeof data}`)
       return
     }
 
-    this.channelReceived(data)
+    if (!data.type || typeof data.type !== 'string') {
+      console.error(`[${this.identifier}] REJECTED: Missing 'type' field`, data)
+      return
+    }
+
+    // Handle system errors from server
+    if (data.type === 'system-error') {
+      this.reportError({ ...data, type: 'actioncable' })
+      return
+    }
+
+    // Auto-route to handler method based on type
+    const methodName = `handle${this.capitalize(data.type)}`
+
+    if (typeof (this as any)[methodName] === 'function') {
+      (this as any)[methodName](data)
+    } else {
+      console.error(
+        `[${this.identifier}] UNHANDLED MESSAGE TYPE: '${data.type}'\n` +
+        `You must implement: protected ${methodName}(data: any): void { ... }`
+      )
+    }
+  }
+
+  /**
+   * Convert type to method name: 'chunk' → 'Chunk', 'status-update' → 'StatusUpdate'
+   */
+  private capitalize(str: string): string {
+    return str
+      .split(/[-_]/)
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join('')
   }
 
   /**
