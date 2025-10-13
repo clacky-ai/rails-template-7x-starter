@@ -41,6 +41,16 @@ export class BaseChannelController extends Controller<HTMLElement> {
   }
 
   /**
+   * Restore button states after operations
+   * CRITICAL: Do not remove - prevents stuck UI states
+   */
+  protected restoreButtonStates(): void {
+    if (typeof window.restoreButtonStates === 'function') {
+      window.restoreButtonStates()
+    }
+  }
+
+  /**
    * Create ActionCable subscription
    * Override channelConnected/channelDisconnected/channelReceived to handle events
    */
@@ -69,11 +79,12 @@ export class BaseChannelController extends Controller<HTMLElement> {
   }
 
   /**
-   * Internal: Handle connection
+   * Internal: Handle connection - restores button states
    */
   private handleChannelConnected(): void {
     console.log(`[${this.identifier}] Connected to channel`)
     this.isConnected = true
+    this.restoreButtonStates()
     this.channelConnected()
   }
 
@@ -86,9 +97,10 @@ export class BaseChannelController extends Controller<HTMLElement> {
   }
 
   /**
-   * Internal: Handle received data - handles errors
+   * Internal: Handle received data - restores button states and handles errors
    */
   private handleChannelReceived(data: any): void {
+    this.restoreButtonStates()
 
     // report Global error handling
     if (data.type === 'system-error') {

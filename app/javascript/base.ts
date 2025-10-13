@@ -27,6 +27,25 @@ window.App.cable = createConsumer()
 // Turbo Drive is now enabled by default (replaced Rails-UJS)
 window.Turbo = Turbo
 
+// Global function to restore disabled buttons (for ActionCable callbacks)
+window.restoreButtonStates = function(): void {
+  const disabledButtons = document.querySelectorAll<HTMLInputElement | HTMLButtonElement>(
+    'input[type="submit"][disabled], button[type="submit"][disabled], button:not([type])[disabled]'
+  )
+
+  disabledButtons.forEach((button: HTMLInputElement | HTMLButtonElement) => {
+    button.disabled = false
+    // Restore original text if data-disable-with was used
+    const originalText = button.dataset.originalText
+    if (originalText) {
+      button.textContent = originalText
+      delete button.dataset.originalText
+    }
+    // Remove loading class if present
+    button.classList.remove('loading')
+  })
+}
+
 // Legacy Rails-UJS compatibility: auto-convert attributes to Turbo equivalents
 function convertLegacyAttributes(): void {
   // data-method → data-turbo-method

@@ -11,6 +11,7 @@ declare global {
       cable: any;
       adminSidebar?: any;
     };
+    restoreButtonStates: () => void;
     errorHandler: ErrorHandler;
     stimulusValidator: any;
     copyToClipboard: (text: string) => Promise<boolean>;
