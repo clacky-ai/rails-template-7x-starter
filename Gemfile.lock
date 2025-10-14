@@ -349,6 +349,9 @@ GEM
     stringio (3.1.7)
     thor (1.3.2)
     timeout (0.4.3)
+    turbo-rails (2.0.17)
+      actionpack (>= 7.1.0)
+      railties (>= 7.1.0)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
     unicode-display_width (3.1.4)
@@ -401,6 +404,7 @@ DEPENDENCIES
   rubocop-rails-omakase
   selenium-webdriver
   solid_cable (~> 3.0)
+  turbo-rails (~> 2.0)
   tzinfo-data
 
 BUNDLED WITH

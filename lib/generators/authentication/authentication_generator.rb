@@ -140,6 +140,11 @@ class AuthenticationGenerator < Rails::Generators::Base
     copy_file 'spec/support/authentication_helpers.rb', 'spec/support/authentication_helpers.rb'
   end
 
+  def create_dev_tasks
+    say "Creating development tasks...", :green
+    copy_file 'lib/tasks/dev.rake', 'lib/tasks/dev.rake'
+  end
+
   def add_oauth_config_to_application_yml
     say "Adding OAuth configuration to application.yml files...", :green
 
@@ -301,10 +306,7 @@ class AuthenticationGenerator < Rails::Generators::Base
     if session_record = find_session_record
       Current.session = session_record
     else
-      respond_to do |format|
-        format.html { redirect_to sign_in_path }
-        format.json { render json: { error: "Authentication required" }, status: :unauthorized }
-      end
+      redirect_to sign_in_path
     end
   end
 

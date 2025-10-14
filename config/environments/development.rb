@@ -75,7 +75,7 @@ Rails.application.configure do
   config.active_job.verbose_enqueue_logs = true
 
   # Configure GoodJob for development
-  config.good_job.execution_mode = :inline
+  config.good_job.execution_mode = :async
 
   # Raises error for missing translations.
   # config.i18n.raise_on_missing_translations = true

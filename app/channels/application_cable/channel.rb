@@ -18,11 +18,10 @@ module ApplicationCable
 
       # Send error to client via transmit (direct to this connection)
       transmit({
-        type: 'error',
+        type: 'system-error',
         message: production? ? 'An error occurred' : e.message,
         channel: self.class.name,  # Channel name from backend
-        action: extract_action_from_backtrace(e.backtrace),
-        success: false,
+        action: extract_action_from_backtrace(e.backtrace)
       })
     end
 

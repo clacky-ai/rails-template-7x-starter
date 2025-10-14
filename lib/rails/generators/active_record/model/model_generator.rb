@@ -201,41 +201,61 @@ module ActiveRecord
 
       def factory_attributes
         parsed_attributes.map do |attr|
-          value = case attr[:type]
-                  when 'string', 'text'
-                    "{ Faker::Lorem.sentence }"
-                  when 'integer'
-                    "{ Faker::Number.number(digits: 5) }"
-                  when 'decimal', 'float'
-                    "{ Faker::Number.decimal(l_digits: 2, r_digits: 2) }"
-                  when 'boolean'
-                    "{ [true, false].sample }"
-                  when 'date'
-                    "{ Faker::Date.backward(days: 30) }"
-                  when 'datetime', 'timestamp'
-                    "{ Faker::Time.backward(days: 30) }"
-                  when 'references', 'belongs_to'
-                    "{ nil } # TODO: Set up association"
-                  else
-                    "{ nil } # TODO: Set appropriate value"
-                  end
+          type_str = attr[:type].to_s
 
-          "    #{attr[:name]} #{value}"
+          # Handle references/belongs_to with association syntax
+          if ['references', 'belongs_to'].include?(type_str)
+            # Extract association name: user_id → user, category_id → category
+            association_name = attr[:name].to_s.sub(/_id$/, '')
+            "    association :#{association_name}"
+          else
+            value = case type_str
+                    when 'string'
+                      '{ "MyString" }'
+                    when 'text'
+                      '{ "MyText" }'
+                    when 'integer'
+                      '{ 1 }'
+                    when 'decimal', 'float'
+                      '{ 9.99 }'
+                    when 'boolean'
+                      '{ true }'
+                    when 'date'
+                      '{ Date.today }'
+                    when 'datetime', 'timestamp'
+                      '{ Time.current }'
+                    else
+                      '{ nil }'
+                    end
+
+            "    #{attr[:name]} #{value}"
+          end
         end.join("\n")
       end
 
       def model_validations
-        validations = []
+        # Don't auto-generate presence validations
+        # Database null: false constraint prevents NULL, but allows empty strings ''
+        # This is important for scenarios like streaming where content starts empty
+        # Developers should add explicit validations in models or concerns as needed
+        ""
+      end
 
-        parsed_attributes.each do |attr|
-          next if attr[:type] == 'references' || attr[:type] == 'belongs_to'
-
-          if !attr[:null]
-            validations << "  validates :#{attr[:name]}, presence: true"
-          end
+      def belongs_to_associations
+        # Generate belongs_to for references/belongs_to fields
+        reference_attrs = parsed_attributes.select do |attr|
+          ['references', 'belongs_to'].include?(attr[:type].to_s)
         end
 
-        validations.join("\n")
+        return "" if reference_attrs.empty?
+
+        associations = reference_attrs.map do |attr|
+          # Extract association name: user_id → user, category_id → category
+          association_name = attr[:name].to_s.sub(/_id$/, '')
+          "  belongs_to :#{association_name}"
+        end
+
+        associations.join("\n")
       end
 
       def serialized_attributes_declarations

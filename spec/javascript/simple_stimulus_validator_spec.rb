@@ -51,30 +51,35 @@ class ErbAstParser
 
       # Check if this block opens a Ruby block structure (do, do |...|, {, etc.)
       # and doesn't close it
-      opens_block = code.match(/\b(do\s*(\|[^|]*\|)?)\s*$/) ||
-                    code.match(/\{\s*(\|[^|]*\|)?\s*$/)
+      opens_block = code.match(/\b(do\s*(\|[^|]*\|)?)/) ||
+                    code.match(/\{\s*(\|[^|]*\|)?/)
 
       # Check if the block has an unmatched 'do' by looking for standalone 'end' keyword
       has_unmatched_do = opens_block && !has_end_keyword?(code)
 
       if has_unmatched_do
-        # Look for the matching end/} block
+        # Look for the matching end/} block using nesting level counting
         merged_code = code.dup
         j = i + 1
+        nesting_level = 1  # Start with 1 for the initial unmatched 'do'
 
-        # Find all blocks until we find the matching closer
-        while j < blocks.length
+        # Find all blocks until nesting level reaches 0
+        while j < blocks.length && nesting_level > 0
           next_block = blocks[j]
           next_code = next_block[:code]
+
+          # Remove string literals to avoid counting 'do'/'end' inside strings
+          code_without_strings = next_code.gsub(/'[^']*'|"[^"]*"/, '')
+
+          # Count 'do' keywords (opens new nesting level)
+          nesting_level += code_without_strings.scan(/\bdo\b/).length
+
+          # Count 'end' keywords (closes nesting level)
+          nesting_level -= code_without_strings.scan(/\bend\b/).length
 
           # Add a newline between merged blocks for proper Ruby syntax
           merged_code += "\n" + next_code
           skip_indices.add(j)
-
-          # Check if this closes the block
-          if next_code.strip == 'end' || next_code.strip.end_with?('}')
-            break
-          end
 
           j += 1
         end
@@ -173,9 +178,13 @@ class ErbAstParser
 
   private
 
-  # Check if code has an unmatched 'end' keyword (word boundary check to avoid "sendMessage")
+  # Check if code has an unmatched 'end' keyword
+  # Need to exclude 'end' inside strings (both single and double quoted)
   def has_end_keyword?(code)
-    code.match?(/\bend\b/)
+    # Remove string literals to avoid matching 'end' inside strings
+    # This handles both single and double quoted strings
+    code_without_strings = code.gsub(/'[^']*'|"[^"]*"/, '')
+    code_without_strings.match?(/\bend\b/)
   end
 
   # Check if ERB block should be parsed for targets
@@ -1328,37 +1337,20 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
     end
   end
 
-  describe 'Turbo-Free Validation' do
-    it 'ensures no Turbo technologies are used in the project' do
+  describe 'Turbo Frame Prohibition Validation' do
+    it 'ensures Turbo Frames are not used (Turbo Streams are allowed)' do
       turbo_violations = []
 
-      # Turbo-related patterns to check in views
+      # Turbo Frame patterns to check in views (FORBIDDEN)
       view_turbo_patterns = {
         'turbo_frame_tag' => 'Turbo Frame helper',
-        'turbo_stream_from' => 'Turbo Stream helper',
         'data-turbo-frame' => 'Turbo Frame data attribute',
-        'data-turbo-stream' => 'Turbo Stream data attribute',
-        'turbo:' => 'Turbo event listener',
-        '<turbo-frame' => 'Turbo Frame HTML tag',
-        '<turbo-stream' => 'Turbo Stream HTML tag'
+        '<turbo-frame' => 'Turbo Frame HTML tag'
       }
 
-      # Turbo-related patterns to check in controllers
+      # Turbo Frame patterns to check in controllers (FORBIDDEN)
       controller_turbo_patterns = {
-        'format.turbo_stream' => 'Turbo Stream response format',
-        'turbo_stream' => 'Turbo Stream response',
-        'turbo_frame_request?' => 'Turbo Frame request check',
-        'turbo:' => 'Turbo configuration',
-        'broadcast_append_to' => 'Turbo Stream broadcast_append_to',
-        'broadcast_prepend_to' => 'Turbo Stream broadcast_prepend_to',
-        'broadcast_replace_to' => 'Turbo Stream broadcast_replace_to',
-        'broadcast_update_to' => 'Turbo Stream broadcast_update_to',
-        'broadcast_remove_to' => 'Turbo Stream broadcast_remove_to',
-        'broadcast_before_to' => 'Turbo Stream broadcast_before_to',
-        'broadcast_after_to' => 'Turbo Stream broadcast_after_to',
-        'broadcast_action_to' => 'Turbo Stream broadcast_action_to',
-        'broadcast_render_to' => 'Turbo Stream broadcast_render_to',
-        'broadcast_refresh_to' => 'Turbo Stream broadcast_refresh_to'
+        'turbo_frame_request?' => 'Turbo Frame request check'
       }
 
       # Check view files
@@ -1372,7 +1364,7 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
               file: relative_path,
               pattern: pattern,
               description: description,
-              suggestion: "Remove #{description} - use Stimulus controllers + RailsUJS instead"
+              suggestion: "Remove #{description} - use Turbo Streams instead (format.turbo_stream)"
             }
           end
         end
@@ -1390,14 +1382,14 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
               file: relative_path,
               pattern: pattern,
               description: description,
-              suggestion: "Remove #{description} - use format.json or format.html with Stimulus instead"
+              suggestion: "Remove #{description} - Turbo Frames not allowed (use format.turbo_stream instead)"
             }
           end
         end
       end
 
       if turbo_violations.any?
-        puts "\n🚫 Turbo Usage Detected (#{turbo_violations.length}):"
+        puts "\n🚫 Turbo Frame Usage Detected (#{turbo_violations.length}):"
         turbo_violations.each do |violation|
           puts "   • #{violation[:file]}: Found '#{violation[:pattern]}' (#{violation[:description]})"
         end
@@ -1406,9 +1398,9 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
           "#{v[:file]}: #{v[:pattern]} - #{v[:suggestion]}"
         end
 
-        expect(turbo_violations).to be_empty, "Turbo technologies are not allowed in this project:\n#{error_details.join("\n")}"
+        expect(turbo_violations).to be_empty, "Turbo Frames are not allowed (Turbo Streams are OK):\n#{error_details.join("\n")}"
       else
-        puts "\n✅ No Turbo usage detected - project is Turbo-free!"
+        puts "\n✅ No Turbo Frame usage detected - Turbo Streams enabled!"
       end
     end
   end
@@ -1557,6 +1549,121 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
         end
 
         expect(total_errors).to eq(0), "QuerySelector validation failed:\n#{error_details.join("\n")}"
+      end
+    end
+  end
+
+  describe 'Turbo Stream Architecture Enforcement' do
+    it 'validates frontend-backend interactions use Turbo Streams exclusively' do
+      violations = []
+
+      # Check backend controllers
+      controller_files = Dir.glob(Rails.root.join('app/controllers/**/*_controller.rb'))
+
+      controller_files.each do |file|
+        content = File.read(file)
+        relative_path = file.sub(Rails.root.to_s + '/', '')
+
+        # Skip API namespace (explicit API endpoints can use JSON)
+        next if relative_path.include?('app/controllers/api/')
+
+        lines = content.split("\n")
+
+        lines.each_with_index do |line, index|
+          line_number = index + 1
+          stripped = line.strip
+
+          # Detect head :ok / head :no_content
+          if stripped.match?(/\bhead\s+:(ok|no_content)\b/)
+            violations << {
+              file: relative_path,
+              line: line_number,
+              code: stripped,
+              type: 'head :ok',
+              issue: 'Lacks explicit frontend interaction feedback',
+              suggestion: 'Use Turbo Stream to provide specific UI update instructions'
+            }
+          end
+
+          # Detect render json:
+          if stripped.match?(/\brender\s+json:/)
+            violations << {
+              file: relative_path,
+              line: line_number,
+              code: stripped,
+              type: 'render json:',
+              issue: 'JSON response requires manual frontend data handling and DOM updates',
+              suggestion: 'Use Turbo Stream for server-rendered HTML fragments'
+            }
+          end
+
+          # Detect format.json
+          if stripped.match?(/format\.json\b/)
+            violations << {
+              file: relative_path,
+              line: line_number,
+              code: stripped,
+              type: 'format.json',
+              issue: 'JSON format increases frontend-backend data synchronization complexity',
+              suggestion: 'Use format.turbo_stream for server-side rendering'
+            }
+          end
+        end
+      end
+
+      # Check frontend Stimulus controllers for fetch usage (forbidden)
+      ts_controller_files = Dir.glob(controllers_dir.join('*_controller.ts'))
+
+      ts_controller_files.each do |file|
+        content = File.read(file)
+        relative_path = file.sub(Rails.root.to_s + '/', '')
+        lines = content.split("\n")
+
+        lines.each_with_index do |line, index|
+          line_number = index + 1
+
+          # Detect fetch() calls (forbidden)
+          if line.match?(/\bfetch\s*\(/)
+            violations << {
+              file: relative_path,
+              line: line_number,
+              code: line.strip,
+              type: 'fetch()',
+              issue: 'Using fetch() breaks Turbo Stream architecture and requires manual response handling',
+              suggestion: 'Use form submission (form.requestSubmit()) to let Turbo handle the interaction'
+            }
+          end
+        end
+      end
+
+      if violations.any?
+        puts "\n⚠️  Frontend-Backend Architecture Notice (#{violations.length} area(s) for improvement):"
+        puts "   📋 Architecture Principle: This project uses pure Turbo Stream architecture"
+        puts "   🎯 Goal: Reduce frontend complexity and avoid manual DOM manipulation errors\n"
+
+        violations.group_by { |v| v[:file] }.each do |file, file_violations|
+          puts "   📄 #{file}:"
+          file_violations.each do |v|
+            puts "      Line #{v[:line]}: #{v[:code]}"
+            puts "      ⚠️  Issue: #{v[:issue]}"
+            puts "      ✅ Suggestion: #{v[:suggestion]}\n"
+          end
+        end
+
+        puts "   ℹ️  Why this matters:"
+        puts "      • head :ok only returns status code, frontend cannot determine what to update"
+        puts "      • JSON responses require manual DOM updates, easy to miss related elements (e.g. counters)"
+        puts "      • Turbo Stream lets backend control UI updates, ensuring interaction completeness"
+        puts "      • API endpoints (app/controllers/api/) are exempt from this requirement\n"
+
+        error_details = violations.map do |v|
+          "#{v[:file]}:#{v[:line]} - #{v[:type]}: #{v[:issue]}"
+        end
+
+        expect(violations).to be_empty,
+          "Frontend-backend interactions must use Turbo Stream architecture:\n#{error_details.join("\n")}"
+      else
+        puts "\n✅ Frontend-backend architecture validated: All interactions use Turbo Streams!"
       end
     end
   end

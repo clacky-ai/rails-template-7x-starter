@@ -10,6 +10,11 @@ class LlmStreamJob < ApplicationJob
 
   # Streaming LLM responses via ActionCable
   # Usage: LlmStreamJob.perform_later(channel_name: "chat_#{user_id}", prompt: "Hello")
+  #
+  # CRITICAL: ALL broadcasts MUST have 'type' field (auto-routes to client handler)
+  # - type: 'chunk' → client calls handleChunk(data)
+  # - type: 'done' → client calls handleDone(data)
+  # - type: 'system-error' → handled by error_handler.ts
   def perform(channel_name:, prompt:, system: nil, **options)
     full_content = ""
 
@@ -17,24 +22,24 @@ class LlmStreamJob < ApplicationJob
     LlmService.call(prompt: prompt, system: system, **options) do |chunk|
       full_content += chunk
 
-      # Broadcast each chunk to ActionCable
+      # Broadcast each chunk → client handleChunk(data)
       ActionCable.server.broadcast(channel_name, {
-        type: 'chunk',
+        type: 'chunk',  # REQUIRED: routes to handleChunk() method
         chunk: chunk
       })
     end
 
-    # Broadcast completion
+    # Broadcast completion → client handleDone(data)
     ActionCable.server.broadcast(channel_name, {
-      type: 'done',
+      type: 'done',  # REQUIRED: routes to handleDone() method
       content: full_content
     })
   rescue => e
     Rails.logger.error("LlmStreamJob failed: #{e.class} - #{e.message}")
 
-    # Broadcast error to frontend
+    # Broadcast error → handled by base_channel_controller.ts
     ActionCable.server.broadcast(channel_name, {
-      type: 'error',
+      type: 'system-error',
       message: e.message
     })
 

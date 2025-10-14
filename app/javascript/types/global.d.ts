@@ -6,6 +6,7 @@ declare global {
     Stimulus: Application;
     Alpine: any;
     ActionCable: any;
+    Turbo: any;
     App: {
       cable: any;
       adminSidebar?: any;
@@ -27,12 +28,6 @@ declare global {
     cable: any;
     adminSidebar?: any;
   };
-}
-
-// Rails UJS types
-declare module '@rails/ujs' {
-  export function start(): void;
-  export default any;
 }
 
 // ActionCable types
@@ -61,7 +56,7 @@ declare module 'alpinejs' {
     start(): void;
     data(name: string, callback: () => any): void;
   }
-  
+
   const Alpine: Alpine;
   export default Alpine;
 }

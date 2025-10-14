@@ -9,38 +9,28 @@ class <%= channel_name %> < ApplicationCable::Channel
     # Any cleanup needed when channel is unsubscribed
   end
 
-  # 📨 EXAMPLE: Handle send_message action from client
-  # def send_message(data)
-  #   # TODO: Save message to database, validate, etc.
-  #   # You can access:
-  #   # - data: the data sent from client
-  #   # - current_user: the authenticated user (if available)
-  #   # - params: parameters passed when subscribing
+  # 📨 CRITICAL: ALL broadcasts MUST have 'type' field (auto-routes to handleType method)
   #
-  #   # Broadcast to all subscribers
+  # EXAMPLE: Handle send_message action from client
+  # def send_message(data)
+  #   # Broadcast with type: 'chunk' → client calls handleChunk(data)
   #   ActionCable.server.broadcast(
   #     "<%= stream_name %>",
   #     {
-  #       type: 'message',
+  #       type: 'chunk',  # REQUIRED: routes to handleChunk() method
   #       content: data['content'],
-  #       user: current_user&.slice(:id, :name, :email),
   #       timestamp: Time.current
   #     }
   #   )
   # end
 
-  # 📊 EXAMPLE: Handle update_status action from client
+  # EXAMPLE: type with kebab-case auto-converts: 'status-update' → handleStatusUpdate()
   # def update_status(data)
-  #   # TODO: Update user status, validate, etc.
-  #
-  #   # Broadcast status update to subscribers
   #   ActionCable.server.broadcast(
   #     "<%= stream_name %>",
   #     {
-  #       type: 'status_update',
-  #       status: data['status'],
-  #       user: current_user&.slice(:id, :name, :email),
-  #       timestamp: Time.current
+  #       type: 'status-update',  # Routes to handleStatusUpdate()
+  #       status: data['status']
   #     }
   #   )
   # end

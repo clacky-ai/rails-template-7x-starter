@@ -4,7 +4,7 @@
 import { SourceMapConsumer } from 'source-map-js'
 
 // Error type definitions
-type ErrorType = 'javascript' | 'interaction' | 'network' | 'promise' | 'http' | 'actioncable' | 'manual' | 'stimulus';
+type ErrorType = 'javascript' | 'interaction' | 'network' | 'promise' | 'http' | 'actioncable' | 'manual' | 'stimulus' | 'asyncjob';
 
 // Base error info interface
 interface BaseErrorInfo {
@@ -50,6 +50,17 @@ interface ActionCableErrorInfo extends BaseErrorInfo {
   details?: any;
 }
 
+// AsyncJob error info
+interface AsyncJobErrorInfo extends BaseErrorInfo {
+  type: 'asyncjob';
+  job_class?: string;
+  job_id?: string;
+  queue?: string;
+  exception_class?: string;
+  backtrace?: string;
+  details?: any;
+}
+
 // Manual error info
 interface ManualErrorInfo extends BaseErrorInfo {
   type: 'manual';
@@ -73,7 +84,7 @@ interface StimulusErrorInfo extends BaseErrorInfo {
 }
 
 // Union type for all possible error info types
-type ErrorInfo = JavaScriptErrorInfo | PromiseErrorInfo | NetworkErrorInfo | ActionCableErrorInfo | ManualErrorInfo | StimulusErrorInfo;
+type ErrorInfo = JavaScriptErrorInfo | PromiseErrorInfo | NetworkErrorInfo | ActionCableErrorInfo | AsyncJobErrorInfo | ManualErrorInfo | StimulusErrorInfo;
 
 // Unified error detail configuration system
 interface ErrorDetailConfig {
@@ -124,13 +135,13 @@ const ERROR_TYPE_CONFIGS: { [key: string]: ErrorTypeConfig } = {
       filename: {
         label: 'File',
         priority: 10,
-        htmlFormatter: (value: string) => `<div class="mb-2"><strong>File:</strong> ${value}</div>`,
+        htmlFormatter: (value: string) => `<div class="mb-1"><strong>File:</strong> ${value}</div>`,
         textFormatter: (value: string) => `File: ${value}`
       },
       lineno: {
         label: 'Line',
         priority: 9,
-        htmlFormatter: (value: number) => `<div class="mb-2"><strong>Line:</strong> ${value}</div>`,
+        htmlFormatter: (value: number) => `<div class="mb-1"><strong>Line:</strong> ${value}</div>`,
         textFormatter: (value: number) => `Line: ${value}`
       }
     }
@@ -141,13 +152,13 @@ const ERROR_TYPE_CONFIGS: { [key: string]: ErrorTypeConfig } = {
       method: {
         label: 'Method',
         priority: 10,
-        htmlFormatter: (value: string) => `<div class="mb-2"><strong>Method:</strong> ${value}</div>`,
+        htmlFormatter: (value: string) => `<div class="mb-1"><strong>Method:</strong> ${value}</div>`,
         textFormatter: (value: string) => `Method: ${value}`
       },
       status: {
         label: 'Status Code',
         priority: 9,
-        htmlFormatter: (value: number) => `<div class="mb-2"><strong>Status Code:</strong> ${value}</div>`,
+        htmlFormatter: (value: number) => `<div class="mb-1"><strong>Status Code:</strong> ${value}</div>`,
         textFormatter: (value: number) => `Status Code: ${value}`
       },
       jsonError: {
@@ -156,7 +167,7 @@ const ERROR_TYPE_CONFIGS: { [key: string]: ErrorTypeConfig } = {
         condition: (error) => !!error.jsonError,
         htmlFormatter: (value: any) => {
           const preClass = 'text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed';
-          return `<div class="mb-3"><div class="mb-2"><strong>JSON Error Details:</strong></div><pre class="${preClass}">${JSON.stringify(value, null, 2)}</pre></div>`;
+          return `<div class="mb-3"><div class="mb-1"><strong>JSON Error Details:</strong></div><pre class="${preClass}">${JSON.stringify(value, null, 2)}</pre></div>`;
         },
         textFormatter: (value: any) => `JSON Error Details:\n${JSON.stringify(value, null, 2)}`
       },
@@ -168,7 +179,7 @@ const ERROR_TYPE_CONFIGS: { [key: string]: ErrorTypeConfig } = {
         },
         htmlFormatter: (value: string) => {
           const preClass = 'text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed';
-          return `<div class="mb-3"><div class="mb-2"><strong>Response Body:</strong></div><pre class="${preClass}">${value}</pre></div>`;
+          return `<div class="mb-3"><div class="mb-1"><strong>Response Body:</strong></div><pre class="${preClass}">${value}</pre></div>`;
         },
         textFormatter: (value: string) => `Response Body:\n${value}`
       }
@@ -180,13 +191,13 @@ const ERROR_TYPE_CONFIGS: { [key: string]: ErrorTypeConfig } = {
       method: {
         label: 'Method',
         priority: 10,
-        htmlFormatter: (value: string) => `<div class="mb-2"><strong>Method:</strong> ${value}</div>`,
+        htmlFormatter: (value: string) => `<div class="mb-1"><strong>Method:</strong> ${value}</div>`,
         textFormatter: (value: string) => `Method: ${value}`
       },
       status: {
         label: 'Status Code',
         priority: 9,
-        htmlFormatter: (value: number) => `<div class="mb-2"><strong>Status Code:</strong> ${value}</div>`,
+        htmlFormatter: (value: number) => `<div class="mb-1"><strong>Status Code:</strong> ${value}</div>`,
         textFormatter: (value: number) => `Status Code: ${value}`
       },
       jsonError: {
@@ -195,7 +206,7 @@ const ERROR_TYPE_CONFIGS: { [key: string]: ErrorTypeConfig } = {
         condition: (error) => !!error.jsonError,
         htmlFormatter: (value: any) => {
           const preClass = 'text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed';
-          return `<div class="mb-3"><div class="mb-2"><strong>JSON Error Details:</strong></div><pre class="${preClass}">${JSON.stringify(value, null, 2)}</pre></div>`;
+          return `<div class="mb-3"><div class="mb-1"><strong>JSON Error Details:</strong></div><pre class="${preClass}">${JSON.stringify(value, null, 2)}</pre></div>`;
         },
         textFormatter: (value: any) => `JSON Error Details:\n${JSON.stringify(value, null, 2)}`
       },
@@ -207,7 +218,7 @@ const ERROR_TYPE_CONFIGS: { [key: string]: ErrorTypeConfig } = {
         },
         htmlFormatter: (value: string) => {
           const preClass = 'text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed';
-          return `<div class="mb-3"><div class="mb-2"><strong>Response Body:</strong></div><pre class="${preClass}">${value}</pre></div>`;
+          return `<div class="mb-3"><div class="mb-1"><strong>Response Body:</strong></div><pre class="${preClass}">${value}</pre></div>`;
         },
         textFormatter: (value: string) => `Response Body:\n${value}`
       }
@@ -222,7 +233,7 @@ const ERROR_TYPE_CONFIGS: { [key: string]: ErrorTypeConfig } = {
         condition: (error) => error.error?.stack,
         htmlFormatter: (value: string) => {
           const preClass = 'text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed';
-          return `<div class="mb-3"><div class="mb-2"><strong>Stack Trace:</strong></div><pre class="${preClass}">${value}</pre></div>`;
+          return `<div class="mb-3"><div class="mb-1"><strong>Stack Trace:</strong></div><pre class="${preClass}">${value}</pre></div>`;
         },
         textFormatter: (value: string) => `Stack Trace:\n${value}`
       }
@@ -234,13 +245,13 @@ const ERROR_TYPE_CONFIGS: { [key: string]: ErrorTypeConfig } = {
       channel: {
         label: 'Channel',
         priority: 10,
-        htmlFormatter: (value: string) => `<div class="mb-2"><strong>Channel:</strong> ${value}</div>`,
+        htmlFormatter: (value: string) => `<div class="mb-1"><strong>Channel:</strong> ${value}</div>`,
         textFormatter: (value: string) => `Channel: ${value}`
       },
       action: {
         label: 'Action',
         priority: 9,
-        htmlFormatter: (value: string) => `<div class="mb-2"><strong>Action:</strong> ${value}</div>`,
+        htmlFormatter: (value: string) => `<div class="mb-1"><strong>Action:</strong> ${value}</div>`,
         textFormatter: (value: string) => `Action: ${value}`
       },
       details: {
@@ -249,7 +260,7 @@ const ERROR_TYPE_CONFIGS: { [key: string]: ErrorTypeConfig } = {
         condition: (error) => !!error.details,
         htmlFormatter: (value: any) => {
           const preClass = 'text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed';
-          return `<div class="mb-3"><div class="mb-2"><strong>Channel Error Details:</strong></div><pre class="${preClass}">${JSON.stringify(value, null, 2)}</pre></div>`;
+          return `<div class="mb-3"><div class="mb-1"><strong>Channel Error Details:</strong></div><pre class="${preClass}">${JSON.stringify(value, null, 2)}</pre></div>`;
         },
         textFormatter: (value: any) => `Channel Error Details:\n${JSON.stringify(value, null, 2)}`
       }
@@ -261,19 +272,19 @@ const ERROR_TYPE_CONFIGS: { [key: string]: ErrorTypeConfig } = {
       subType: {
         label: 'Stimulus Error Type',
         priority: 10,
-        htmlFormatter: (value: string) => `<div class="mb-2"><strong>Stimulus Error Type:</strong> ${value}</div>`,
+        htmlFormatter: (value: string) => `<div class="mb-1"><strong>Stimulus Error Type:</strong> ${value}</div>`,
         textFormatter: (value: string) => `Stimulus Error Type: ${value}`
       },
       controllerName: {
         label: 'Controller',
         priority: 9,
-        htmlFormatter: (value: string) => `<div class="mb-2"><strong>Controller:</strong> ${value}</div>`,
+        htmlFormatter: (value: string) => `<div class="mb-1"><strong>Controller:</strong> ${value}</div>`,
         textFormatter: (value: string) => `Controller: ${value}`
       },
       action: {
         label: 'Action',
         priority: 8,
-        htmlFormatter: (value: string) => `<div class="mb-2"><strong>Action:</strong> ${value}</div>`,
+        htmlFormatter: (value: string) => `<div class="mb-1"><strong>Action:</strong> ${value}</div>`,
         textFormatter: (value: string) => `Action: ${value}`
       },
       missingControllers: {
@@ -290,7 +301,7 @@ const ERROR_TYPE_CONFIGS: { [key: string]: ErrorTypeConfig } = {
         htmlFormatter: (value: string[]) => {
           const ulClass = 'text-xs list-disc list-inside bg-gray-800 p-3 rounded space-y-1';
           const items = value.map((issue: string) => `<li class="leading-relaxed">${issue}</li>`).join('');
-          return `<div class="mb-3"><div class="mb-2"><strong>Positioning Issues:</strong></div><ul class="${ulClass}">${items}</ul></div>`;
+          return `<div class="mb-3"><div class="mb-1"><strong>Positioning Issues:</strong></div><ul class="${ulClass}">${items}</ul></div>`;
         },
         textFormatter: (value: string[]) => `Positioning Issues:\n${value.map((issue: string) => `  - ${issue}`).join('\n')}`
       },
@@ -300,7 +311,7 @@ const ERROR_TYPE_CONFIGS: { [key: string]: ErrorTypeConfig } = {
         condition: (error) => !!error.elementInfo,
         htmlFormatter: (value: any) => {
           const preClass = 'text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed';
-          return `<div class="mb-3"><div class="mb-2"><strong>Element Info:</strong></div><pre class="${preClass}">${JSON.stringify(value, null, 2)}</pre></div>`;
+          return `<div class="mb-3"><div class="mb-1"><strong>Element Info:</strong></div><pre class="${preClass}">${JSON.stringify(value, null, 2)}</pre></div>`;
         },
         textFormatter: (value: any) => `Element Info:\n${JSON.stringify(value, null, 2)}`
       },
@@ -309,7 +320,7 @@ const ERROR_TYPE_CONFIGS: { [key: string]: ErrorTypeConfig } = {
         priority: 3,
         htmlFormatter: (value: string) => {
           const divClass = 'text-sm bg-blue-900 text-blue-200 p-3 rounded leading-relaxed';
-          return `<div class="mb-3"><div class="mb-2"><strong>💡 Suggestion:</strong></div><div class="${divClass}">${value}</div></div>`;
+          return `<div class="mb-3"><div class="mb-1"><strong>💡 Suggestion:</strong></div><div class="${divClass}">${value}</div></div>`;
         },
         textFormatter: (value: string) => `Suggestion: ${value}`
       },
@@ -319,9 +330,42 @@ const ERROR_TYPE_CONFIGS: { [key: string]: ErrorTypeConfig } = {
         condition: (error) => !!error.details,
         htmlFormatter: (value: any) => {
           const preClass = 'text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed';
-          return `<div class="mb-3"><div class="mb-2"><strong>Detailed Information:</strong></div><pre class="${preClass}">${JSON.stringify(value, null, 2)}</pre></div>`;
+          return `<div class="mb-3"><div class="mb-1"><strong>Detailed Information:</strong></div><pre class="${preClass}">${JSON.stringify(value, null, 2)}</pre></div>`;
         },
         textFormatter: (value: any) => `Detailed Information:\n${JSON.stringify(value, null, 2)}`
+      }
+    }
+  },
+  asyncjob: {
+    icon: '⚙️',
+    fields: {
+      job_class: {
+        label: 'Job Class',
+        priority: 10,
+        htmlFormatter: (value: string) => `<div class="mb-1"><strong>Job Class:</strong> ${value}</div>`,
+        textFormatter: (value: string) => `Job Class: ${value}`
+      },
+      queue: {
+        label: 'Queue',
+        priority: 9,
+        htmlFormatter: (value: string) => `<div class="mb-1"><strong>Queue:</strong> ${value}</div>`,
+        textFormatter: (value: string) => `Queue: ${value}`
+      },
+      exception_class: {
+        label: 'Exception',
+        priority: 8,
+        htmlFormatter: (value: string) => `<div class="mb-1"><strong>Exception:</strong> ${value}</div>`,
+        textFormatter: (value: string) => `Exception: ${value}`
+      },
+      backtrace: {
+        label: 'Backtrace',
+        priority: 5,
+        condition: (error) => !!error.backtrace,
+        htmlFormatter: (value: string) => {
+          const preClass = 'text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed';
+          return `<div class="mb-3"><div class="mb-1"><strong>Backtrace:</strong></div><pre class="${preClass}">${value}</pre></div>`;
+        },
+        textFormatter: (value: string) => `Backtrace:\n${value}`
       }
     }
   },
@@ -367,6 +411,7 @@ interface ErrorCounts {
   promise: number;
   http: number;
   actioncable: number;
+  asyncjob: number;
   manual?: number;
   stimulus?: number;
 }
@@ -385,6 +430,7 @@ class ErrorHandler {
     promise: 0,
     http: 0,
     actioncable: 0,
+    asyncjob: 0,
     manual: 0,
     stimulus: 0
   };
@@ -1152,9 +1198,9 @@ class ErrorHandler {
         if (format === 'html') {
           if (field === 'stack') {
             const preClass = 'text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed';
-            details.push(`<div class="mb-3"><div class="mb-2"><strong>${this.capitalize(field)}:</strong></div><pre class="${preClass}">${value}</pre></div>`);
+            details.push(`<div class="mb-3"><div class="mb-1"><strong>${this.capitalize(field)}:</strong></div><pre class="${preClass}">${value}</pre></div>`);
           } else {
-            details.push(`<div class="mb-2"><strong>${this.capitalize(field)}:</strong> ${value}</div>`);
+            details.push(`<div class="mb-1"><strong>${this.capitalize(field)}:</strong> ${value}</div>`);
           }
         } else {
           details.push(`${this.capitalize(field)}: ${value}`);
@@ -1171,9 +1217,9 @@ class ErrorHandler {
             const formattedValue = typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value);
             if (typeof value === 'object') {
               const preClass = 'text-xs bg-gray-800 p-3 rounded overflow-x-auto whitespace-pre-wrap leading-relaxed';
-              details.push(`<div class="mb-3"><div class="mb-2"><strong>${this.capitalize(key)}:</strong></div><pre class="${preClass}">${formattedValue}</pre></div>`);
+              details.push(`<div class="mb-3"><div class="mb-1"><strong>${this.capitalize(key)}:</strong></div><pre class="${preClass}">${formattedValue}</pre></div>`);
             } else {
-              details.push(`<div class="mb-2"><strong>${this.capitalize(key)}:</strong> ${formattedValue}</div>`);
+              details.push(`<div class="mb-1"><strong>${this.capitalize(key)}:</strong> ${formattedValue}</div>`);
             }
           } else {
             const formattedValue = typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value);
@@ -1192,7 +1238,7 @@ class ErrorHandler {
   }
 
   formatTechnicalDetails(error: StoredError): string {
-    const details = [`<div><strong>Page URL:</strong> ${window.location.href}</div>`];
+    const details = [`<div class='mb-1'><strong>Page URL:</strong> ${window.location.href}</div>`];
 
     // Use the unified formatting system
     const typeSpecificDetails = this.formatErrorDetails(error, 'html');
@@ -1368,6 +1414,7 @@ ${error.message}`;
       promise: 0,
       http: 0,
       actioncable: 0,
+      asyncjob: 0,
       manual: 0,
       stimulus: 0
     };
