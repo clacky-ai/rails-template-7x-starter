@@ -170,8 +170,10 @@ module ActiveRecord
           opts << "null: false" unless attr[:null]
 
           if attr[:default]
-            # Quote string/text defaults, leave numbers/booleans unquoted
-            default_value = if attr[:type].to_s.in?(['string', 'text'])
+            # Handle datetime/time types with "now" default
+            default_value = if attr[:type].to_s.in?(['datetime', 'time', 'timestamp']) && attr[:default] == 'now'
+                             "-> { 'CURRENT_TIMESTAMP' }"
+                           elsif attr[:type].to_s.in?(['string', 'text'])
                              "\"#{attr[:default]}\""
                            else
                              attr[:default]
