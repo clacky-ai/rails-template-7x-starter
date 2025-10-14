@@ -1548,6 +1548,7 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
     it 'validates frontend-backend interactions use Turbo Streams exclusively' do
       violations = []
 
+      # Check backend controllers
       controller_files = Dir.glob(Rails.root.join('app/controllers/**/*_controller.rb'))
 
       controller_files.each do |file|
@@ -1596,6 +1597,31 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
               type: 'format.json',
               issue: 'JSON format increases frontend-backend data synchronization complexity',
               suggestion: 'Use format.turbo_stream for server-side rendering'
+            }
+          end
+        end
+      end
+
+      # Check frontend Stimulus controllers for fetch usage (forbidden)
+      ts_controller_files = Dir.glob(controllers_dir.join('*_controller.ts'))
+
+      ts_controller_files.each do |file|
+        content = File.read(file)
+        relative_path = file.sub(Rails.root.to_s + '/', '')
+        lines = content.split("\n")
+
+        lines.each_with_index do |line, index|
+          line_number = index + 1
+
+          # Detect fetch() calls (forbidden)
+          if line.match?(/\bfetch\s*\(/)
+            violations << {
+              file: relative_path,
+              line: line_number,
+              code: line.strip,
+              type: 'fetch()',
+              issue: 'Using fetch() breaks Turbo Stream architecture and requires manual response handling',
+              suggestion: 'Use form submission (form.requestSubmit()) to let Turbo handle the interaction'
             }
           end
         end

@@ -145,9 +145,11 @@ Use FriendlyId (already configured) if need slug URLs. For user-facing content u
 
 **CRITICAL**:
 - ❌ NEVER use Rails-UJS syntax (`remote: true`, `method: :delete`, `data-method`, `data-confirm`, `data-disable-with`)
+- ❌ NEVER use `fetch()` in Stimulus controllers - use form submission instead
 - ✅ Use Turbo instead: Turbo Drive, Frames, and Streams are available
 - ✅ Prefer `format.turbo_stream` for server responses
 - ✅ Real-time: Use `broadcast_*_to` in ActionCable
+- ✅ For AJAX-like updates: Use `form.requestSubmit()` to trigger Turbo Stream responses
 
 ALWAYS prefer TailwindCSS v3 and Stimulus controllers for UI behavior. NO pure JavaScript or jQuery allowed.
 

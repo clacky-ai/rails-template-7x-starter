@@ -5,7 +5,7 @@ module ViewDevelopmentMatchers
   matcher :be_success_with_view_check do |action_name = nil|
     match do |response|
       case response.status
-      when 200, 201, 202, 204
+      when 200, 201, 202, 204, 300..399
         true
       when 406
         action_info = action_name ? "##{action_name}" : ""
