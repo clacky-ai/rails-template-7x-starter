@@ -310,13 +310,16 @@ class ErbAstParser
         end
       end
 
-      # Handle symbol keys: controller_target: "target"
+      # Handle symbol keys: controller_target: "target" or "controller-target": "target"
       if key_node.type == :sym && value_node.type == :str
         key_sym = key_node.children[0]
         value_str = value_node.children[0]
 
-        expected_key = "#{controller_name.gsub('-', '_')}_target"
-        if key_sym.to_s == expected_key && value_str == target_name
+        # Support both formats: underscore and hyphen
+        expected_key_underscore = "#{controller_name.gsub('-', '_')}_target"
+        expected_key_hyphen = "#{controller_name}-target"
+
+        if (key_sym.to_s == expected_key_underscore || key_sym.to_s == expected_key_hyphen) && value_str == target_name
           matches << {
             type: :hash_symbol_key,
             controller: controller_name,
@@ -473,12 +476,16 @@ class ErbAstParser
         end
       end
 
-      # Handle symbol keys: controller_value_name_value: "..."
+      # Handle symbol keys: controller_value_name_value: "..." or "controller-value-name-value": "..."
       if key_node.type == :sym
         key_sym = key_node.children[0]
-        expected_key = "#{controller_name.gsub('-', '_')}_#{value_name.gsub(/([a-z])([A-Z])/, '\1_\2').downcase}_value"
+        kebab_value_name = value_name.gsub(/([a-z])([A-Z])/, '\1-\2').downcase
 
-        if key_sym.to_s == expected_key
+        # Support both formats: underscore and hyphen
+        expected_key_underscore = "#{controller_name.gsub('-', '_')}_#{value_name.gsub(/([a-z])([A-Z])/, '\1_\2').downcase}_value"
+        expected_key_hyphen = "#{controller_name}-#{kebab_value_name}-value"
+
+        if (key_sym.to_s == expected_key_underscore || key_sym.to_s == expected_key_hyphen)
           matches << {
             type: :hash_symbol_key,
             controller: controller_name,
