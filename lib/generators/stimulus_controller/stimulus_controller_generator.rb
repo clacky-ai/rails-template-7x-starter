@@ -9,13 +9,21 @@ class StimulusControllerGenerator < Rails::Generators::NamedBase
 
     controller_name = file_name_without_controller
     class_name = "#{controller_name.camelize}Controller"
+    controller_path = "app/javascript/controllers/#{controller_name}_controller.ts"
 
-    template 'controller.ts.erb', "app/javascript/controllers/#{controller_name}_controller.ts"
+    # Check if file already exists
+    if File.exist?(controller_path)
+      say "⚠️  Controller file already exists: #{controller_path}", :yellow
+      say "💡 Please read and modify the existing code, following the conventions within.", :blue
+      return
+    end
+
+    template 'controller.ts.erb', controller_path
 
     insert_into_index_ts(controller_name, class_name)
 
     say "✅ Stimulus controller '#{controller_name}' created successfully!", :green
-    say "📁 Controller file: app/javascript/controllers/#{controller_name}_controller.ts", :blue
+    say "📁 Controller file: #{controller_path}", :blue
     say "📄 Added to: app/javascript/controllers/index.ts", :blue
   end
 
