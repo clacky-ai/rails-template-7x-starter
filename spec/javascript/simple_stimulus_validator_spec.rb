@@ -1543,4 +1543,93 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
       end
     end
   end
+
+  describe 'Turbo Stream Architecture Enforcement' do
+    it 'validates frontend-backend interactions use Turbo Streams exclusively' do
+      violations = []
+
+      controller_files = Dir.glob(Rails.root.join('app/controllers/**/*_controller.rb'))
+
+      controller_files.each do |file|
+        content = File.read(file)
+        relative_path = file.sub(Rails.root.to_s + '/', '')
+
+        # Skip API namespace (explicit API endpoints can use JSON)
+        next if relative_path.include?('app/controllers/api/')
+
+        lines = content.split("\n")
+
+        lines.each_with_index do |line, index|
+          line_number = index + 1
+          stripped = line.strip
+
+          # Detect head :ok / head :no_content
+          if stripped.match?(/\bhead\s+:(ok|no_content)\b/)
+            violations << {
+              file: relative_path,
+              line: line_number,
+              code: stripped,
+              type: 'head :ok',
+              issue: 'Lacks explicit frontend interaction feedback',
+              suggestion: 'Use Turbo Stream to provide specific UI update instructions'
+            }
+          end
+
+          # Detect render json:
+          if stripped.match?(/\brender\s+json:/)
+            violations << {
+              file: relative_path,
+              line: line_number,
+              code: stripped,
+              type: 'render json:',
+              issue: 'JSON response requires manual frontend data handling and DOM updates',
+              suggestion: 'Use Turbo Stream for server-rendered HTML fragments'
+            }
+          end
+
+          # Detect format.json
+          if stripped.match?(/format\.json\b/)
+            violations << {
+              file: relative_path,
+              line: line_number,
+              code: stripped,
+              type: 'format.json',
+              issue: 'JSON format increases frontend-backend data synchronization complexity',
+              suggestion: 'Use format.turbo_stream for server-side rendering'
+            }
+          end
+        end
+      end
+
+      if violations.any?
+        puts "\n⚠️  Frontend-Backend Architecture Notice (#{violations.length} area(s) for improvement):"
+        puts "   📋 Architecture Principle: This project uses pure Turbo Stream architecture"
+        puts "   🎯 Goal: Reduce frontend complexity and avoid manual DOM manipulation errors\n"
+
+        violations.group_by { |v| v[:file] }.each do |file, file_violations|
+          puts "   📄 #{file}:"
+          file_violations.each do |v|
+            puts "      Line #{v[:line]}: #{v[:code]}"
+            puts "      ⚠️  Issue: #{v[:issue]}"
+            puts "      ✅ Suggestion: #{v[:suggestion]}\n"
+          end
+        end
+
+        puts "   ℹ️  Why this matters:"
+        puts "      • head :ok only returns status code, frontend cannot determine what to update"
+        puts "      • JSON responses require manual DOM updates, easy to miss related elements (e.g. counters)"
+        puts "      • Turbo Stream lets backend control UI updates, ensuring interaction completeness"
+        puts "      • API endpoints (app/controllers/api/) are exempt from this requirement\n"
+
+        error_details = violations.map do |v|
+          "#{v[:file]}:#{v[:line]} - #{v[:type]}: #{v[:issue]}"
+        end
+
+        expect(violations).to be_empty,
+          "Frontend-backend interactions must use Turbo Stream architecture:\n#{error_details.join("\n")}"
+      else
+        puts "\n✅ Frontend-backend architecture validated: All interactions use Turbo Streams!"
+      end
+    end
+  end
 end

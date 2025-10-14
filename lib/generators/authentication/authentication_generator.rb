@@ -301,10 +301,7 @@ class AuthenticationGenerator < Rails::Generators::Base
     if session_record = find_session_record
       Current.session = session_record
     else
-      respond_to do |format|
-        format.html { redirect_to sign_in_path }
-        format.json { render json: { error: "Authentication required" }, status: :unauthorized }
-      end
+      redirect_to sign_in_path
     end
   end
 
