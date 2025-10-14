@@ -51,30 +51,35 @@ class ErbAstParser
 
       # Check if this block opens a Ruby block structure (do, do |...|, {, etc.)
       # and doesn't close it
-      opens_block = code.match(/\b(do\s*(\|[^|]*\|)?)\s*$/) ||
-                    code.match(/\{\s*(\|[^|]*\|)?\s*$/)
+      opens_block = code.match(/\b(do\s*(\|[^|]*\|)?)/) ||
+                    code.match(/\{\s*(\|[^|]*\|)?/)
 
       # Check if the block has an unmatched 'do' by looking for standalone 'end' keyword
       has_unmatched_do = opens_block && !has_end_keyword?(code)
 
       if has_unmatched_do
-        # Look for the matching end/} block
+        # Look for the matching end/} block using nesting level counting
         merged_code = code.dup
         j = i + 1
+        nesting_level = 1  # Start with 1 for the initial unmatched 'do'
 
-        # Find all blocks until we find the matching closer
-        while j < blocks.length
+        # Find all blocks until nesting level reaches 0
+        while j < blocks.length && nesting_level > 0
           next_block = blocks[j]
           next_code = next_block[:code]
+
+          # Remove string literals to avoid counting 'do'/'end' inside strings
+          code_without_strings = next_code.gsub(/'[^']*'|"[^"]*"/, '')
+
+          # Count 'do' keywords (opens new nesting level)
+          nesting_level += code_without_strings.scan(/\bdo\b/).length
+
+          # Count 'end' keywords (closes nesting level)
+          nesting_level -= code_without_strings.scan(/\bend\b/).length
 
           # Add a newline between merged blocks for proper Ruby syntax
           merged_code += "\n" + next_code
           skip_indices.add(j)
-
-          # Check if this closes the block
-          if next_code.strip == 'end' || next_code.strip.end_with?('}')
-            break
-          end
 
           j += 1
         end
@@ -173,9 +178,13 @@ class ErbAstParser
 
   private
 
-  # Check if code has an unmatched 'end' keyword (word boundary check to avoid "sendMessage")
+  # Check if code has an unmatched 'end' keyword
+  # Need to exclude 'end' inside strings (both single and double quoted)
   def has_end_keyword?(code)
-    code.match?(/\bend\b/)
+    # Remove string literals to avoid matching 'end' inside strings
+    # This handles both single and double quoted strings
+    code_without_strings = code.gsub(/'[^']*'|"[^"]*"/, '')
+    code_without_strings.match?(/\bend\b/)
   end
 
   # Check if ERB block should be parsed for targets
