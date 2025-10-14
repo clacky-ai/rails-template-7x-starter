@@ -6,7 +6,7 @@ RSpec.describe "Orders", type: :request do
   # before { sign_in_as(user) }
 
   # Use this version if controller needs authentication
-  # let!(:order) { create(:order, :user) }
+  # let!(:order) { create(:order, user: user) }
   # None authentication version
   let!(:order) { create(:order) }
 

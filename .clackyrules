@@ -123,7 +123,7 @@ Use `rails generate admin_crud xxx` (where xxx is your model name that you creat
 
 Use `rails generate controller xxx [action1] [action2] [--auth] [--single]` (where xxx is your controller name, action is optional(all actions by default), --auth means need authenticate_user!, --single generates singular resource without index action) to create controllers when developing the user-side functionality, modify generated code for free.
 
-Use `rails generate channel xxx [action1] [action2] [--auth]` to create ActionCable channels, --auth means need current_user and authenticate_user!
+Use `rails generate channel xxx [action1] [action2] [--auth]` to create ActionCable channels. Generates BOTH xxx_channel.rb (WebSocket) AND xxx_controller.ts (handles BOTH WebSocket AND UI interactions). Don't create separate controllers - extend the generated one. --auth means need current_user and authenticate_user!
 
 Use `rails generate pwa` to generate Progressive Web App setup with manifest, service worker, and install controller. Auto-detects app name from ENV['APPNAME'] and theme color from application.css --color-primary.
 

@@ -31,7 +31,7 @@ RSpec.describe "<%= plural_name.humanize %>", type: :request do
     <%- else -%>
   describe "GET /<%= plural_name %>/:id" do
     <%- if requires_authentication? -%>
-    let(:<%= singular_name %>) { create(:<%= singular_name %>, :user) }
+    let(:<%= singular_name %>) { create(:<%= singular_name %>, user: user) }
     <%- else -%>
     let(:<%= singular_name %>) { create(:<%= singular_name %>) }
     <%- end %>
@@ -64,7 +64,7 @@ RSpec.describe "<%= plural_name.humanize %>", type: :request do
     <%- else -%>
   describe "GET /<%= plural_name %>/:id/edit" do
     <%- if requires_authentication? -%>
-    let(:<%= singular_name %>) { create(:<%= singular_name %>, :user) }
+    let(:<%= singular_name %>) { create(:<%= singular_name %>, user: user) }
     <%- else -%>
     let(:<%= singular_name %>) { create(:<%= singular_name %>) }
     <%- end %>
