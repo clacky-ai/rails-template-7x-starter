@@ -162,7 +162,10 @@ Every form should include error messages using the shared partial. Add `<%= rend
 
 **CRITICAL**: Double check `rake test` all passed at last when you finish the task.
 
-Use `curl -X POST localhost:3000/sign_in -H "Content-Type: application/json" -d '{"email":"user@example.com","password":"pass"}'` return session_token then `curl -H "Authorization: Bearer <session_token>" -s xxx` for page test. Use `rails runner "User.create(xxx)"` if need create user first.
+For authenticated curl: `rails dev:token[test@example.com]` outputs the token and example curl command (will create user if not exists). Copy the token and use it:
+```bash
+curl -H 'Authorization: Bearer <token>' http://localhost:3000/your_endpoint
+```
 
 Do not use `rails console`, use `rails runner` instead if you want insert or check db data.
 
