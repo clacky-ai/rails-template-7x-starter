@@ -4,6 +4,29 @@ class AuthenticationGenerator < Rails::Generators::Base
 
   desc "Generate a complete authentication system with users and sessions"
 
+  def check_if_already_generated
+    session_model = 'app/models/session.rb'
+    current_model = 'app/models/current.rb'
+
+    if File.exist?(session_model) && File.exist?(current_model)
+      say "\n" + "="*70, :red
+      say "ERROR: Authentication system has already been generated!", :red
+      say "="*70, :red
+      say "\nIncluded features:", :green
+      say "  - User registration, login, password reset", :cyan
+      say "  - Email verification", :cyan
+      say "  - Session management", :cyan
+      say "  - OAuth integration (Google, Facebook, Twitter, GitHub)", :cyan
+      say "\nTo enable OAuth providers, set these in config/application.yml:", :yellow
+      say "  GOOGLE_OAUTH_ENABLED: 'true'     # + GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET", :yellow
+      say "  FACEBOOK_OAUTH_ENABLED: 'true'   # + FACEBOOK_APP_ID, FACEBOOK_APP_SECRET", :yellow
+      say "  TWITTER_OAUTH_ENABLED: 'true'    # + TWITTER_API_KEY, TWITTER_API_SECRET", :yellow
+      say "  GITHUB_OAUTH_ENABLED: 'true'     # + GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET", :yellow
+      say "\n"
+      exit(1)
+    end
+  end
+
   def create_models
     say "Creating models...", :green
 
@@ -247,22 +270,12 @@ class AuthenticationGenerator < Rails::Generators::Base
     say "Authentication system generated successfully!", :green
     say "="*50, :green
     say "\nNext steps:", :yellow
-    say "1. Run: rails db:migrate"
-    say "2. Run: bundle install (new OAuth gems added)"
-    say "3. Configure OAuth providers:"
-    say "   - If using Figaro gem, update config/application.yml:"
-    say "     * Set *_OAUTH_ENABLED: 'true' to enable each provider (use strings)"
-    say "     * Add your OAuth client credentials"
-    say "     * Optional: Configure Clacky Auth fallback for development/testing"
-    say "   - Or set environment variables:"
-    say "     * GOOGLE_OAUTH_ENABLED, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET"
-    say "     * FACEBOOK_OAUTH_ENABLED, FACEBOOK_APP_ID, FACEBOOK_APP_SECRET"
-    say "     * TWITTER_OAUTH_ENABLED, TWITTER_API_KEY, TWITTER_API_SECRET"
-    say "     * GITHUB_OAUTH_ENABLED, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET"
-    say "     * Optional: CLACKY_AUTH_CLIENT_ID, CLACKY_AUTH_CLIENT_SECRET, CLACKY_AUTH_DOMAIN"
-    say "4. Update navbar: For flexibility, navbar was not auto-generated."
-    say "   Please manually update app/views/shared/_navbar.html.erb", :cyan
-    say "5. Customize the views to match your application's styling"
+    say "1. Run: bundle install (new OAuth gems added)"
+    say "2. Run: rails db:migrate"
+    say "3. OAuth login (Google, Facebook, Twitter, GitHub) is built-in:"
+    say "   - Set *_OAUTH_ENABLED: 'true' in config/application.yml to enable"
+    say "   - Default credentials are pre-configured and ready to use"
+    say "   - DO NOT modify CLIENT_ID/CLIENT_SECRET unless user specifies it"
   end
 
   private

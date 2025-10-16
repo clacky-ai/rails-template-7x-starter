@@ -49,6 +49,9 @@ module Myapp
     # Configure GoodJob as the Active Job queue adapter
     config.active_job.queue_adapter = :good_job
 
+    # Use custom MailDeliveryJob that inherits from ApplicationJob
+    config.action_mailer.delivery_job = "MailDeliveryJob"
+
     # Enable cron-style recurring jobs
     config.good_job.enable_cron = true
 
