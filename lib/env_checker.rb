@@ -66,19 +66,19 @@ module EnvChecker
     # Variables are considered optional if:
     # 1. They end with '_OPTIONAL' suffix
     # 2. Their value in application.yml.example uses <%= ENV.fetch('CLACKY_xxx') %>
-    # 3. They have a corresponding xxx_DUMMY variable with a value
     def check_required_env_vars(example_env_configs = nil)
+      if get_env_var('SECRET_KEY_BASE_DUMMY').present?
+        puts 'SECRET_KEY_BASE_DUMMY is setted, skip check_required_env_vars...'
+        return
+      end
+
       example_env_configs ||= load_example_env_vars
 
       missing_vars = example_env_configs.reject do |config|
         var_name = config[:name]
         is_optional = config[:optional] || var_name.end_with?('_OPTIONAL')
 
-        # Check if xxx_DUMMY variable exists and has value (allows skipping this check)
-        dummy_var_name = "#{var_name}_DUMMY"
-        has_dummy = ENV[dummy_var_name].present?
-
-        is_optional || has_dummy || get_env_var(var_name).present?
+        is_optional || get_env_var(var_name).present?
       end.map { |config| config[:name] }
 
       if missing_vars.any?
