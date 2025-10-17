@@ -19,9 +19,6 @@ SECRET_KEY_BASE: ''
 # production need!!!
 PUBLIC_HOST: '<%= ENV.fetch('CLACKY_PUBLIC_HOST', '') %>'
 
-# Browser base title
-APPNAME: 'ClackyAI APP'
-
 # SMTP for email
 EMAIL_SMTP_ADDRESS: '<%= ENV.fetch("CLACKY_EMAIL_SMTP_ADDRESS", '') %>'
 EMAIL_SMTP_PORT: '<%= ENV.fetch("CLACKY_EMAIL_SMTP_PORT", '') %>'
