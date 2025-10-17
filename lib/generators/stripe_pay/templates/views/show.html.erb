@@ -113,19 +113,17 @@
           </div>
 
           <%% if @order.pending? || @order.failed? %>
-            <div class="space-x-3">
-              <%%= link_to @order.failed? ? "Retry Payment" : "Complete Payment",
+            <div class="flex items-center gap-3">
+              <%%= button_to @order.failed? ? "Retry Payment" : "Complete Payment",
                   pay_order_path(@order),
+                  method: :post,
                   class: "btn-primary px-6 py-3 text-lg",
-                  data: {
-                    disable_with: @order.failed? ? 'Retrying Payment...' : 'Processing Payment...',
-                    turbo: false
-                  },
-                  method: :post %>
-              <%%= link_to "Cancel Order",
+                  form: { onsubmit: "this.querySelector('button').disabled=true" },
+                  data: { turbo: false } %>
+              <%%= button_to "Cancel Order",
                   order_path(@order),
-                  class: "btn-danger",
                   method: :delete,
+                  class: "btn-danger",
                   data: { confirm: "Are you sure you want to cancel this order?" } %>
             </div>
           <%% end %>

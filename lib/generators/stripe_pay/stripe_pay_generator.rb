@@ -107,9 +107,9 @@ class StripePayGenerator < Rails::Generators::Base
 
   def add_routes
     if options[:for_test]
-      order_routes = "[:index, :new, :create, :show]"
+      order_routes = "[:index, :new, :create, :show, :destroy]"
     else
-      order_routes = "[:index, :show]"
+      order_routes = "[:index, :show, :destroy]"
     end
 
     route_content = <<~ROUTES
