@@ -146,6 +146,10 @@ GEM
       fugit (>= 1.11.0)
       railties (>= 6.1.0)
       thor (>= 1.0.0)
+    herb (0.7.5)
+    herb (0.7.5-arm64-darwin)
+    herb (0.7.5-x86_64-darwin)
+    herb (0.7.5-x86_64-linux-gnu)
     i18n (1.14.7)
       concurrent-ruby (~> 1.0)
     image_processing (1.14.0)
@@ -396,6 +400,7 @@ DEPENDENCIES
   figaro
   friendly_id (~> 5.5)
   good_job (~> 4.6)
+  herb (~> 0.7.5)
   image_processing (~> 1.2)
   jbuilder
   jsbundling-rails
