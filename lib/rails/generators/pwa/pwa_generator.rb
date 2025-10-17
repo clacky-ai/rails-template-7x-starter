@@ -5,7 +5,6 @@ module Rails
     class PwaGenerator < Base
       source_root File.expand_path("templates", __dir__)
 
-      class_option :app_name, type: :string, default: nil, desc: "Application name for PWA (defaults to ENV['APPNAME'] or Rails app name)"
       class_option :theme_color, type: :string, default: nil, desc: "Theme color for PWA (defaults to --color-primary from application.css or #7c3aed)"
       class_option :skip_controller, type: :boolean, default: false, desc: "Skip creating Stimulus controller"
       class_option :skip_routes, type: :boolean, default: false, desc: "Skip adding routes"
@@ -107,7 +106,7 @@ module Rails
       private
 
       def app_name
-        @app_name ||= options[:app_name] || ENV['APPNAME'] || Rails.application.class.module_parent_name.titleize
+        @app_name ||= Rails.application.config.x.appname
       end
 
       def short_name

@@ -10,11 +10,11 @@
     <meta name="HandheldFriendly" content="True">
     <meta name="MobileOptimized" content="320">
     <title>
-      <% if content_for?(:title) %>
-        <%= yield(:title) + ENV['APPNAME'] || 'ClackyAI APP' %>
-      <% else %>
-        <%= ENV['APPNAME'] || 'ClackyAI APP' %>
-      <% end %>
+    <% if content_for?(:title) %>
+      <%= yield(:title) + ' | ' + Rails.application.config.x.appname %>
+    <% else %>
+      <%= Rails.application.config.x.appname %>
+    <% end %>
     </title>
     <%= csrf_meta_tags %>
     <%= action_cable_meta_tag %>

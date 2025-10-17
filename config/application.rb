@@ -46,6 +46,9 @@ module Myapp
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
 
+    # Application name configuration
+    config.x.appname = "ClackyAPP"
+
     # Configure GoodJob as the Active Job queue adapter
     config.active_job.queue_adapter = :good_job
 

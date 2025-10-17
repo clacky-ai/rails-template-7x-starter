@@ -162,8 +162,6 @@ Every form should include error messages using the shared partial. Add `<%= rend
 
 `rake test` is configured to only show 3 failed test cases at a time, so you should repeatedly run rake test (no less than 3 rounds, no more than 10 rounds) until all tests pass
 
-**CRITICAL**: Double check `rake test` all passed at last when you finish the task.
-
 For authenticated curl: `rails dev:token[test@example.com]` outputs the token and example curl command (will create user if not exists). Copy the token and use it:
 ```bash
 curl -H 'Authorization: Bearer <token>' http://localhost:3000/your_endpoint

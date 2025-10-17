@@ -34,5 +34,12 @@ RSpec.describe "Home", type: :request do
             "Navigation should be implemented in app/views/shared/_navbar.html.erb instead. " \
       end
     end
+
+    it "should customize appname from default value" do
+      appname = Rails.application.config.x.appname
+      expect(appname).not_to eq("ClackyAPP"),
+        "Please customize your application name in config/application.rb. " \
+        "Change config.x.appname from the default 'ClackyAPP' to your own app name."
+    end
   end
 end

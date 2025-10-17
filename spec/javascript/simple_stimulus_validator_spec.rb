@@ -694,6 +694,27 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
     actions
   end
 
+  def find_exempt_methods(node, content, exempt_ranges)
+    return unless node
+
+    if node.type == :def
+      method_name = node.children[0].to_s
+
+      # Check if method name is webhook/callback or ends with _webhook/_callback
+      if method_name.match?(/(^|_)(webhook|callback)$/)
+        # Get line range for this method
+        start_line = node.loc.line
+        end_line = node.loc.last_line
+        exempt_ranges << (start_line..end_line)
+      end
+    end
+
+    # Recursively search child nodes
+    node.children.each do |child|
+      find_exempt_methods(child, content, exempt_ranges) if child.is_a?(Parser::AST::Node)
+    end
+  end
+
   def parse_erb_actions(content, relative_path)
     actions = []
 
@@ -1574,11 +1595,23 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
         # Skip API namespace (explicit API endpoints can use JSON)
         next if relative_path.include?('app/controllers/api/')
 
+        # Parse controller file with AST to find webhook/callback methods
+        exempt_method_ranges = []
+        begin
+          ast = Parser::CurrentRuby.parse(content)
+          find_exempt_methods(ast, content, exempt_method_ranges)
+        rescue Parser::SyntaxError
+          # If parsing fails, skip AST-based exemption (fall back to line-by-line)
+        end
+
         lines = content.split("\n")
 
         lines.each_with_index do |line, index|
           line_number = index + 1
           stripped = line.strip
+
+          # Skip JSON checks if current line is inside a webhook/callback method
+          next if exempt_method_ranges.any? { |range| range.cover?(line_number) }
 
           # Detect head :ok / head :no_content
           if stripped.match?(/\bhead\s+:(ok|no_content)\b/)
