@@ -1,15 +1,24 @@
 <div class="container-lg">
-  <!-- Header -->
-  <div class="flex items-center justify-between">
+  <div class="mb-6">
+    <!-- Back Button -->
     <div class="flex items-center space-x-4">
-      <%%= link_to "← Back to Orders", admin_orders_path, class: "btn-ghost" %>
-      <h1 class="text-3xl font-bold text-primary">Order #<%%= @order.id %></h1>
+      <%%= link_to admin_orders_path, class: "btn-ghost text-sm py-1 px-3" do %>
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+        </svg>
+        Back to Orders
+      <%% end %>
     </div>
 
-    <div class="flex items-center space-x-3">
-      <%%= link_to "Delete Order", admin_order_path(@order), method: :delete,
-          data: { confirm: "Are you sure you want to delete this order? This action cannot be undone." },
-          class: "btn-danger" %>
+    <!-- Header -->
+    <div class="mt-4 flex items-center justify-between">
+      <h1 class="text-3xl font-bold text-primary">Order #<%%= @order.id %></h1>
+
+      <div class="flex items-center space-x-3">
+        <%%= link_to "Delete Order", admin_order_path(@order), method: :delete,
+            data: { confirm: "Are you sure you want to delete this order? This action cannot be undone." },
+            class: "btn-danger" %>
+      </div>
     </div>
   </div>
 
@@ -34,6 +43,20 @@
         <h2 class="text-xl font-semibold text-primary mb-4">Customer Information</h2>
 
         <div class="space-y-4">
+<% if @auth -%>
+          <div>
+            <label class="form-label">User Account</label>
+            <%% if @order.user %>
+              <p class="text-lg text-primary font-medium">
+                <%%= @order.user.email %>
+                <span class="text-sm text-muted">(ID: <%%= @order.user.id %>)</span>
+              </p>
+            <%% else %>
+              <p class="text-lg text-muted">No user account associated</p>
+            <%% end %>
+          </div>
+
+<% end -%>
           <div>
             <label class="form-label">Name</label>
             <p class="text-lg text-primary font-medium"><%%= @order.customer_name %></p>

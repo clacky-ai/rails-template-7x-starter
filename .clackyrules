@@ -74,9 +74,9 @@ Only after completing Steps 1-3, you can create other models and controllers.
 
 ## Some important tips when Developing user authentication/payment/LLM-calling(AI APP) system
 
-when developing order/payment system, don't write it yourself. Use `rails generate stripe_pay` to generate the initial code.
+when developing order/payment system, don't write it yourself. Use `rails generate stripe_pay [--auth]` to generate the initial code.
 
-**IMPORTANT for stripe_pay:** Before running `rails generate stripe_pay`, ensure NO Order model exists. The generator will create the Order model, migration, user-side order pages and admin crud pages. If Order model already exists, remove it first to avoid conflicts.
+**IMPORTANT for stripe_pay:** Before running `rails generate stripe_pay`, ensure NO Order model exists. The generator will create the Order model, migration, user-side order pages and admin crud pages. If Order model already exists, remove it first to avoid conflicts. Use `--auth` option to add user association (requires User model exists).
 
 Should only need to support Stripe payments by default.
 

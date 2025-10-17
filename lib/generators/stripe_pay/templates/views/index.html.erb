@@ -1,17 +1,15 @@
 <%% content_for(:title, "Your Orders") %>
 
 <div class="container-xl py-12">
-    <div class="flex justify-between items-center mb-8">
-      <div>
-        <h1 class="text-3xl font-bold text-primary">Your Orders</h1>
-        <p class="text-secondary mt-2">Track and manage your orders</p>
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-bold text-primary">Your Orders</h1>
+      <p class="text-secondary mt-2">Track and manage your orders</p>
+      <% if @for_test %>
+      <div class="mt-4">
+        <%%= link_to "Create New Order", new_order_path, class: "btn-primary" %>
       </div>
-        <% if @for_test %>
-        <div>
-          <%%= link_to "Create New Order", new_order_path, class: "btn-primary" %>
-        </div>
-        <% end %>
-      </div>
+      <% end %>
+    </div>
 
       <div class="space-y-6">
         <%% if @orders.any? %>
@@ -73,15 +71,10 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
             </svg>
             <h3 class="mt-2 text-sm font-medium text-primary">No orders yet</h3>
-            <p class="mt-1 text-sm text-muted">Get started by creating your first order.</p>
             <% if @for_test %>
-            <div class="mt-6">
-              <%%= link_to "Create Your First Order", new_order_path, class: "btn-primary" %>
-            </div>
+            <p class="mt-1 text-sm text-muted">Get started by creating your first order.</p>
             <% else %>
-            <div class="mt-6">
-              <p class="text-sm text-muted">Orders will be created programmatically in your application.</p>
-            </div>
+            <p class="mt-1 text-sm text-muted">Orders will be created programmatically in your application.</p>
             <% end %>
           </div>
         <%% end %>

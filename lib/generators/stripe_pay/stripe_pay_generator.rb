@@ -6,8 +6,30 @@ class StripePayGenerator < Rails::Generators::Base
   class_option :for_test, type: :boolean, default: false,
                desc: "Generate order new/create functionality for testing (includes new order form and controller actions)"
 
+  class_option :auth, type: :boolean, default: false,
+               desc: "Add user association to orders (requires User model)"
+
+  def check_user_model
+    return unless options[:auth]
+
+    unless File.exist?("app/models/user.rb")
+      say "Error: User model not found.", :red
+      say "Please ensure app/models/user.rb exists before using --auth option.", :yellow
+      say "You can generate it with: rails generate authentication", :blue
+      exit(1)
+    end
+  end
+
   def generate_migration
-    generate "migration", "CreateOrders customer_name:string customer_email:string product_name:string amount:decimal currency:string status:string stripe_payment_intent_id:string"
+    if options[:auth]
+      # With auth: only need user reference, get customer info from user
+      fields = "user:references product_name:string amount:decimal currency:string status:string stripe_payment_intent_id:string"
+    else
+      # Without auth: need customer fields
+      fields = "customer_name:string customer_email:string product_name:string amount:decimal currency:string status:string stripe_payment_intent_id:string"
+    end
+
+    generate "migration", "CreateOrders #{fields}"
 
     # Add custom migration content for defaults
     migration_file = Dir.glob("db/migrate/*_create_orders.rb").last
@@ -25,10 +47,41 @@ class StripePayGenerator < Rails::Generators::Base
   end
 
   def generate_model
+    @auth = options[:auth]
     template "order.rb.erb", "app/models/order.rb"
   end
 
+  def add_user_association
+    return unless options[:auth]
+
+    user_model_path = "app/models/user.rb"
+    return unless File.exist?(user_model_path)
+
+    user_content = File.read(user_model_path)
+
+    # Check if has_many :orders already exists
+    if user_content.include?("has_many :orders")
+      say "User model already has has_many :orders, skipping...", :yellow
+      return
+    end
+
+    # Insert has_many :orders after has_many :sessions
+    if user_content.match(/has_many :sessions.*\n/)
+      updated_content = user_content.sub(
+        /(has_many :sessions.*\n)/,
+        "\\1  has_many :orders\n"
+      )
+      File.write(user_model_path, updated_content)
+      say "Added has_many :orders to User model (after has_many :sessions)", :green
+    else
+      say "Warning: Could not find 'has_many :sessions' in User model", :yellow
+      say "Please manually add 'has_many :orders' to your User model", :yellow
+    end
+  end
+
   def generate_controller
+    @auth = options[:auth]
+    @for_test = options[:for_test]
     template "orders_controller.rb.erb", "app/controllers/orders_controller.rb"
   end
 
@@ -37,6 +90,7 @@ class StripePayGenerator < Rails::Generators::Base
   end
 
   def generate_views
+    @auth = options[:auth]
     @for_test = options[:for_test]
     template "views/index.html.erb", "app/views/orders/index.html.erb"
     if options[:for_test]
@@ -78,15 +132,19 @@ class StripePayGenerator < Rails::Generators::Base
   end
 
   def generate_admin_controller
+    @auth = options[:auth]
     template "admin_orders_controller.rb.erb", "app/controllers/admin/orders_controller.rb"
   end
 
   def generate_admin_views
+    @auth = options[:auth]
     template "admin_views/index.html.erb", "app/views/admin/orders/index.html.erb"
     template "admin_views/show.html.erb", "app/views/admin/orders/show.html.erb"
   end
 
   def generate_tests
+    @auth = options[:auth]
+    @for_test = options[:for_test]
     template "orders_spec.rb.erb", "spec/requests/orders_spec.rb"
     template "factory.rb.erb", "spec/factories/orders.rb"
   end
@@ -197,6 +255,9 @@ class StripePayGenerator < Rails::Generators::Base
   def display_next_steps
     say "\n" + "="*60, :green
     say "Stripe Payment Generator completed successfully!", :green
+    if options[:auth]
+      say "(with user authentication)", :green
+    end
     say "="*60, :green
     say "\nNext steps:", :yellow
     say "1. Run bundle install to install the Stripe gem:", :cyan

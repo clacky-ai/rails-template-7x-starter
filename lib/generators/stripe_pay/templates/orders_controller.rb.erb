@@ -1,22 +1,37 @@
 class OrdersController < ApplicationController
   before_action :set_order, only: [:show, :pay, :success, :failure]
   skip_before_action :verify_authenticity_token, only: [:webhook], raise: false
+<% if @auth -%>
+  before_action :authenticate_user!
+<% end -%>
 
   def index
+<% if @auth -%>
+    @orders = current_user.orders.order(created_at: :desc).page(params[:page])
+<% else -%>
     # TODO: Replace this with proper business logic to avoid security issues
     # Consider implementing user authentication and authorization to ensure users
     # can only view their own orders, not all orders in the system.
     # Example: @orders = current_user.orders.order(created_at: :desc).page(params[:page])
     @orders = Order.order(created_at: :desc).page(params[:page])
+<% end -%>
   end
 
 <% if options[:for_test] -%>
   def new
+<% if @auth -%>
+    @order = current_user.orders.new
+<% else -%>
     @order = Order.new
+<% end -%>
   end
 
   def create
+<% if @auth -%>
+    @order = current_user.orders.new(order_params)
+<% else -%>
     @order = Order.new(order_params)
+<% end -%>
 
     if @order.save
       # Redirect to order show page instead of directly to payment
@@ -84,12 +99,20 @@ class OrdersController < ApplicationController
   private
 
   def set_order
+<% if @auth -%>
+    @order = current_user.orders.find(params[:id])
+<% else -%>
     @order = Order.find(params[:id])
+<% end -%>
   end
 
 <% if options[:for_test] -%>
   def order_params
+<% if @auth -%>
+    params.require(:order).permit(:product_name, :amount, :currency)
+<% else -%>
     params.require(:order).permit(:customer_name, :customer_email, :product_name, :amount, :currency)
+<% end -%>
   end
 
 <% end -%>

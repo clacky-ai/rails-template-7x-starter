@@ -1,6 +1,11 @@
 class Order < ApplicationRecord
+<% if @auth -%>
+  belongs_to :user
+
+<% else -%>
   validates :customer_name, presence: true, length: { minimum: 2, maximum: 100 }
   validates :customer_email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
+<% end -%>
   validates :product_name, presence: true, length: { minimum: 2, maximum: 200 }
   validates :amount, presence: true, numericality: { greater_than: 0 }
   validates :currency, presence: true
@@ -55,6 +60,17 @@ class Order < ApplicationRecord
   def mark_as_canceled!
     update!(status: 'canceled')
   end
+
+  # Customer information helpers
+<% if @auth -%>
+  def customer_name
+    user&.name || user&.email&.split('@')&.first || 'Unknown'
+  end
+
+  def customer_email
+    user&.email
+  end
+<% end -%>
 
   # Amount helpers
   def amount_in_cents

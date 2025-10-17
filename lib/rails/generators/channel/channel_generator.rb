@@ -12,6 +12,17 @@ module Rails
 
       check_class_collision suffix: "Channel"
 
+      def check_user_model
+        return unless options[:auth]
+
+        unless File.exist?("app/models/user.rb")
+          say "Error: User model not found.", :red
+          say "Please ensure app/models/user.rb exists before using --auth option.", :yellow
+          say "You can generate it with: rails generate authentication", :blue
+          exit(1)
+        end
+      end
+
       def create_base_channel_controller
         base_controller_path = "app/javascript/controllers/base_channel_controller.ts"
 

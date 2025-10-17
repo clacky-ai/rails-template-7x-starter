@@ -1,7 +1,11 @@
 FactoryBot.define do
   factory :order do
+<% if @auth -%>
+    association :user
+<% else -%>
     customer_name { "John Doe" }
     customer_email { "john@example.com" }
+<% end -%>
     product_name { "Test Product" }
     amount { 19.99 }
     currency { "usd" }

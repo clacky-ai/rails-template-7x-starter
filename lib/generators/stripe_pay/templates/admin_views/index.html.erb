@@ -87,6 +87,9 @@
             <thead class="table-header">
               <tr>
                 <th class="table-header-cell">Order</th>
+<% if @auth -%>
+                <th class="table-header-cell">User</th>
+<% end -%>
                 <th class="table-header-cell">Customer</th>
                 <th class="table-header-cell">Product</th>
                 <th class="table-header-cell">Amount</th>
@@ -104,6 +107,16 @@
                       <div class="text-sm text-muted">Has Payment Intent</div>
                     <%% end %>
                   </td>
+<% if @auth -%>
+                  <td class="table-cell">
+                    <%% if order.user %>
+                      <div class="text-sm font-medium text-primary"><%%= order.user.email %></div>
+                      <div class="text-sm text-muted">#<%%= order.user.id %></div>
+                    <%% else %>
+                      <div class="text-sm text-muted">No user</div>
+                    <%% end %>
+                  </td>
+<% end -%>
                   <td class="table-cell">
                     <div class="text-sm font-medium text-primary"><%%= order.customer_name %></div>
                     <div class="text-sm text-secondary"><%%= order.customer_email %></div>

@@ -6,6 +6,7 @@
     <%%= form_with model: @order, local: true, class: "space-y-6" do |form| %>
       <%%= render 'shared/form_error_message', model: @order %>
 
+<% unless @auth -%>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <%%= form.label :customer_name, class: "form-label" %>
@@ -24,6 +25,7 @@
         </div>
       </div>
 
+<% end -%>
       <div>
         <%%= form.label :product_name, class: "form-label" %>
         <%%= form.text_field :product_name,

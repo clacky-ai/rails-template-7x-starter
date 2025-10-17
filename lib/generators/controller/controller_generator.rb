@@ -6,6 +6,17 @@ class ControllerGenerator < Rails::Generators::NamedBase
   class_option :auth, type: :boolean, default: false, desc: "Generate controller with authentication required"
   class_option :single, type: :boolean, default: false, desc: "Generate singular resource (resource instead of resources)"
 
+  def check_user_model
+    return unless options[:auth]
+
+    unless File.exist?("app/models/user.rb")
+      say "Error: User model not found.", :red
+      say "Please ensure app/models/user.rb exists before using --auth option.", :yellow
+      say "You can generate it with: rails generate authentication", :blue
+      exit(1)
+    end
+  end
+
   def check_name_validity
     # Check for reserved words first (before processing)
     if %w[controller controllers].include?(name.downcase)

@@ -12,10 +12,15 @@ module HomeDemoConcern
   private
 
   def check_demo_mode
-    return unless should_render_demo?
-    @full_render = true
-    flash.now[:tips] = 'This is a quick preview version. The actual functionality is under development. Please refresh and try again later'
-    render 'shared/demo'
+    if should_render_demo?
+      @full_render = true
+      flash.now[:tips] = 'This is a quick preview version. The actual functionality is under development. Please refresh and try again later'
+      render 'shared/demo'
+    else
+      if !File.exist?(index_template_path)
+        raise ActionController::MissingExactTemplate.new('no template', 'app/views/home/index.html.erb', [])
+      end
+    end
   end
 
   def should_render_demo?

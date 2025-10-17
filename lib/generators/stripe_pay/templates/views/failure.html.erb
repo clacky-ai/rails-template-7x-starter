@@ -50,7 +50,10 @@
           <% if @for_test %>
           <%%= link_to "Try Payment Again", new_order_path, class: "btn-primary w-full btn-lg" %>
           <% else %>
-          <%%= link_to "Try Payment Again", pay_order_path(@order), class: "btn-primary w-full btn-lg", method: :get %>
+          <%%= link_to "Retry Payment", pay_order_path(@order),
+                  class: "btn-primary w-full btn-lg",
+                  method: :post,
+                  data: { turbo: false, disable_with: 'Retrying Payment...' } %>
           <% end %>
           <%%= link_to "View Order Details", @order, class: "btn-ghost w-full" %>
         <%% else %>
