@@ -5,7 +5,8 @@ COPY --chown=ruby:ruby Gemfile* ./
 ENV RAILS_ENV="production" \
     BUNDLE_DEPLOYMENT="1" \
     BUNDLE_PATH="/usr/local/bundle" \
-    BUNDLE_WITHOUT="development"
+    BUNDLE_WITHOUT="development" \
+    SKIP_ENV_CHECK="1"
 RUN bundle install
 
 COPY --chown=ruby:ruby package.json package-lock.json ./

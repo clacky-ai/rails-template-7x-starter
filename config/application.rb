@@ -12,7 +12,7 @@ module Myapp
   class Application < Rails::Application
 
     # check environment variables in production
-    EnvChecker.check_required_env_vars if Rails.env.production?
+    EnvChecker.check_required_env_vars if Rails.env.production? and ENV['SKIP_ENV_CHECK'].present?
 
     config.generators do |g|
       g.test_framework :rspec,

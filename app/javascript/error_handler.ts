@@ -1317,6 +1317,7 @@ Technical Details:`;
       report = `${report.substring(0, maxTotalLength - 50)  }...\n\n`;
     }
 
+    report = `\`\`\`\n${report}\n\`\`\``;
     report += 'Please help me analyze and fix these issues.';
     return report;
   }
@@ -1336,6 +1337,7 @@ ${error.message}`;
       report += `\n\n${  typeSpecificDetails.join('\n')}`;
     }
 
+    report = `\`\`\`\n${report}\n\`\`\``;
     report += `\n\nPlease help me analyze and fix this issue.`;
     return report;
   }
