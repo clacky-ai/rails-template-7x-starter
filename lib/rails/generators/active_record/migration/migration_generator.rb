@@ -98,27 +98,31 @@ module ActiveRecord
 
       def migration_attributes
         parsed_attributes.map do |attr|
-          next if attr[:reference]
+          if attr[:reference]
+            # Handle reference types with add_reference
+            original_attr = attributes.find { |a| a.name == attr[:name] }
+            "    add_reference :#{table_name}, :#{attr[:name]}#{original_attr.inject_options}#{foreign_key_type}"
+          else
+            line = "    add_column :#{table_name}, :#{attr[:name]}, :#{attr[:type]}"
 
-          line = "    add_column :#{table_name}, :#{attr[:name]}, :#{attr[:type]}"
+            opts = []
+            opts << "null: false" unless attr[:null]
 
-          opts = []
-          opts << "null: false" unless attr[:null]
+            if attr[:default]
+              # Handle datetime/time types with "now" default
+              default_value = if attr[:type].to_s.in?(['datetime', 'time', 'timestamp']) && attr[:default] == 'now'
+                               "-> { 'CURRENT_TIMESTAMP' }"
+                             elsif attr[:type].to_s.in?(['string', 'text'])
+                               "\"#{attr[:default]}\""
+                             else
+                               attr[:default]
+                             end
+              opts << "default: #{default_value}"
+            end
 
-          if attr[:default]
-            # Handle datetime/time types with "now" default
-            default_value = if attr[:type].to_s.in?(['datetime', 'time', 'timestamp']) && attr[:default] == 'now'
-                             "-> { 'CURRENT_TIMESTAMP' }"
-                           elsif attr[:type].to_s.in?(['string', 'text'])
-                             "\"#{attr[:default]}\""
-                           else
-                             attr[:default]
-                           end
-            opts << "default: #{default_value}"
+            line += ", #{opts.join(', ')}" if opts.any?
+            line
           end
-
-          line += ", #{opts.join(', ')}" if opts.any?
-          line
         end.compact.join("\n")
       end
 
