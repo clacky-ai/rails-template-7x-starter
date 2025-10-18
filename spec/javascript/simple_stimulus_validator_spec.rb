@@ -534,7 +534,6 @@ class ErbAstParser
     actions
   end
 
-
   def calculate_line_number(position)
     @content[0...position].count("\n") + 1
   end
@@ -713,6 +712,72 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
     node.children.each do |child|
       find_exempt_methods(child, content, exempt_ranges) if child.is_a?(Parser::AST::Node)
     end
+  end
+
+  def find_actioncable_broadcasts_in_ast(node)
+    return [] unless node
+
+    broadcasts = []
+
+    if node.type == :send && is_actioncable_broadcast?(node)
+      broadcasts << {
+        type: extract_broadcast_type_from_node(node),
+        stream_name: extract_broadcast_stream_name(node),
+        line: node.loc.line
+      }
+    end
+
+    if node.respond_to?(:children)
+      node.children.each do |child|
+        broadcasts.concat(find_actioncable_broadcasts_in_ast(child)) if child.is_a?(Parser::AST::Node)
+      end
+    end
+
+    broadcasts
+  end
+
+  def is_actioncable_broadcast?(node)
+    return false unless node.type == :send && node.children[1] == :broadcast
+    receiver = node.children[0]
+    return false unless receiver && receiver.type == :send && receiver.children[1] == :server
+    receiver_receiver = receiver.children[0]
+    receiver_receiver && receiver_receiver.type == :const && receiver_receiver.children[1] == :ActionCable
+  end
+
+  def extract_broadcast_stream_name(broadcast_node)
+    first_arg = broadcast_node.children[2]
+    return nil unless first_arg
+
+    case first_arg.type
+    when :str
+      first_arg.children[0]
+    when :dstr
+      first_arg.children.each { |part| return part if part.is_a?(String) && !part.empty? }
+      nil
+    else
+      nil
+    end
+  end
+
+  def extract_broadcast_type_from_node(broadcast_node)
+    broadcast_node.children[2..-1].each do |arg|
+      next unless arg.is_a?(Parser::AST::Node) && arg.type == :hash
+      arg.children.each do |pair|
+        next unless pair.type == :pair
+        key, value = pair.children[0], pair.children[1]
+        is_type_key = (key.type == :sym && key.children[0] == :type) || (key.type == :str && key.children[0] == 'type')
+        return value.children[0] if is_type_key && value.type == :str
+      end
+    end
+    nil
+  end
+
+  def infer_channel_name_from_stream(stream_name)
+    stream_name&.sub(/_\d+$/, '')
+  end
+
+  def capitalize_type(type_string)
+    type_string.split(/[-_]/).map(&:capitalize).join('')
   end
 
   def parse_erb_actions(content, relative_path)
@@ -1581,6 +1646,155 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
     end
   end
 
+  describe 'ActionCable Broadcast Type Validation' do
+    it 'validates that broadcast types match frontend handlers' do
+      broadcast_errors = []
+
+      # Check channel files and job files
+      source_files = Dir.glob(Rails.root.join('app/channels/**/*_channel.rb')) +
+                     Dir.glob(Rails.root.join('app/jobs/**/*.rb'))
+
+      source_files.each do |source_file|
+        content = File.read(source_file)
+        relative_path = source_file.sub(Rails.root.to_s + '/', '')
+
+        # Skip ApplicationCable::Channel
+        next if relative_path.include?('application_cable/channel.rb')
+
+        # Parse file with AST
+        begin
+          ast = Parser::CurrentRuby.parse(content)
+        rescue Parser::SyntaxError
+          next # Skip files with syntax errors
+        end
+
+        # Find all ActionCable.server.broadcast calls using AST
+        broadcasts = find_actioncable_broadcasts_in_ast(ast)
+
+        broadcasts.each do |broadcast|
+          type_value = broadcast[:type]
+          stream_name = broadcast[:stream_name]
+          line_number = broadcast[:line]
+
+          # Infer channel name from stream name
+          next unless stream_name
+
+          channel_name = infer_channel_name_from_stream(stream_name)
+          next unless channel_name
+
+          controller_name = channel_name.dasherize
+          frontend_controller_file = Rails.root.join("app/javascript/controllers/#{channel_name}_controller.ts")
+
+          # Check if frontend controller exists
+          unless File.exist?(frontend_controller_file)
+            broadcast_errors << {
+              source_file: relative_path,
+              line: line_number,
+              stream_name: stream_name,
+              channel_name: channel_name,
+              type: type_value,
+              expected_method: type_value ? "handle#{capitalize_type(type_value)}" : nil,
+              frontend_file: "app/javascript/controllers/#{channel_name}_controller.ts",
+              error_type: 'missing_frontend_file',
+              suggestion: "Create frontend controller (refer to existing *_controller.ts files for examples)"
+            }
+            next
+          end
+
+          if type_value.nil?
+            # No type field found
+            broadcast_errors << {
+              source_file: relative_path,
+              line: line_number,
+              stream_name: stream_name,
+              channel_name: channel_name,
+              type: nil,
+              expected_method: nil,
+              frontend_file: "app/javascript/controllers/#{channel_name}_controller.ts",
+              error_type: 'missing_type',
+              suggestion: "Add 'type' field to broadcast hash: { type: 'your-type', ... }"
+            }
+          else
+            # Convert type to method name (e.g., 'new-message' -> 'handleNewMessage')
+            method_name = "handle#{capitalize_type(type_value)}"
+
+            # Check if frontend controller has this method
+            frontend_methods = controller_data[controller_name]&.fetch(:methods, []) || []
+
+            # Frontend methods are stored in camelCase without 'handle' prefix
+            expected_frontend_method = method_name.sub(/^handle/, '').sub(/^./) { |m| m.downcase }
+
+            unless frontend_methods.include?(expected_frontend_method)
+              broadcast_errors << {
+                source_file: relative_path,
+                line: line_number,
+                stream_name: stream_name,
+                channel_name: channel_name,
+                type: type_value,
+                expected_method: method_name,
+                frontend_file: "app/javascript/controllers/#{channel_name}_controller.ts",
+                error_type: 'missing_handler',
+                suggestion: "Add method to frontend controller: protected #{method_name}(data: any): void { ... }"
+              }
+            end
+          end
+        end
+      end
+
+      if broadcast_errors.any?
+        puts "\n⚠️  ActionCable Broadcast Type Errors (#{broadcast_errors.length}):"
+
+        missing_frontend_errors = broadcast_errors.select { |e| e[:error_type] == 'missing_frontend_file' }
+        missing_type_errors = broadcast_errors.select { |e| e[:error_type] == 'missing_type' }
+        missing_handler_errors = broadcast_errors.select { |e| e[:error_type] == 'missing_handler' }
+
+        if missing_frontend_errors.any?
+          puts "\n   📁 Missing frontend controller (#{missing_frontend_errors.length}):"
+          missing_frontend_errors.each do |error|
+            puts "     • #{error[:source_file]}:#{error[:line]}"
+            puts "       Stream: '#{error[:stream_name]}' → expects #{error[:frontend_file]}"
+            puts "       💡 #{error[:suggestion]}"
+          end
+        end
+
+        if missing_type_errors.any?
+          puts "\n   📨 Missing 'type' field (#{missing_type_errors.length}):"
+          missing_type_errors.each do |error|
+            puts "     • #{error[:source_file]}:#{error[:line]}"
+            puts "       Stream: '#{error[:stream_name]}'"
+            puts "       💡 #{error[:suggestion]}"
+          end
+        end
+
+        if missing_handler_errors.any?
+          puts "\n   🔌 Missing frontend handlers (#{missing_handler_errors.length}):"
+          missing_handler_errors.each do |error|
+            puts "     • #{error[:source_file]}:#{error[:line]}"
+            puts "       Stream: '#{error[:stream_name]}', type: '#{error[:type]}' → expects #{error[:expected_method]}()"
+            puts "       Frontend: #{error[:frontend_file]}"
+            puts "       💡 #{error[:suggestion]}"
+          end
+        end
+
+        error_details = broadcast_errors.map do |e|
+          case e[:error_type]
+          when 'missing_frontend_file'
+            "#{e[:source_file]}:#{e[:line]} - stream '#{e[:stream_name]}' needs #{e[:frontend_file]}"
+          when 'missing_type'
+            "#{e[:source_file]}:#{e[:line]} - stream '#{e[:stream_name]}' broadcast missing 'type' field"
+          when 'missing_handler'
+            "#{e[:source_file]}:#{e[:line]} - stream '#{e[:stream_name]}' type '#{e[:type]}' needs #{e[:expected_method]}() in #{e[:frontend_file]}"
+          end
+        end
+
+        expect(broadcast_errors).to be_empty,
+          "ActionCable broadcast validation failed:\n#{error_details.join("\n")}"
+      else
+        puts "\n✅ ActionCable broadcasts validated: All types have matching handlers!"
+      end
+    end
+  end
+
   describe 'Turbo Stream Architecture Enforcement' do
     it 'validates frontend-backend interactions use Turbo Streams exclusively' do
       violations = []
@@ -1670,7 +1884,19 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
               code: line.strip,
               type: 'fetch()',
               issue: 'Using fetch() breaks Turbo Stream architecture and requires manual response handling',
-              suggestion: 'Use form submission (form.requestSubmit()) to let Turbo handle the interaction'
+              suggestion: 'Use standard form submission to let Turbo handle the interaction'
+            }
+          end
+
+          # Detect requestSubmit() calls (forbidden)
+          if line.match?(/\.requestSubmit\s*\(/)
+            violations << {
+              file: relative_path,
+              line: line_number,
+              code: line.strip,
+              type: 'requestSubmit()',
+              issue: 'Manual form submission bypasses Turbo automatic handling',
+              suggestion: 'FORMS: Use Turbo + Turbo Streams (no manual code needed) - let forms submit naturally with data-turbo attributes'
             }
           end
         end
@@ -1693,6 +1919,7 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
         puts "   ℹ️  Why this matters:"
         puts "      • head :ok only returns status code, frontend cannot determine what to update"
         puts "      • JSON responses require manual DOM updates, easy to miss related elements (e.g. counters)"
+        puts "      • Manual form submission (requestSubmit) bypasses Turbo's automatic handling"
         puts "      • Turbo Stream lets backend control UI updates, ensuring interaction completeness"
         puts "      • API endpoints (app/controllers/api/) are exempt from this requirement\n"
 

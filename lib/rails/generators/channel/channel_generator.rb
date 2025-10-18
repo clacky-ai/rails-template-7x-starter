@@ -129,6 +129,7 @@ module Rails
           else
             say "🔓 Authentication: Disabled (use --auth to enable)", :yellow
           end
+          say "\n⚠️  Follow Turbo Stream architecture: No JSON, No fetch(), No manual form submission", :yellow
           say "\n"
         end
       end

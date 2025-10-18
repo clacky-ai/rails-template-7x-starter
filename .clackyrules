@@ -10,7 +10,6 @@ Figaro
 PostgreSQL
 Active_Storage for upload file
 Kaminari
-FriendlyId (for SEO-friendly URLs)
 Puma
 RSpec
 Stimulus
@@ -129,6 +128,13 @@ Use `rails generate pwa` to generate Progressive Web App setup with manifest, se
 
 Use `rails generate stimulus_controller xxx` to create new Stimulus controller. Forms are handled automatically by Turbo Drive.
 
+**⚠️ CRITICAL: When writing Stimulus controllers:**
+- ❌ NEVER manually submit forms in JavaScript (no `fetch()`, `requestSubmit()`, or `submit()`)
+- ❌ Backend NEVER return `head :ok` or `render json:` - JSON responses are forbidden
+- ✅ Let Turbo handle form submissions automatically - just use HTML forms with proper actions
+- ✅ Backend MUST return `format.turbo_stream` with explicit Turbo Stream DOM updates
+- ✅ Stimulus is ONLY for UI interactions (toggle, show/hide, validation) - NOT for data submission
+
 **STIMULUS TARGET RULES**: Optional targets must be declared with `declare readonly hasXXXTarget: boolean` to bypass validation. Required targets without this declaration will be validated.
 
 **⚠️ STIMULUS TESTING - CRITICAL COMPLIANCE**:
@@ -143,24 +149,15 @@ Use FriendlyId (already configured) if need slug URLs. For user-facing content u
 
 **MANDATORY**: ALL frontend interactions MUST use Stimulus controllers. NO inline JavaScript allowed.
 
-**CRITICAL**:
-- ❌ NEVER use Rails-UJS syntax (`remote: true`, `method: :delete`, `data-method`, `data-confirm`, `data-disable-with`)
-- ❌ NEVER use `fetch()` in Stimulus controllers - use form submission instead
-- ✅ Use Turbo instead: Turbo Drive, Frames, and Streams are available
-- ✅ Prefer `format.turbo_stream` for server responses
-- ✅ Real-time: Use `broadcast_*_to` in ActionCable
-- ✅ For AJAX-like updates: Use `form.requestSubmit()` to trigger Turbo Stream responses
-
 ALWAYS prefer TailwindCSS v3 and Stimulus controllers for UI behavior. NO pure JavaScript or jQuery allowed.
 
 Every form should include error messages using the shared partial. Add `<%= render 'shared/form_error_message', model: @your_model %>` at the beginning of every form for consistent error display. Never write nested form.
-
 
 ## Testing Requirements
 
 **MANDATORY**: Keep `rake test` all passed Before delivery feature to users.
 
-`rake test` is configured to only show 3 failed test cases at a time, so you should repeatedly run rake test (no less than 3 rounds, no more than 10 rounds) until all tests pass
+`rake test` is configured to only show 3 failed test cases at a time, so you should repeatedly run rake test if these have errors (no more than 10 rounds) until all tests pass
 
 For authenticated curl: `rails dev:token[test@example.com]` outputs the token and example curl command (will create user if not exists). Copy the token and use it:
 ```bash

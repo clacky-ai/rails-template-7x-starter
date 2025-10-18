@@ -79,6 +79,22 @@ export class BaseChannelController extends Controller<HTMLElement> {
   }
 
   /**
+   * Send data to the channel (calls server-side action)
+   */
+  protected perform(action: string, data: Record<string, any> = {}): void {
+    if (!this.subscription) {
+      console.error(`[${this.identifier}] Cannot perform action: not subscribed`)
+      return
+    }
+
+    if (!this.isConnected) {
+      console.warn(`[${this.identifier}] Performing action while disconnected`)
+    }
+
+    this.subscription.perform(action, data)
+  }
+
+  /**
    * Internal: Handle connection - restores button states
    */
   private handleChannelConnected(): void {
@@ -100,9 +116,7 @@ export class BaseChannelController extends Controller<HTMLElement> {
    * Internal: Handle received data - restores button states and auto-routes by type
    *
    * AUTO-ROUTING: Messages are automatically routed to handler methods
-   * - type: 'chunk' → calls handleChunk(data)
-   * - type: 'complete' → calls handleComplete(data)
-   * - type: 'error' → calls handleError(data)
+   * - type: 'new-message' → calls handleNewMessage(data)
    * - type: 'status-update' → calls handleStatusUpdate(data)
    *
    * CRITICAL: All messages MUST have 'type' field as object

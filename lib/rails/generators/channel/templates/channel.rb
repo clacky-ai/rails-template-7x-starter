@@ -3,33 +3,41 @@ class <%= channel_name %> < ApplicationCable::Channel
     # Stream from a channel based on some identifier
     # Example: stream_from "some_channel"
     stream_from "<%= stream_name %>"
+  rescue StandardError => e
+    handle_channel_error(e)
+    reject
   end
 
   def unsubscribed
     # Any cleanup needed when channel is unsubscribed
+  rescue StandardError => e
+    handle_channel_error(e)
   end
 
   # 📨 CRITICAL: ALL broadcasts MUST have 'type' field (auto-routes to handleType method)
   #
-  # EXAMPLE: Handle send_message action from client
+  # EXAMPLE: Send new message
   # def send_message(data)
-  #   # Broadcast with type: 'chunk' → client calls handleChunk(data)
+  #   message = Message.create!(content: data['content'])
+  #
   #   ActionCable.server.broadcast(
   #     "<%= stream_name %>",
   #     {
-  #       type: 'chunk',  # REQUIRED: routes to handleChunk() method
-  #       content: data['content'],
-  #       timestamp: Time.current
+  #       type: 'new-message',  # REQUIRED: routes to handleNewMessage() in frontend
+  #       id: message.id,
+  #       content: message.content,
+  #       user_name: message.user.name,
+  #       created_at: message.created_at
   #     }
   #   )
   # end
 
-  # EXAMPLE: type with kebab-case auto-converts: 'status-update' → handleStatusUpdate()
+  # EXAMPLE: Send status update
   # def update_status(data)
   #   ActionCable.server.broadcast(
   #     "<%= stream_name %>",
   #     {
-  #       type: 'status-update',  # Routes to handleStatusUpdate()
+  #       type: 'status-update',  # Routes to handleStatusUpdate() in frontend
   #       status: data['status']
   #     }
   #   )
