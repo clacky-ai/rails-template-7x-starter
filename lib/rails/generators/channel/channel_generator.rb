@@ -116,6 +116,28 @@ module Rails
           say "ℹ️  Note: base_channel_controller.ts was not removed (may be used by other channels)", :yellow
           say "\n"
         else
+          # Display generated channel file content
+          channel_file = File.join("app/channels", class_path, "#{file_name}_channel.rb")
+          say "\n"
+          say "📄 Generated channel (#{channel_file}):", :green
+          say "━" * 60, :green
+          File.readlines(channel_file).each_with_index do |line, index|
+            say "#{(index + 1).to_s.rjust(4)} │ #{line.chomp}"
+          end
+          say "━" * 60, :green
+          say "✅ This is the latest content - no need to read the file again", :cyan
+
+          # Display generated controller file content
+          controller_file = File.join("app/javascript/controllers", class_path, "#{file_name}_controller.ts")
+          say "\n"
+          say "📄 Generated controller (#{controller_file}):", :green
+          say "━" * 60, :green
+          File.readlines(controller_file).each_with_index do |line, index|
+            say "#{(index + 1).to_s.rjust(4)} │ #{line.chomp}"
+          end
+          say "━" * 60, :green
+          say "✅ This is the latest content - no need to read the file again", :cyan
+
           say "\n"
           say "✅ Generated #{file_name.camelize}Channel (WebSocket + UI controller)", :green
           say "\n"

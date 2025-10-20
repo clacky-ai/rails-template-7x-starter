@@ -125,32 +125,45 @@ class ControllerGenerator < Rails::Generators::NamedBase
   end
 
   def show_completion_message
-    say "\n"
-    say "Controller, tests and view directory generated successfully!", :green
-    say "📁 View directory created: app/views/#{plural_name}/", :green
-    say "📄 Please create and edit view files manually as needed:", :yellow
-    say "\n"
-
-    selected_actions.each do |action|
-      case action
-      when 'index'
-        say "  app/views/#{plural_name}/index.html.erb", :blue unless options[:single]
-      when 'show'
-        if options[:single]
-          say "  app/views/#{plural_name}/show.html.erb", :blue
-        else
-          say "  app/views/#{plural_name}/show.html.erb", :blue
-        end
-      when 'new'
-        say "  app/views/#{plural_name}/new.html.erb", :blue
-      when 'edit'
-        say "  app/views/#{plural_name}/edit.html.erb", :blue
+    # Display generated controller file content (only when creating)
+    if behavior != :revoke
+      controller_file = "app/controllers/#{plural_name}_controller.rb"
+      say "\n"
+      say "📄 Generated controller (#{controller_file}):", :green
+      say "━" * 60, :green
+      File.readlines(controller_file).each_with_index do |line, index|
+        say "#{(index + 1).to_s.rjust(4)} │ #{line.chomp}"
       end
-    end
+      say "━" * 60, :green
+      say "✅ This is the latest content - no need to read the file again", :cyan
 
-    say "\n"
-    if options[:single]
-      say "Tip: This is a singular resource - routes don't need :id parameter", :cyan
+      say "\n"
+      say "Controller, tests and view directory generated successfully!", :green
+      say "📁 View directory created: app/views/#{plural_name}/", :green
+      say "📄 Please create and edit view files manually as needed:", :yellow
+      say "\n"
+
+      selected_actions.each do |action|
+        case action
+        when 'index'
+          say "  app/views/#{plural_name}/index.html.erb", :blue unless options[:single]
+        when 'show'
+          if options[:single]
+            say "  app/views/#{plural_name}/show.html.erb", :blue
+          else
+            say "  app/views/#{plural_name}/show.html.erb", :blue
+          end
+        when 'new'
+          say "  app/views/#{plural_name}/new.html.erb", :blue
+        when 'edit'
+          say "  app/views/#{plural_name}/edit.html.erb", :blue
+        end
+      end
+
+      say "\n"
+      if options[:single]
+        say "Tip: This is a singular resource - routes don't need :id parameter", :cyan
+      end
     end
   end
 

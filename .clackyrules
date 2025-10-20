@@ -73,11 +73,21 @@ Only after completing Steps 1-3, you can create other models and controllers.
 
 ## Some important tips when Developing user authentication/payment/LLM-calling(AI APP) system
 
-when developing order/payment system, don't write it yourself. Use `rails generate stripe_pay [--auth]` to generate the initial code.
+**⚠️ BEFORE CREATING ANY MODELS - CHECK THESE GENERATORS FIRST:**
 
-**IMPORTANT for stripe_pay:** Before running `rails generate stripe_pay`, ensure NO Order model exists. The generator will create the Order model, migration, user-side order pages and admin crud pages. If Order model already exists, remove it first to avoid conflicts. Use `--auth` option to add user association (requires User model exists).
+When developing features that require User or Order models, **DO NOT create them manually**. Use these generators instead:
 
-Should only need to support Stripe payments by default.
+1. **User Authentication System**: Use `rails generate authention` to generate User model and authentication system
+   - **IMPORTANT**: Before running this generator, ensure NO User model exists
+   - The generator creates: User model, migration, sessions, authentication logic, and user pages
+   - If User model already exists, remove it first to avoid conflicts
+
+2. **Payment/Order System**: Use `rails generate stripe_pay [--auth]` to generate Order model and payment system
+   - **IMPORTANT**: Before running this generator, ensure NO Order model exists
+   - The generator creates: Order model, migration, user-side order pages, admin CRUD pages, and Stripe integration
+   - If Order model already exists, remove it first to avoid conflicts
+   - Use `--auth` option to add user association (requires User model exists)
+   - Should only need to support Stripe payments by default
 
 **LLM Integration:** Use `rails generate llm` to generate LLM service infrastructure. Always prefer streaming via ActionCable - use `LlmStreamJob.perform_later(channel_name:, prompt:, system:)` for real-time streaming responses. Auto-configures LLM_BASE_URL, LLM_API_KEY, LLM_MODEL in application.yml. When storing LLM messages, include `LlmMessageValidationConcern` - don't validate role & content yourself.
 
@@ -103,6 +113,15 @@ Generate images using this placeholder website: https://images.unsplash.com/ and
 Use Unsplash images instead of self-generated icons if you need placeholder images with ActiveStorage.
 
 When installing any new gem or npm packages, always specify a version you are most familiar with and suitable for the project. Do not use the latest version directly.
+
+**⚠️ CRITICAL: Before Creating ANY Models - Generator Priority Check:**
+
+Before using `rails generate models` or `rails generate model`, **ALWAYS check if the feature requires these models first:**
+
+1. **Need User model?** → Use `rails generate authention` (NOT `rails g model user`)
+2. **Need Order model?** → Use `rails generate stripe_pay` (NOT `rails g model order`)
+3. **Need LLM integration?** → Use `rails generate llm` first
+4. **Other models** → Then use `rails generate models` or `rails generate model`
 
 **ALWAYS prefer `rails generate models` for batch model generation:**
 - Syntax: `rails g models product name:string:default=Untitled price:decimal:default=0 + category name:string + tag name:string color:string:default=#000000`

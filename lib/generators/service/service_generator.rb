@@ -12,6 +12,21 @@ class ServiceGenerator < Rails::Generators::NamedBase
     template 'service_spec.rb.erb', "spec/services/#{file_name}_spec.rb"
   end
 
+  def show_completion_message
+    # Display generated service file content (only when creating)
+    if behavior != :revoke
+      service_file = "app/services/#{file_name}.rb"
+      say "\n"
+      say "📄 Generated service (#{service_file}):", :green
+      say "━" * 60, :green
+      File.readlines(service_file).each_with_index do |line, index|
+        say "#{(index + 1).to_s.rjust(4)} │ #{line.chomp}"
+      end
+      say "━" * 60, :green
+      say "✅ This is the latest content - no need to read the file again", :cyan
+    end
+  end
+
   private
 
   def file_name

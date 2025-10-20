@@ -22,6 +22,22 @@ module ActiveRecord
         migration_template @migration_template, File.join(db_migrate_path, "#{file_name}.rb")
       end
 
+      def show_migration_content
+        # Find the most recent migration file matching our file_name
+        migration_files = Dir.glob(File.join(db_migrate_path, "*_#{file_name}.rb")).sort
+        if migration_files.any?
+          latest_migration = migration_files.last
+          say "\n"
+          say "📄 Generated migration (#{File.basename(latest_migration)}):", :green
+          say "━" * 60, :green
+          File.readlines(latest_migration).each_with_index do |line, index|
+            say "#{(index + 1).to_s.rjust(4)} │ #{line.chomp}"
+          end
+          say "━" * 60, :green
+          say "✅ This is the latest content - no need to read the file again", :cyan
+        end
+      end
+
       private
 
       attr_reader :migration_action, :join_tables

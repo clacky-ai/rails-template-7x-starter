@@ -79,6 +79,17 @@ module ActiveRecord
 
       def show_completion_message
         if behavior != :revoke
+          # Display generated model file content
+          model_file = "app/models/#{singular_name}.rb"
+          say "\n"
+          say "📄 Generated model (#{model_file}):", :green
+          say "━" * 60, :green
+          File.readlines(model_file).each_with_index do |line, index|
+            say "#{(index + 1).to_s.rjust(4)} │ #{line.chomp}"
+          end
+          say "━" * 60, :green
+          say "✅ This is the latest content - no need to read the file again", :cyan
+
           say "\n"
           say "Next steps:", :yellow
           say "1. Run: rails db:migrate", :blue unless options[:skip_migration]

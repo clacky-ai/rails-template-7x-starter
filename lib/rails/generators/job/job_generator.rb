@@ -17,6 +17,21 @@ module Rails
         template 'job_spec.rb.erb', File.join("spec/jobs", class_path, "#{job_file_name}_spec.rb")
       end
 
+      def show_completion_message
+        # Display generated job file content (only when creating)
+        if behavior != :revoke
+          job_file = File.join("app/jobs", class_path, "#{job_file_name}.rb")
+          say "\n"
+          say "📄 Generated job (#{job_file}):", :green
+          say "━" * 60, :green
+          File.readlines(job_file).each_with_index do |line, index|
+            say "#{(index + 1).to_s.rjust(4)} │ #{line.chomp}"
+          end
+          say "━" * 60, :green
+          say "✅ This is the latest content - no need to read the file again", :cyan
+        end
+      end
+
       private
 
       def job_file_name

@@ -22,6 +22,19 @@ class StimulusControllerGenerator < Rails::Generators::NamedBase
 
     insert_into_index_ts(controller_name, class_name)
 
+    # Display generated controller file content
+    if File.exist?(controller_path)
+      say "\n"
+      say "📄 Generated controller (#{controller_path}):", :green
+      say "━" * 60, :green
+      File.readlines(controller_path).each_with_index do |line, index|
+        say "#{(index + 1).to_s.rjust(4)} │ #{line.chomp}"
+      end
+      say "━" * 60, :green
+      say "✅ This is the latest content - no need to read the file again", :cyan
+    end
+
+    say "\n"
     say "✅ Stimulus controller '#{controller_name}' created successfully!", :green
     say "📁 Controller file: #{controller_path}", :blue
     say "📄 Added to: app/javascript/controllers/index.ts", :blue

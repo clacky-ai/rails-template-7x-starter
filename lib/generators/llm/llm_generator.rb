@@ -39,6 +39,32 @@ class LlmGenerator < Rails::Generators::Base
 
 
   def show_usage_instructions
+    # Display generated files content
+    unless options[:skip_service]
+      service_file = 'app/services/llm_service.rb'
+      say "\n"
+      say "📄 Generated service (#{service_file}):", :green
+      say "━" * 60, :green
+      File.readlines(service_file).each_with_index do |line, index|
+        say "#{(index + 1).to_s.rjust(4)} │ #{line.chomp}"
+      end
+      say "━" * 60, :green
+      say "✅ This is the latest content - no need to read the file again", :cyan
+    end
+
+    unless options[:skip_job]
+      job_file = 'app/jobs/llm_stream_job.rb'
+      say "\n"
+      say "📄 Generated job (#{job_file}):", :green
+      say "━" * 60, :green
+      File.readlines(job_file).each_with_index do |line, index|
+        say "#{(index + 1).to_s.rjust(4)} │ #{line.chomp}"
+      end
+      say "━" * 60, :green
+      say "✅ This is the latest content - no need to read the file again", :cyan
+    end
+
+    say "\n"
     say "LLM Generator completed successfully!", :green
 
     say "\n📝 Configuration:"
