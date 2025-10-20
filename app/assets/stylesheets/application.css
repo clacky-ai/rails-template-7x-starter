@@ -771,30 +771,30 @@
 
   /*
    * CONTAINER SYSTEM
-   * 
+   *
    * Responsive container classes with consistent max-width and padding.
    * Feel free to modify as needed, but please don't remove.
-   * 
+   *
    * .container-xl  - Recommended for navbar, headers, list pages
-   * .container-lg  - Detail pages, dashboard, content display  
+   * .container-lg  - Detail pages, dashboard, content display
    * .container-md  - Form pages, create/edit pages
    * .container-sm  - Login, registration, small forms
    */
 
   .container-sm {
-    @apply max-w-2xl mx-auto px-4 sm:px-6;
+    @apply w-full max-w-2xl mx-auto px-4 sm:px-6;
   }
 
   .container-md {
-    @apply max-w-4xl mx-auto px-4 sm:px-6;
+    @apply w-full max-w-4xl mx-auto px-4 sm:px-6;
   }
 
   .container-lg {
-    @apply max-w-6xl mx-auto px-4 sm:px-6;
+    @apply w-full max-w-6xl mx-auto px-4 sm:px-6;
   }
 
   .container-xl {
-    @apply max-w-7xl mx-auto px-4 sm:px-6;
+    @apply w-full max-w-7xl mx-auto px-4 sm:px-6;
   }
 
   /* write your own components here */
