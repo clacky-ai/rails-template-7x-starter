@@ -5,6 +5,11 @@ class ApplicationJob < ActiveJob::Base
   # Most jobs are safe to ignore if the underlying records are no longer available
   # discard_on ActiveJob::DeserializationError
 
+  # ⚠️  CRITICAL: DO NOT use `rescue` in subclass Jobs!
+  # All exceptions are automatically caught here and reported to the frontend.
+  # If you catch exceptions in your Job, they will be "swallowed" and not reported.
+  # Let exceptions bubble up to this global handler.
+
   # Capture all job errors and broadcast to frontend via Turbo Streams
   rescue_from StandardError do |exception|
     # Broadcast error to frontend via GlobalErrorsChannel
@@ -32,7 +37,7 @@ class ApplicationJob < ActiveJob::Base
 
     # Broadcast inline turbo-stream without template
     Turbo::StreamsChannel.broadcast_render_to(
-      "global_errors",
+      "system_monitor",
       inline: "<turbo-stream action='report_async_error' data-error='<%= error_data.to_json.gsub(\"'\", \"&#39;\") %>'></turbo-stream>",
       locals: { error_data: error_data }
     )

@@ -114,7 +114,7 @@
     <%- end %>
 
     <% if Rails.env.development? %>
-      <%= turbo_stream_from "global_errors" %>
+      <%= turbo_stream_from "system_monitor" %>
     <% end %>
   </body>
 </html>

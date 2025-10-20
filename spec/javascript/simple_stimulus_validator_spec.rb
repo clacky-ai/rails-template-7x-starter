@@ -714,26 +714,69 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
     end
   end
 
-  def find_actioncable_broadcasts_in_ast(node)
+  def find_actioncable_broadcasts_in_ast(node, local_vars = nil)
+    # Initialize local_vars hash on first call
+    local_vars ||= {}
+
     return [] unless node
 
     broadcasts = []
 
+    # Track local variable assignments in current scope
+    if node.type == :lvasgn
+      var_name = node.children[0]
+      var_value_node = node.children[1]
+      if var_value_node
+        # Extract string value from assignment
+        extracted = extract_string_from_node(var_value_node)
+        if extracted
+          local_vars[var_name] = extracted
+        end
+      end
+    end
+
+    # Find ActionCable.server.broadcast calls
     if node.type == :send && is_actioncable_broadcast?(node)
+      stream_name = extract_broadcast_stream_name(node, local_vars)
       broadcasts << {
         type: extract_broadcast_type_from_node(node),
-        stream_name: extract_broadcast_stream_name(node),
+        stream_name: stream_name,
         line: node.loc.line
       }
     end
 
+    # Recursively search child nodes (pass the same local_vars reference)
     if node.respond_to?(:children)
       node.children.each do |child|
-        broadcasts.concat(find_actioncable_broadcasts_in_ast(child)) if child.is_a?(Parser::AST::Node)
+        if child.is_a?(Parser::AST::Node)
+          broadcasts.concat(find_actioncable_broadcasts_in_ast(child, local_vars))
+        end
       end
     end
 
     broadcasts
+  end
+
+  def extract_string_from_node(node)
+    return nil unless node
+
+    case node.type
+    when :str
+      # Plain string: "chat_123"
+      node.children[0]
+    when :dstr
+      # Interpolated string: "chatzzz_#{chat_id}"
+      # AST structure: (dstr (str "chatzzz_") (begin (lvar :chat_id)))
+      # Extract the first static string part
+      node.children.each do |part|
+        if part.is_a?(Parser::AST::Node) && part.type == :str
+          return part.children[0] if !part.children[0].empty?
+        end
+      end
+      nil
+    else
+      nil
+    end
   end
 
   def is_actioncable_broadcast?(node)
@@ -744,16 +787,28 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
     receiver_receiver && receiver_receiver.type == :const && receiver_receiver.children[1] == :ActionCable
   end
 
-  def extract_broadcast_stream_name(broadcast_node)
+  def extract_broadcast_stream_name(broadcast_node, local_vars = {})
     first_arg = broadcast_node.children[2]
     return nil unless first_arg
 
     case first_arg.type
     when :str
+      # Direct string: "chat_123"
       first_arg.children[0]
     when :dstr
-      first_arg.children.each { |part| return part if part.is_a?(String) && !part.empty? }
+      # Interpolated string: "chat_#{id}"
+      # Extract first static string part
+      first_arg.children.each do |part|
+        if part.is_a?(Parser::AST::Node) && part.type == :str
+          return part.children[0] if !part.children[0].empty?
+        end
+      end
       nil
+    when :lvar
+      # Variable reference: channel_name
+      # Look up the variable value in local_vars hash
+      var_name = first_arg.children[0]
+      local_vars[var_name]
     else
       nil
     end
@@ -773,7 +828,10 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
   end
 
   def infer_channel_name_from_stream(stream_name)
-    stream_name&.sub(/_\d+$/, '')
+    return nil unless stream_name
+    # Remove trailing _digits pattern: "chat_123" -> "chat"
+    # Also remove trailing underscore for inline interpolation: "chat_" -> "chat"
+    stream_name.sub(/_\d+$/, '').chomp('_')
   end
 
   def capitalize_type(type_string)
@@ -1680,6 +1738,7 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
           next unless stream_name
 
           channel_name = infer_channel_name_from_stream(stream_name)
+
           next unless channel_name
 
           controller_name = channel_name.dasherize
@@ -1721,10 +1780,8 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
             # Check if frontend controller has this method
             frontend_methods = controller_data[controller_name]&.fetch(:methods, []) || []
 
-            # Frontend methods are stored in camelCase without 'handle' prefix
-            expected_frontend_method = method_name.sub(/^handle/, '').sub(/^./) { |m| m.downcase }
-
-            unless frontend_methods.include?(expected_frontend_method)
+            # Strict match: method name must exactly match
+            unless frontend_methods.include?(method_name)
               broadcast_errors << {
                 source_file: relative_path,
                 line: line_number,
