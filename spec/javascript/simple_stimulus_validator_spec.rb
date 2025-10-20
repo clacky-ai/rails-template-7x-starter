@@ -1937,6 +1937,51 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
     end
   end
 
+  describe 'Routes Validation' do
+    it 'ensures routes.rb does not use custom param option' do
+      param_violations = []
+      routes_file = Rails.root.join('config/routes.rb')
+
+      return unless File.exist?(routes_file)
+
+      content = File.read(routes_file)
+      lines = content.lines
+
+      lines.each_with_index do |line, index|
+        line_number = index + 1
+
+        # Skip comments
+        next if line.strip.start_with?('#')
+
+        # Check for param: usage in routes
+        if line.match?(/\bparam:\s*:/)
+          param_violations << {
+            line: line_number,
+            content: line.strip,
+            suggestion: "Do not use 'param:' to customize route parameter. Use friendly_id (already configured) for slug customization instead."
+          }
+        end
+      end
+
+      if param_violations.any?
+        puts "\n⚠️  Routes param: violations (#{param_violations.length}):"
+        param_violations.each do |v|
+          puts "   Line #{v[:line]}: #{v[:content]}"
+          puts "   💡 #{v[:suggestion]}\n"
+        end
+
+        error_details = param_violations.map do |v|
+          "config/routes.rb:#{v[:line]} - #{v[:suggestion]}"
+        end
+
+        expect(param_violations).to be_empty,
+          "Routes validation failed:\n#{error_details.join("\n")}"
+      else
+        puts "\n✅ Routes validation passed: No custom param usage!"
+      end
+    end
+  end
+
   describe 'Turbo Stream Architecture Enforcement' do
     it 'validates frontend-backend interactions use Turbo Streams exclusively' do
       violations = []

@@ -15,6 +15,7 @@ RSpec
 Stimulus
 Turbo (Drive enabled, full SPA experience)
 ActionCable( solid_queue, no redis )
+FriendlyId
 
 Do not add or remove any components and avoid upgrading or downgrading components.
 
