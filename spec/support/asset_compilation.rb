@@ -14,7 +14,7 @@ RSpec.configure do |config|
     puts "📦 Compiling assets for system tests..."
 
     # Capture both stdout and stderr
-    output = `RAILS_ENV=test bin/rails assets:precompile 2>&1`
+    output = `npm run build 2>&1`
     result = $?.success?
 
     unless result
@@ -32,7 +32,7 @@ RSpec.configure do |config|
       if error_lines.any?
         puts "\n🔍 Key errors:"
         error_lines.first(10).each { |line| puts "   #{line}" }
-        puts "\n💡 Run 'bin/rails assets:precompile' to see full output" if error_lines.length > 10
+        puts "\n💡 Run 'npm run build' to see full output" if error_lines.length > 10
       else
         # Show last 20 lines if no specific errors found
         puts "\n📋 Last output lines:"
@@ -53,7 +53,8 @@ RSpec.configure do |config|
     # Check if build output directory exists
     return true unless Dir.exist?("app/assets/builds")
 
-    built_files = Dir.glob("app/assets/builds/**/*")
+    # Filter out directories, only keep files
+    built_files = Dir.glob("app/assets/builds/**/*").select { |f| File.file?(f) }
     return true if built_files.empty?
 
     # Compare modification times between source and built files

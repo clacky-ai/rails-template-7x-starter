@@ -5,4 +5,6 @@ if Rake::Task.task_defined?(:test)
   Rake::Task[:test].clear
 end
 
-task test: :spec
+task :test do
+  exec 'bundle exec rspec'
+end

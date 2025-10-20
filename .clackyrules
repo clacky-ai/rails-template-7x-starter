@@ -33,6 +33,9 @@ Restarting project is unnecessary because Rails automatically hot-reloads code c
 
 **STOP! Before creating ANY models or controllers, you MUST complete these steps first:**
 
+### Step 0: REQUIRED - Update Application Name
+**ALWAYS start by updating `config.x.appname` in `config/application.rb` to match the project name.** This is used throughout the application for page titles, branding, and PWA manifest. Example: `config.x.appname = "MyApp"`
+
 ### Step 1: REQUIRED - Design System First
 **ALWAYS start by updating existing design system variables in `app/assets/stylesheets/application.css`** (using `npm run build:css` to keep it right). DO NOT create any models/controllers before this.
 
