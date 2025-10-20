@@ -25,6 +25,7 @@ const sourceFile = ts.createSourceFile(
 const result = {
   targets: [],
   optionalTargets: [],
+  outlets: [],
   values: [],
   valuesWithDefaults: [],
   methods: [],
@@ -137,6 +138,11 @@ function visitNode(node) {
         // Extract static targets = [...]
         if (name === 'targets' && member.initializer) {
           result.targets = extractArrayStringLiterals(member.initializer);
+        }
+
+        // Extract static outlets = [...]
+        if (name === 'outlets' && member.initializer) {
+          result.outlets = extractArrayStringLiterals(member.initializer);
         }
 
         // Extract static values = {...}

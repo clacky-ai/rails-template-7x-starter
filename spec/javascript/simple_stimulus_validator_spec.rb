@@ -599,6 +599,7 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
         data[controller_name] = {
           targets: parsed_data['targets'] || [],
           optional_targets: parsed_data['optionalTargets'] || [],
+          outlets: parsed_data['outlets'] || [],
           values: parsed_data['values'] || [],
           values_with_defaults: parsed_data['valuesWithDefaults'] || [],
           methods: parsed_data['methods'] || [],
@@ -953,6 +954,7 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
       scope_errors = []
       registration_errors = []
       value_errors = []
+      outlet_errors = []
 
       view_files.each do |view_file|
         content = File.read(view_file)
@@ -1121,6 +1123,69 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
                 end
               end
             end
+
+            # Check for outlet attributes
+            controller_data[controller_name][:outlets].each do |outlet_name|
+              outlet_attr = "data-#{controller_name}-#{outlet_name.gsub('_', '-')}-outlet"
+
+              # Check if outlet attribute exists
+              unless controller_element.has_attribute?(outlet_attr)
+                # Check for common mistakes
+                wrong_attr_with_value = "#{outlet_attr}-value"
+
+                if controller_element.has_attribute?(wrong_attr_with_value)
+                  outlet_errors << {
+                    controller: controller_name,
+                    outlet: outlet_name,
+                    selector: nil,
+                    file: relative_path,
+                    error_type: 'wrong_attribute_name',
+                    found_attr: wrong_attr_with_value,
+                    expected_attr: outlet_attr,
+                    suggestion: "Change '#{wrong_attr_with_value}' to '#{outlet_attr}' (remove -value suffix)"
+                  }
+                else
+                  outlet_errors << {
+                    controller: controller_name,
+                    outlet: outlet_name,
+                    selector: nil,
+                    file: relative_path,
+                    error_type: 'missing_outlet',
+                    expected_attr: outlet_attr,
+                    suggestion: "Add #{outlet_attr}=\"[data-controller='...']\" to element"
+                  }
+                end
+                next
+              end
+
+              outlet_selector = controller_element[outlet_attr]
+
+              # Validate that outlet selector uses [data-controller] pattern
+              unless outlet_selector.match?(/^\[data-controller/)
+                outlet_errors << {
+                  controller: controller_name,
+                  outlet: outlet_name,
+                  selector: outlet_selector,
+                  file: relative_path,
+                  error_type: 'invalid_selector',
+                  suggestion: "Outlet selector must use [data-controller] pattern, found: '#{outlet_selector}'"
+                }
+                next
+              end
+
+              # Check if target element exists
+              target_element = doc.css(outlet_selector).first
+              if target_element.nil?
+                outlet_errors << {
+                  controller: controller_name,
+                  outlet: outlet_name,
+                  selector: outlet_selector,
+                  file: relative_path,
+                  error_type: 'target_not_found',
+                  suggestion: "No element found matching selector '#{outlet_selector}'"
+                }
+              end
+            end
           end
         end
 
@@ -1276,7 +1341,7 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
       # Remove duplicates from registration errors
       registration_errors = registration_errors.uniq { |error| [error[:controller], error[:file]] }
 
-      total_errors = target_errors.length + target_scope_errors.length + action_errors.length + scope_errors.length + registration_errors.length + value_errors.length
+      total_errors = target_errors.length + target_scope_errors.length + action_errors.length + scope_errors.length + registration_errors.length + value_errors.length + outlet_errors.length
 
       puts "\n🔍 Simple Stimulus Validation Results:"
       puts "   📁 Scanned: #{view_files.length} views, #{controller_data.keys.length} controllers"
@@ -1314,6 +1379,22 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
               puts "     • #{error[:controller]}:#{error[:value]} incorrect format '#{error[:found]}' in #{error[:file]}, expected '#{error[:expected]}'"
             else
               puts "     • #{error[:controller]}:#{error[:value]} missing in #{error[:file]}"
+            end
+          end
+        end
+
+        if outlet_errors.any?
+          puts "\n   🔌 Outlet Errors (#{outlet_errors.length}):"
+          outlet_errors.each do |error|
+            case error[:error_type]
+            when 'wrong_attribute_name'
+              puts "     • #{error[:controller]}:#{error[:outlet]} wrong attribute name '#{error[:found_attr]}' in #{error[:file]}, expected '#{error[:expected_attr]}'"
+            when 'missing_outlet'
+              puts "     • #{error[:controller]}:#{error[:outlet]} missing outlet attribute '#{error[:expected_attr]}' in #{error[:file]}"
+            when 'invalid_selector'
+              puts "     • #{error[:controller]}:#{error[:outlet]} uses invalid selector '#{error[:selector]}' in #{error[:file]}"
+            when 'target_not_found'
+              puts "     • #{error[:controller]}:#{error[:outlet]} target not found for selector '#{error[:selector]}' in #{error[:file]}"
             end
           end
         end
@@ -1368,6 +1449,10 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
 
         value_errors.each do |error|
           error_details << "Value error: #{error[:controller]}:#{error[:value]} in #{error[:file]} - #{error[:suggestion]}"
+        end
+
+        outlet_errors.each do |error|
+          error_details << "Outlet error: #{error[:controller]}:#{error[:outlet]} in #{error[:file]} - #{error[:suggestion]}"
         end
 
         scope_errors.each do |error|
