@@ -114,7 +114,9 @@
     <%- end %>
 
     <% if Rails.env.development? %>
-      <%= turbo_stream_from "system_monitor" %>
+      <div id="system-monitor-stream" data-turbo-permanent>
+        <%= turbo_stream_from "system_monitor" %>
+      </div>
     <% end %>
   </body>
 </html>
