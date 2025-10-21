@@ -8,7 +8,7 @@ class ImageGenerationService < ApplicationService
   def initialize(prompt:, **options)
     @prompt = prompt
     @options = options
-    @base_url = options[:base_url] || ENV.fetch('IMAGE_GEN_BASE_URL')
+    @base_url = options[:base_url] || ENV.fetch('LLM_BASE_URL')
     @model = options[:model] || ENV.fetch('IMAGE_GEN_MODEL')
     @size = options[:size] || ENV.fetch('IMAGE_GEN_SIZE', '1024x1024')
     @timeout = options[:timeout] || 60 # Image generation may take longer
@@ -90,8 +90,8 @@ class ImageGenerationService < ApplicationService
   end
 
   def api_key
-    ENV.fetch('IMAGE_GEN_API_KEY') do
-      raise ImageGenerationError, "IMAGE_GEN_API_KEY not configured"
+    ENV.fetch('LLM_API_KEY') do
+      raise ImageGenerationError, "LLM_API_KEY not configured"
     end
   end
 end
