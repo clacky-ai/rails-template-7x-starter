@@ -64,7 +64,7 @@ class ControllerGenerator < Rails::Generators::NamedBase
                        else
                          "as it conflicts with authentication system"
                        end
-      
+
       say "Error: Cannot generate controller for '#{plural_name}' #{conflict_reason}.", :red
       say "The following controller names are protected:", :yellow
       protected_controller_names.each { |name| say "  - #{name}", :yellow }
@@ -132,7 +132,7 @@ class ControllerGenerator < Rails::Generators::NamedBase
       say "📄 Generated controller (#{controller_file}):", :green
       say "━" * 60, :green
       File.readlines(controller_file).each_with_index do |line, index|
-        say "#{(index + 1).to_s.rjust(4)} │ #{line.chomp}"
+        puts "#{(index + 1).to_s.rjust(4)} │ #{line.chomp}"
       end
       say "━" * 60, :green
 
@@ -143,7 +143,7 @@ class ControllerGenerator < Rails::Generators::NamedBase
         say "━" * 60, :green
         @added_routes_content.each_with_index do |line, index|
           line_number = @added_routes_start_line + index
-          say "#{line_number.to_s.rjust(4)} │ #{line}"
+          puts "#{line_number.to_s.rjust(4)} │ #{line}"
         end
         say "━" * 60, :green
       end

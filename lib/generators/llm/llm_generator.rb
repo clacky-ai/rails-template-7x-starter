@@ -46,7 +46,7 @@ class LlmGenerator < Rails::Generators::Base
       say "📄 Generated service (#{service_file}):", :green
       say "━" * 60, :green
       File.readlines(service_file).each_with_index do |line, index|
-        say "#{(index + 1).to_s.rjust(4)} │ #{line.chomp}"
+        puts "#{(index + 1).to_s.rjust(4)} │ #{line.chomp}"
       end
       say "━" * 60, :green
       say "✅ This is the latest content - no need to read the file again", :cyan
@@ -58,7 +58,7 @@ class LlmGenerator < Rails::Generators::Base
       say "📄 Generated job (#{job_file}):", :green
       say "━" * 60, :green
       File.readlines(job_file).each_with_index do |line, index|
-        say "#{(index + 1).to_s.rjust(4)} │ #{line.chomp}"
+        puts "#{(index + 1).to_s.rjust(4)} │ #{line.chomp}"
       end
       say "━" * 60, :green
       say "✅ This is the latest content - no need to read the file again", :cyan

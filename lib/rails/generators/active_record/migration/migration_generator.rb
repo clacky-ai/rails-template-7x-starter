@@ -31,7 +31,7 @@ module ActiveRecord
           say "📄 Generated migration (#{File.basename(latest_migration)}):", :green
           say "━" * 60, :green
           File.readlines(latest_migration).each_with_index do |line, index|
-            say "#{(index + 1).to_s.rjust(4)} │ #{line.chomp}"
+            puts "#{(index + 1).to_s.rjust(4)} │ #{line.chomp}"
           end
           say "━" * 60, :green
           say "✅ This is the latest content - no need to read the file again", :cyan

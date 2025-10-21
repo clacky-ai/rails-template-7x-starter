@@ -87,6 +87,37 @@ document.addEventListener('DOMContentLoaded', convertLegacyAttributes)
 document.addEventListener('turbo:load', convertLegacyAttributes)
 document.addEventListener('turbo:frame-load', convertLegacyAttributes)
 
+// Handle data-disable-with for forms with data-turbo="false" (like OAuth)
+// Since Turbo is disabled, we need to manually handle button disable/enable
+function handleNonTurboFormSubmit(event: Event): void {
+  const form = event.target as HTMLFormElement
+  if (form.dataset.turbo === 'false') {
+    const button = form.querySelector<HTMLButtonElement>('button[type="submit"], button:not([type])')
+    if (button && button.dataset.disableWith) {
+      // Store original text and disable button
+      button.dataset.originalText = button.textContent || ''
+      button.textContent = button.dataset.disableWith
+      button.disabled = true
+    }
+  }
+}
+
+// Re-enable buttons when page is restored from bfcache
+function restoreNonTurboButtons(event: PageTransitionEvent): void {
+  if (event.persisted) {
+    document.querySelectorAll<HTMLButtonElement>('form[data-turbo="false"] button[disabled][data-original-text]').forEach(button => {
+      button.disabled = false
+      const originalText = button.dataset.originalText
+      if (originalText) {
+        button.textContent = originalText
+        delete button.dataset.originalText
+      }
+    })
+  }
+}
+document.addEventListener('submit', handleNonTurboFormSubmit)
+window.addEventListener('pageshow', restoreNonTurboButtons)
+
 // Register custom Turbo Stream action for async job errors
 StreamActions.report_async_error = function(this: any) {
   const errorData = JSON.parse(this.getAttribute('data-error') || '{}')

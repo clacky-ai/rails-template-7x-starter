@@ -122,7 +122,7 @@ module Rails
           say "📄 Generated channel (#{channel_file}):", :green
           say "━" * 60, :green
           File.readlines(channel_file).each_with_index do |line, index|
-            say "#{(index + 1).to_s.rjust(4)} │ #{line.chomp}"
+            puts "#{(index + 1).to_s.rjust(4)} │ #{line.chomp}"
           end
           say "━" * 60, :green
           say "✅ This is the latest content - no need to read the file again", :cyan
@@ -133,7 +133,7 @@ module Rails
           say "📄 Generated controller (#{controller_file}):", :green
           say "━" * 60, :green
           File.readlines(controller_file).each_with_index do |line, index|
-            say "#{(index + 1).to_s.rjust(4)} │ #{line.chomp}"
+            puts "#{(index + 1).to_s.rjust(4)} │ #{line.chomp}"
           end
           say "━" * 60, :green
           say "✅ This is the latest content - no need to read the file again", :cyan
