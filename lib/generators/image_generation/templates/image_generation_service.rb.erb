@@ -55,7 +55,7 @@ class ImageGenerationService < ApplicationService
     request["Content-Type"] = "application/json"
     request["Authorization"] = "Bearer #{api_key}"
 
-    # Use chat/completions format with modalities for OpenRouter
+    # LiteLLM image generation format (same as OpenRouter)
     request.body = {
       model: @model,
       messages: [
@@ -83,7 +83,7 @@ class ImageGenerationService < ApplicationService
   end
 
   def extract_images(response)
-    # OpenRouter format: { choices: [{ message: { images: [{ image_url: { url: "..." } }] } }] }
+    # LiteLLM format: { choices: [{ message: { images: [{ image_url: { url: "..." } }] } }] }
     message = response.dig("choices", 0, "message")
     images = message&.dig("images") || []
     images.map { |img| img.dig("image_url", "url") }.compact
