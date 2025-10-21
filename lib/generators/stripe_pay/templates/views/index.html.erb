@@ -1,5 +1,23 @@
 <%% content_for(:title, "Your Orders") %>
 
+<!--
+  If you want to add a "Pay" button directly on this page (instead of redirecting to order show page),
+  use button_to with iframe detection for better user experience:
+
+  Example:
+  <%%#= button_to "Pay Now", pay_order_path(order),
+          method: :post,
+          class: "btn-primary btn-sm",
+          form: { onsubmit: "this.target = (window.self !== window.parent) ? '_blank' : '_self';" },
+          data: { turbo: false, disable_with: "Processing..." } %>
+
+  This pattern:
+  - Detects if the page is in an iframe and opens payment in a new window if needed
+  - Disables the button on click and shows "Processing..." text
+  - Works with Stripe's X-Frame-Options restrictions
+  - See order/show.html.erb and order/failure.html.erb for more examples
+-->
+
 <div class="container-xl py-12">
     <div class="text-center mb-8">
       <h1 class="text-3xl font-bold text-primary">Your Orders</h1>

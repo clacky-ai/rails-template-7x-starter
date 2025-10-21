@@ -73,8 +73,13 @@ function convertLegacyAttributes(): void {
     el.removeAttribute('data-remote')
   })
 
-  // data-disable-with → data-turbo-submits-with
+  // data-disable-with → data-turbo-submits-with (skip if turbo is disabled)
   document.querySelectorAll<HTMLElement>('[data-disable-with]:not([data-turbo-submits-with])').forEach(el => {
+    // Skip if element or its parent form has data-turbo="false"
+    if (el.dataset.turbo === 'false') return
+    const parentForm = el.closest('form')
+    if (parentForm?.dataset.turbo === 'false') return
+
     const text = el.getAttribute('data-disable-with')
     if (text) {
       el.setAttribute('data-turbo-submits-with', text)
@@ -91,21 +96,24 @@ document.addEventListener('turbo:frame-load', convertLegacyAttributes)
 // Since Turbo is disabled, we need to manually handle button disable/enable
 function handleNonTurboFormSubmit(event: Event): void {
   const form = event.target as HTMLFormElement
-  if (form.dataset.turbo === 'false') {
-    const button = form.querySelector<HTMLButtonElement>('button[type="submit"], button:not([type])')
-    if (button && button.dataset.disableWith) {
-      // Store original text and disable button
-      button.dataset.originalText = button.textContent || ''
-      button.textContent = button.dataset.disableWith
-      button.disabled = true
-    }
+  const button = form.querySelector<HTMLButtonElement>('button[type="submit"], button:not([type])')
+
+  // Check if turbo is disabled on form or button
+  const isTurboDisabled = form.dataset.turbo === 'false' || button?.dataset.turbo === 'false'
+
+  if (isTurboDisabled && button && button.dataset.disableWith) {
+    // Store original text and disable button
+    button.dataset.originalText = button.textContent || ''
+    button.textContent = button.dataset.disableWith
+    button.disabled = true
   }
 }
 
-// Re-enable buttons when page is restored from bfcache
-function restoreNonTurboButtons(event: PageTransitionEvent): void {
-  if (event.persisted) {
-    document.querySelectorAll<HTMLButtonElement>('form[data-turbo="false"] button[disabled][data-original-text]').forEach(button => {
+// Re-enable buttons when page becomes visible (e.g., switching back from payment window)
+function handleVisibilityChange(): void {
+  if (document.visibilityState === 'visible') {
+    const selector = 'form[data-turbo="false"] button[disabled][data-original-text], button[data-turbo="false"][disabled][data-original-text]'
+    document.querySelectorAll<HTMLButtonElement>(selector).forEach(button => {
       button.disabled = false
       const originalText = button.dataset.originalText
       if (originalText) {
@@ -115,8 +123,9 @@ function restoreNonTurboButtons(event: PageTransitionEvent): void {
     })
   }
 }
+
 document.addEventListener('submit', handleNonTurboFormSubmit)
-window.addEventListener('pageshow', restoreNonTurboButtons)
+document.addEventListener('visibilitychange', handleVisibilityChange)
 
 // Register custom Turbo Stream action for async job errors
 StreamActions.report_async_error = function(this: any) {

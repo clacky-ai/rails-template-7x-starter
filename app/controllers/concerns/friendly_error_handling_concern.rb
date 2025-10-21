@@ -107,7 +107,8 @@ module FriendlyErrorHandlingConcern
     # Further filter out internal concern methods
     filtered_backtrace = cleaned_backtrace.reject do |line|
       line.include?('check_pending_migrations') ||
-      line.include?('friendly_error_handling_concern.rb')
+      line.include?('friendly_error_handling_concern.rb') ||
+      line.include?('clacky_health_check')
     end
 
     # If filtered backtrace is empty, fall back to cleaned backtrace, then original
