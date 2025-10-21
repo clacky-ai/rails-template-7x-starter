@@ -44,7 +44,7 @@ class ImageGenerationService < ApplicationService
     require 'uri'
     require 'json'
 
-    uri = URI.parse("#{@base_url}/images/generations")
+    uri = URI.parse("#{@base_url}/chat/completions")
 
     http = Net::HTTP.new(uri.host, uri.port)
     http.use_ssl = (uri.scheme == 'https')
@@ -55,10 +55,13 @@ class ImageGenerationService < ApplicationService
     request["Content-Type"] = "application/json"
     request["Authorization"] = "Bearer #{api_key}"
 
+    # Use chat/completions format with modalities for OpenRouter
     request.body = {
       model: @model,
-      prompt: @prompt,
-      size: @size
+      messages: [
+        { role: "user", content: @prompt }
+      ],
+      modalities: ["image", "text"]
     }.to_json
 
     response = http.request(request)
@@ -80,10 +83,10 @@ class ImageGenerationService < ApplicationService
   end
 
   def extract_images(response)
-    # OpenRouter/OpenAI returns images in data array
-    # Format: { data: [{ url: "data:image/png;base64,..." }] }
-    data = response.dig("data") || []
-    data.map { |img| img.dig("url") }.compact
+    # OpenRouter format: { choices: [{ message: { images: [{ image_url: { url: "..." } }] } }] }
+    message = response.dig("choices", 0, "message")
+    images = message&.dig("images") || []
+    images.map { |img| img.dig("image_url", "url") }.compact
   end
 
   def api_key
