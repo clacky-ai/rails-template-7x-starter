@@ -1,0 +1,94 @@
+# Image Generation Service - OpenRouter/OpenAI compatible API wrapper
+# Generates images using the /images/generations endpoint
+class ImageGenerationService < ApplicationService
+  class ImageGenerationError < StandardError; end
+  class TimeoutError < ImageGenerationError; end
+  class ApiError < ImageGenerationError; end
+
+  def initialize(prompt:, **options)
+    @prompt = prompt
+    @options = options
+    @base_url = options[:base_url] || ENV.fetch('IMAGE_GEN_BASE_URL')
+    @model = options[:model] || ENV.fetch('IMAGE_GEN_MODEL')
+    @size = options[:size] || ENV.fetch('IMAGE_GEN_SIZE', '1024x1024')
+    @timeout = options[:timeout] || 60 # Image generation may take longer
+  end
+
+  # Generate image(s) and return result
+  # Returns: { images: [base64_data_urls] }
+  def call
+    raise ImageGenerationError, "Prompt cannot be blank" if @prompt.blank?
+
+    response = make_http_request
+    images = extract_images(response)
+
+    raise ImageGenerationError, "No images in response" if images.empty?
+
+    { images: images }
+  rescue => e
+    Rails.logger.error("Image Generation Error: #{e.class} - #{e.message}")
+    raise
+  end
+
+  # Class method shortcut
+  class << self
+    def call(prompt:, **options)
+      new(prompt: prompt, **options).call
+    end
+  end
+
+  private
+
+  def make_http_request
+    require 'net/http'
+    require 'uri'
+    require 'json'
+
+    uri = URI.parse("#{@base_url}/images/generations")
+
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = (uri.scheme == 'https')
+    http.read_timeout = @timeout
+    http.open_timeout = 10
+
+    request = Net::HTTP::Post.new(uri.path)
+    request["Content-Type"] = "application/json"
+    request["Authorization"] = "Bearer #{api_key}"
+
+    request.body = {
+      model: @model,
+      prompt: @prompt,
+      size: @size
+    }.to_json
+
+    response = http.request(request)
+
+    case response.code.to_i
+    when 200
+      JSON.parse(response.body)
+    when 429
+      raise ApiError, "Rate limit exceeded"
+    when 500..599
+      raise ApiError, "Server error: #{response.code}"
+    else
+      raise ApiError, "API error: #{response.code} - #{response.body}"
+    end
+  rescue Net::ReadTimeout
+    raise TimeoutError, "Request timed out after #{@timeout}s"
+  rescue JSON::ParserError => e
+    raise ApiError, "Invalid JSON response: #{e.message}"
+  end
+
+  def extract_images(response)
+    # OpenRouter/OpenAI returns images in data array
+    # Format: { data: [{ url: "data:image/png;base64,..." }] }
+    data = response.dig("data") || []
+    data.map { |img| img.dig("url") }.compact
+  end
+
+  def api_key
+    ENV.fetch('IMAGE_GEN_API_KEY') do
+      raise ImageGenerationError, "IMAGE_GEN_API_KEY not configured"
+    end
+  end
+end

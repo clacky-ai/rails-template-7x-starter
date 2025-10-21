@@ -27,7 +27,6 @@ class LlmGenerator < Rails::Generators::Base
       LLM_BASE_URL: '<%= ENV.fetch("CLACKY_LLM_BASE_URL", '') %>'
       LLM_API_KEY: '<%= ENV.fetch("CLACKY_LLM_API_KEY", '') %>'
       LLM_MODEL: '<%= ENV.fetch("CLACKY_LLM_MODEL", 'gemini-2.5-flash') %>'
-      LLM_IMAGE_MODEL: '<%= ENV.fetch("CLACKY_LLM_IMAGE_MODEL", '') %>' # Optional: model for image generation
       # LLM Service Configuration generated end
     YAML
 
@@ -71,10 +70,9 @@ class LlmGenerator < Rails::Generators::Base
     say "\n📝 Configuration:"
     say "  Environment variables added to config/application.yml.example"
     say "  Configure these in your config/application.yml:"
-    say "    LLM_BASE_URL       - API endpoint (e.g., https://api.openai.com/v1)"
-    say "    LLM_API_KEY        - Your API key"
-    say "    LLM_MODEL          - Model name (e.g., gpt-4o-mini, deepseek-chat)"
-    say "    LLM_IMAGE_MODEL    - (Optional) Model for image generation"
+    say "    LLM_BASE_URL     - API endpoint (e.g., https://api.openai.com/v1)"
+    say "    LLM_API_KEY      - Your API key"
+    say "    LLM_MODEL        - Model name (e.g., gpt-4o-mini, deepseek-chat)"
 
     say "\n🚀 Usage (Streaming via ActionCable):"
     say "     LlmStreamJob.perform_later("
