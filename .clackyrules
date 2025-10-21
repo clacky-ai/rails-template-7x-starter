@@ -81,7 +81,7 @@ Only after completing Steps 1-3, you can create other models and controllers.
 
 When developing features that require User or Order models, **DO NOT create them manually**. Use these generators instead:
 
-1. **User Authentication System**: Use `rails generate authention` to generate User model and authentication system
+1. **User Authentication System**: Use `rails generate authentication` to generate User model and authentication system
    - **IMPORTANT**: Before running this generator, ensure NO User model exists
    - The generator creates: User model, migration, sessions, authentication logic, and user pages
    - If User model already exists, remove it first to avoid conflicts

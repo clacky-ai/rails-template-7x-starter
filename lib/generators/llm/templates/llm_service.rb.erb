@@ -10,7 +10,16 @@ class LlmService < ApplicationService
     @prompt = prompt
     @system = system
     @options = options
-    @model = options[:model] || ENV.fetch('LLM_MODEL')
+    @base_url = options[:base_url] || ENV.fetch('LLM_BASE_URL')
+    @type = options[:type] || 'chat'
+
+    # For image type, use LLM_IMAGE_MODEL if available and no model specified
+    if @type == 'image' && !options[:model] && ENV['LLM_IMAGE_MODEL'].present?
+      @model = ENV.fetch('LLM_IMAGE_MODEL')
+    else
+      @model = options[:model] || ENV.fetch('LLM_MODEL')
+    end
+
     @temperature = options[:temperature]&.to_f || 0.7
     @max_tokens = options[:max_tokens] || 4000
     @timeout = options[:timeout] || 30
@@ -30,8 +39,25 @@ class LlmService < ApplicationService
     raise LlmError, "Prompt cannot be blank" if @prompt.blank?
 
     response = make_http_request(stream: false)
-    content = response.dig("choices", 0, "message", "content")
 
+    # For image type, extract images array
+    if @type == 'image'
+      message = response.dig("choices", 0, "message")
+      images = message&.dig("images") || []
+      content = message&.dig("content")
+
+      result = {
+        content: content,
+        images: images.map { |img| img.dig("image_url", "url") }.compact
+      }
+
+      raise LlmError, "No images in response" if result[:images].empty?
+
+      return result
+    end
+
+    # For text/chat type, extract content
+    content = response.dig("choices", 0, "message", "content")
     raise LlmError, "No content in response" if content.blank?
 
     content
@@ -45,14 +71,40 @@ class LlmService < ApplicationService
     raise LlmError, "Prompt cannot be blank" if @prompt.blank?
     raise LlmError, "Block required for streaming" unless block_given?
 
-    full_content = ""
+    if @type == 'image'
+      # For image generation, streaming returns image data in chunks
+      images = []
+      full_content = ""
 
-    make_http_request(stream: true) do |chunk|
-      full_content += chunk
-      block.call(chunk)
+      make_http_request(stream: true) do |chunk_data|
+        if chunk_data.is_a?(Hash)
+          # Image chunk data
+          if image_url = chunk_data.dig("image_url")
+            images << image_url
+            block.call({ type: "image", data: image_url })
+          elsif content = chunk_data.dig("content")
+            full_content += content
+            block.call({ type: "content", data: content })
+          end
+        else
+          # Text content chunk
+          full_content += chunk_data
+          block.call({ type: "content", data: chunk_data })
+        end
+      end
+
+      { content: full_content, images: images }
+    else
+      # For text/chat type, stream text content
+      full_content = ""
+
+      make_http_request(stream: true) do |chunk|
+        full_content += chunk
+        block.call(chunk)
+      end
+
+      full_content
     end
-
-    full_content
   rescue => e
     Rails.logger.error("LLM Stream Error: #{e.class} - #{e.message}")
     raise
@@ -95,8 +147,7 @@ class LlmService < ApplicationService
   end
 
   def prepare_http_request(stream)
-    base_url = ENV.fetch('LLM_BASE_URL')
-    uri = URI.parse("#{base_url}/chat/completions")
+    uri = URI.parse("#{@base_url}/chat/completions")
 
     http = Net::HTTP.new(uri.host, uri.port)
     http.use_ssl = (uri.scheme == 'https')
@@ -108,7 +159,7 @@ class LlmService < ApplicationService
     request["Authorization"] = "Bearer #{api_key}"
 
     body = build_request_body
-    if stream
+    if stream and @type == 'chat'
       request["Accept"] = "text/event-stream"
       body[:stream] = true
     end
@@ -156,8 +207,26 @@ class LlmService < ApplicationService
 
           begin
             json = JSON.parse(data)
-            if content = json.dig("choices", 0, "delta", "content")
-              block.call(content)
+            delta = json.dig("choices", 0, "delta")
+
+            if @type == 'image'
+              # For image generation, check for both content and images
+              if content = delta&.dig("content")
+                block.call({ content: content })
+              end
+
+              if images = delta&.dig("images")
+                images.each do |img|
+                  if image_url = img.dig("image_url", "url")
+                    block.call({ image_url: image_url })
+                  end
+                end
+              end
+            else
+              # For text/chat, only process content
+              if content = delta&.dig("content")
+                block.call(content)
+              end
             end
           rescue JSON::ParserError => e
             Rails.logger.warn("Failed to parse SSE chunk: #{e.message}")
@@ -172,12 +241,14 @@ class LlmService < ApplicationService
     messages << { role: "system", content: @system } if @system.present?
     messages << { role: "user", content: @prompt }
 
-    {
+    body = {
       model: @model,
       messages: messages,
       temperature: @temperature,
       max_tokens: @max_tokens
     }
+    body[:modalities] = ['image', 'text'] if @type == 'image'
+    return body
   end
 
   def api_key
