@@ -12,18 +12,29 @@ class ImageGenerationGenerator < Rails::Generators::Base
   end
 
   def update_application_yml
+    # Check if LLM config exists, if not, add it first
+    llm_config = <<~YAML
+
+      # LLM Service Configuration (shared with ImageGenerationService)
+      LLM_BASE_URL: '<%= ENV.fetch("CLACKY_LLM_BASE_URL", "") %>'
+      LLM_API_KEY: '<%= ENV.fetch("CLACKY_LLM_API_KEY", "") %>'
+      # LLM Service Configuration end
+    YAML
+
     image_gen_config = <<~YAML
 
       # Image Generation Service Configuration (uses LLM_BASE_URL and LLM_API_KEY)
-      IMAGE_GEN_MODEL: '<%= ENV.fetch("CLACKY_IMAGE_GEN_MODEL", "google/gemini-2.0-flash-exp:free") %>'
+      IMAGE_GEN_MODEL: '<%= ENV.fetch("CLACKY_IMAGE_GEN_MODEL", "gemini-2.5-flash-image") %>'
       IMAGE_GEN_SIZE: '1024x1024' # Default image size
       # Image Generation Service Configuration end
     YAML
 
     # Update application.yml.example
+    add_llm_config_if_missing('config/application.yml.example', llm_config)
     add_config_to_file('config/application.yml.example', image_gen_config)
 
     # Update application.yml if it exists
+    add_llm_config_if_missing('config/application.yml', llm_config)
     add_config_to_file('config/application.yml', image_gen_config)
   end
 
@@ -82,6 +93,21 @@ class ImageGenerationGenerator < Rails::Generators::Base
   end
 
   private
+
+  def add_llm_config_if_missing(file_path, llm_config)
+    if File.exist?(file_path)
+      content = File.read(file_path)
+
+      unless content.include?('LLM_BASE_URL') || content.include?('# LLM Service Configuration')
+        append_to_file file_path, llm_config
+        say "Added LLM configuration to #{File.basename(file_path)}", :green
+      else
+        say "LLM configuration already exists in #{File.basename(file_path)}, skipping...", :cyan
+      end
+    else
+      say "#{File.basename(file_path)} not found, skipping...", :yellow
+    end
+  end
 
   def add_config_to_file(file_path, config)
     if File.exist?(file_path)
