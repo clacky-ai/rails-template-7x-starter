@@ -1,14 +1,14 @@
 require 'rails_helper'
 
 RSpec.describe "Orders", type: :request do
-  # Uncomment this if controller needs authentication
-  # let(:user) { create(:user) }
-  # before { sign_in_as(user) }
+<% if @auth -%>
+  let(:user) { create(:user) }
+  let!(:order) { create(:order, user: user) }
 
-  # Use this version if controller needs authentication
-  # let!(:order) { create(:order, user: user) }
-  # None authentication version
+  before { sign_in_as(user) }
+<% else -%>
   let!(:order) { create(:order) }
+<% end -%>
 
   describe "GET /orders" do
     it "returns http success" do

@@ -2,7 +2,7 @@ class OrdersController < ApplicationController
   before_action :set_order, only: [:show, :pay, :success, :failure, :destroy]
   skip_before_action :verify_authenticity_token, only: [:webhook], raise: false
 <% if @auth -%>
-  before_action :authenticate_user!
+  before_action :authenticate_user!, except: [:webhook]
 <% end -%>
 
   def index

@@ -69,7 +69,7 @@ class StripePayGenerator < Rails::Generators::Base
     if user_content.match(/has_many :sessions.*\n/)
       updated_content = user_content.sub(
         /(has_many :sessions.*\n)/,
-        "\\1  has_many :orders, :dependent: :destroy\n"
+        "\\1  has_many :orders, dependent: :destroy\n"
       )
       File.write(user_model_path, updated_content)
       say "Added has_many :orders to User model (after has_many :sessions)", :green
