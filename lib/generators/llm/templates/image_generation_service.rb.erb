@@ -11,6 +11,7 @@ class ImageGenerationService < ApplicationService
     @model = options[:model] || ENV.fetch('IMAGE_GEN_MODEL')
     @size = options[:size] || ENV.fetch('IMAGE_GEN_SIZE', '1024x1024')
     @timeout = options[:timeout] || 60 # Image generation may take longer
+    @images = normalize_images(options[:images])
   end
 
   # Generate image(s) and return result
@@ -54,14 +55,25 @@ class ImageGenerationService < ApplicationService
     request["Content-Type"] = "application/json"
     request["Authorization"] = "Bearer #{api_key}"
 
-    # LiteLLM image generation format (same as OpenRouter)
-    request.body = {
+    messages = []
+    if @images.present?
+      content = [{ type: "text", text: @prompt.to_s }]
+      @images.each do |img|
+        content << { type: "image_url", image_url: { url: img } }
+      end
+      messages << { role: "user", content: content }
+    else
+      messages << { role: "user", content: @prompt }
+    end
+
+    body = {
       model: @model,
-      messages: [
-        { role: "user", content: @prompt }
-      ],
-      modalities: ["image", "text"]
-    }.to_json
+      messages: messages,
+      size: @size
+    }
+    body[:modalities] = ["text", "image"]
+
+    request.body = body.to_json
 
     response = http.request(request)
 
@@ -92,5 +104,11 @@ class ImageGenerationService < ApplicationService
     ENV.fetch('LLM_API_KEY') do
       raise ImageGenerationError, "LLM_API_KEY not configured"
     end
+  end
+
+  def normalize_images(images)
+    return [] if images.blank?
+    list = images.is_a?(Array) ? images.compact : [images].compact
+    list.map(&:to_s).reject(&:blank?)
   end
 end

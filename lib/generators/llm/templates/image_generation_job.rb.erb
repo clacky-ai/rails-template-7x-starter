@@ -9,24 +9,21 @@ class ImageGenerationJob < ApplicationJob
   discard_on ActiveJob::DeserializationError
 
   # Generate images via background job to avoid blocking main process
-  # Usage: ImageGenerationJob.perform_later(channel_name: "user_123", prompt: "A sunset")
-  #
-  # CRITICAL: ALL broadcasts MUST have 'type' field (auto-routes to client handler)
-  # - type: 'image_generated' → client calls handleImageGenerated(data)
-  # - type: 'error' → client calls handleError(data)
+  # Usage (Turbo Streams):
+  #   ImageGenerationJob.perform_later(stream: "images_#{user_id}", prompt: "A sunset")
+  # Frontend 订阅对应的 Turbo Streams：
+  #   <turbo-cable-stream-source channel="Turbo::StreamsChannel" signed-stream-name="<%= Turbo::StreamsChannel.signed_stream_name("images_#{current_user.id}") %>"></turbo-cable-stream-source>
   #
   # ⚠️  DO NOT rescue exceptions here!
   # ApplicationJob handles all exceptions globally and reports them automatically.
-  def perform(channel_name:, prompt:, **options)
+  def perform(stream:, prompt:, **options)
     result = ImageGenerationService.call(prompt: prompt, **options)
 
-    # Broadcast generated images → client handleImageGenerated(data)
-    ActionCable.server.broadcast(channel_name, {
-      type: 'image_generated',
-      images: result[:images],
-      prompt: prompt
-    })
-
-    # Note: Let exceptions bubble up to ApplicationJob for proper error handling
+    # 使用 Turbo Streams 推送生成结果，采用自定义 action，前端据此处理 UI 更新
+    Turbo::StreamsChannel.broadcast_render_to(
+      stream,
+      inline: "<turbo-stream action='image_generated' data-images='<%= images.to_json.gsub(\"'\", \"&#39;\") %>' data-prompt='<%= prompt %>'></turbo-stream>",
+      locals: { images: result[:images], prompt: prompt }
+    )
   end
 end
