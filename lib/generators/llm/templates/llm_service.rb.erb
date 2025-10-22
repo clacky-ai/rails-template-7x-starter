@@ -14,6 +14,7 @@ class LlmService < ApplicationService
     @temperature = options[:temperature]&.to_f || 0.7
     @max_tokens = options[:max_tokens] || 4000
     @timeout = options[:timeout] || 30
+    @images = normalize_images(options[:images])
   end
 
   # Default call - streaming if block given, blocking otherwise
@@ -170,19 +171,40 @@ class LlmService < ApplicationService
   def build_request_body
     messages = []
     messages << { role: "system", content: @system } if @system.present?
-    messages << { role: "user", content: @prompt }
 
-    {
+    if @images.present?
+      user_content = []
+      user_content << { type: "text", text: @prompt.to_s }
+      @images.each do |img|
+        user_content << { type: "image_url", image_url: { url: img } }
+      end
+      messages << { role: "user", content: user_content }
+    else
+      messages << { role: "user", content: @prompt }
+    end
+
+    body = {
       model: @model,
       messages: messages,
       temperature: @temperature,
       max_tokens: @max_tokens
     }
+
+    # Some providers require modalities when sending images
+    body[:modalities] = ["text", "image"] if @images.present?
+
+    body
   end
 
   def api_key
     ENV.fetch('LLM_API_KEY') do
       raise LlmError, "LLM_API_KEY not configured"
     end
+  end
+
+  def normalize_images(images)
+    return [] if images.blank?
+    list = images.is_a?(Array) ? images.compact : [images].compact
+    list.map(&:to_s).reject(&:blank?)
   end
 end

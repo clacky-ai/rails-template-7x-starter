@@ -16,6 +16,11 @@ class LlmGenerator < Rails::Generators::Base
     template 'llm_stream_job.rb.erb', 'app/jobs/llm_stream_job.rb'
   end
 
+  def create_image_generation_service_file
+    template 'image_generation_service.rb.erb', 'app/services/image_generation_service.rb'
+  end
+
+
   def create_llm_message_validation_concern
     template 'llm_message_validation_concern.rb.erb', 'app/models/concerns/llm_message_validation_concern.rb'
   end
@@ -38,37 +43,48 @@ class LlmGenerator < Rails::Generators::Base
       # LLM Service Specific Configuration end
     YAML
 
+    # Image generation config (uses shared LLM_BASE_URL and LLM_API_KEY)
+    image_gen_config = <<~YAML
+
+      # Image Generation Service Configuration (uses LLM_BASE_URL and LLM_API_KEY)
+      IMAGE_GEN_MODEL: '<%= ENV.fetch("CLACKY_IMAGE_GEN_MODEL", "gemini-2.5-flash-image") %>'
+      IMAGE_GEN_SIZE: '1024x1024' # Default image size
+      # Image Generation Service Configuration end
+    YAML
+
     # Update application.yml.example
     add_llm_base_config_if_missing('config/application.yml.example', llm_base_config)
     add_llm_specific_config_to_file('config/application.yml.example', llm_specific_config)
+    add_image_gen_config_to_file('config/application.yml.example', image_gen_config)
 
     # Update application.yml if it exists
     add_llm_base_config_if_missing('config/application.yml', llm_base_config)
     add_llm_specific_config_to_file('config/application.yml', llm_specific_config)
+    add_image_gen_config_to_file('config/application.yml', image_gen_config)
   end
 
 
   def show_usage_instructions
     # Display generated files content
+    generated_files = []
+
     unless options[:skip_service]
-      service_file = 'app/services/llm_service.rb'
-      say "\n"
-      say "📄 Generated service (#{service_file}):", :green
-      say "━" * 60, :green
-      File.readlines(service_file).each_with_index do |line, index|
-        puts "#{(index + 1).to_s.rjust(4)} │ #{line.chomp}"
-      end
-      say "━" * 60, :green
-      say "✅ This is the latest content - no need to read the file again", :cyan
+      generated_files << 'app/services/llm_service.rb'
     end
 
+    generated_files << 'app/services/image_generation_service.rb'
+
     unless options[:skip_job]
-      job_file = 'app/jobs/llm_stream_job.rb'
+      generated_files << 'app/jobs/llm_stream_job.rb'
+    end
+
+
+    generated_files.each do |file_path|
       say "\n"
-      say "📄 Generated job (#{job_file}):", :green
+      say "📄 Generated file (#{file_path}):", :green
       say "━" * 60, :green
-      File.readlines(job_file).each_with_index do |line, index|
-        puts "#{(index + 1).to_s.rjust(4)} │ #{line.chomp}"
+      File.readlines(file_path).each_with_index do |line, index|
+        say "#{(index + 1).to_s.rjust(4)} │ #{line.chomp}"
       end
       say "━" * 60, :green
       say "✅ This is the latest content - no need to read the file again", :cyan
@@ -80,20 +96,32 @@ class LlmGenerator < Rails::Generators::Base
     say "\n📝 Configuration:"
     say "  Environment variables added to config/application.yml.example"
     say "  Configure these in your config/application.yml:"
-    say "    LLM_BASE_URL     - API endpoint (e.g., https://api.openai.com/v1)"
-    say "    LLM_API_KEY      - Your API key"
-    say "    LLM_MODEL        - Model name (e.g., gpt-4o-mini, deepseek-chat)"
+    say "    LLM_BASE_URL        - API endpoint (e.g., http://localhost:4000/v1)"
+    say "    LLM_API_KEY         - Your API key"
+    say "    LLM_MODEL           - Model for text generation (e.g., gemini-2.5-flash)"
+    say "    IMAGE_GEN_MODEL     - Model for image generation (e.g., gemini-2.5-flash-image)"
+    say "    IMAGE_GEN_SIZE      - Default image size (e.g., 1024x1024)"
 
-    say "\n🚀 Usage (Streaming via ActionCable):"
+    say "\n🚀 Usage:"
+    say "\n  1) Text stream:"
     say "     LlmStreamJob.perform_later("
-    say "       channel_name: \"chat_\#{user_id}\","
+    say "       chat_id: user.id,"
     say "       prompt: 'Explain quantum computing',"
-    say "       system: 'You are a helpful assistant'"
+    say "       system: 'You are a helpful assistant',"
+    say "       images: ['https://example.com/ref.jpg'] # optional"
     say "     )"
 
-    say "\n📚 Next Steps:"
-    say "  1. Configure your API keys in config/application.yml"
-    say "  2. Use LlmStreamJob with ActionCable for real-time streaming"
+    say "\n  2) Direct image generation:"
+    say "     result = ImageGenerationService.call("
+    say "       prompt: 'A beautiful sunset over the ocean',"
+    say "       images: 'https://example.com/ref.jpg' # optional"
+    say "     )"
+    say "     # result[:images] → array of image URLs"
+
+    say "\n📚 Next:"
+    say "  1) Configure keys in config/application.yml"
+    say "  2) Use images: string|array for multimodal inputs when needed"
+    say "  3) ⚠️  Image generation is slow - consider async processing"
 
     say "\n🤖 AI Assistant Note:"
     say "  When storing LLM messages, include LlmMessageValidationConcern."
@@ -126,6 +154,21 @@ class LlmGenerator < Rails::Generators::Base
         say "Added LLM specific configuration to #{File.basename(file_path)}", :green
       else
         say "LLM specific configuration already exists in #{File.basename(file_path)}, skipping...", :yellow
+      end
+    else
+      say "#{File.basename(file_path)} not found, skipping...", :yellow
+    end
+  end
+
+  def add_image_gen_config_to_file(file_path, image_gen_config)
+    if File.exist?(file_path)
+      content = File.read(file_path)
+
+      unless content.include?('# Image Generation Service Configuration')
+        append_to_file file_path, image_gen_config
+        say "Added Image Generation configuration to #{File.basename(file_path)}", :green
+      else
+        say "Image Generation configuration already exists in #{File.basename(file_path)}, skipping...", :yellow
       end
     else
       say "#{File.basename(file_path)} not found, skipping...", :yellow
