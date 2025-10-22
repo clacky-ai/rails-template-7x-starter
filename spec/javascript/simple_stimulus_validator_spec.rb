@@ -604,6 +604,7 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
           values_with_defaults: parsed_data['valuesWithDefaults'] || [],
           methods: parsed_data['methods'] || [],
           querySelectors: parsed_data['querySelectors'] || [],
+          anti_patterns: parsed_data['antiPatterns'] || [],
           file: file
         }
       else
@@ -1982,6 +1983,83 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
     end
   end
 
+  describe 'Controller Registration Validation' do
+    it 'ensures all controllers are imported and registered in index.ts' do
+      registration_errors = []
+      index_file = Rails.root.join('app/javascript/controllers/index.ts')
+
+      # Skip validation if index.ts doesn't exist
+      unless File.exist?(index_file)
+        puts "\n⚠️  Skipping controller registration check: index.ts not found"
+        next
+      end
+
+      index_content = File.read(index_file)
+
+      # Get all controller files, excluding base_* controllers
+      controller_files = Dir.glob(controllers_dir.join('*_controller.ts')).reject do |file|
+        File.basename(file).start_with?('base_')
+      end
+
+      controller_files.each do |file|
+        controller_name = File.basename(file, '.ts').gsub('_controller', '')
+        class_name = controller_name.split('_').map(&:capitalize).join('') + 'Controller'
+        kebab_name = controller_name.gsub('_', '-')
+
+        # Check if imported
+        import_pattern = /import\s+#{class_name}\s+from\s+["']\.\/#{controller_name}_controller["']/
+        unless index_content.match?(import_pattern)
+          registration_errors << {
+            controller: controller_name,
+            file: file.sub(Rails.root.to_s + '/', ''),
+            error_type: 'missing_import',
+            suggestion: "Add to index.ts: import #{class_name} from \"./#{controller_name}_controller\""
+          }
+        end
+
+        # Check if registered
+        register_pattern = /application\.register\s*\(\s*["']#{kebab_name}["']\s*,\s*#{class_name}\s*\)/
+        unless index_content.match?(register_pattern)
+          registration_errors << {
+            controller: controller_name,
+            file: file.sub(Rails.root.to_s + '/', ''),
+            error_type: 'missing_registration',
+            suggestion: "Add to index.ts: application.register(\"#{kebab_name}\", #{class_name})"
+          }
+        end
+      end
+
+      if registration_errors.any?
+        puts "\n⚠️  Controller Registration Errors (#{registration_errors.length}):"
+
+        missing_imports = registration_errors.select { |e| e[:error_type] == 'missing_import' }
+        missing_registrations = registration_errors.select { |e| e[:error_type] == 'missing_registration' }
+
+        if missing_imports.any?
+          puts "\n   📦 Missing Imports (#{missing_imports.length}):"
+          missing_imports.each do |error|
+            puts "     • #{error[:file]}"
+            puts "       💡 #{error[:suggestion]}"
+          end
+        end
+
+        if missing_registrations.any?
+          puts "\n   🔌 Missing Registrations (#{missing_registrations.length}):"
+          missing_registrations.each do |error|
+            puts "     • #{error[:file]}"
+            puts "       💡 #{error[:suggestion]}"
+          end
+        end
+
+        error_details = registration_errors.map { |e| "#{e[:file]} - #{e[:suggestion]}" }
+        expect(registration_errors).to be_empty,
+          "Controller registration validation failed:\n#{error_details.join("\n")}"
+      else
+        puts "\n✅ All controllers are properly imported and registered in index.ts!"
+      end
+    end
+  end
+
   describe 'Turbo Stream Architecture Enforcement' do
     it 'validates frontend-backend interactions use Turbo Streams exclusively' do
       violations = []
@@ -2038,32 +2116,55 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
             }
           end
 
-          # Detect format.json
-          if stripped.match?(/format\.json\b/)
+          # Detect respond_to usage (forbidden)
+          if stripped.match?(/\brespond_to\s+(do\b|\{)/)
             violations << {
               file: relative_path,
               line: line_number,
               code: stripped,
-              type: 'format.json',
-              issue: 'JSON format increases frontend-backend data synchronization complexity',
-              suggestion: 'Use format.turbo_stream for server-side rendering'
+              type: 'respond_to',
+              issue: 'respond_to block adds unnecessary complexity and branching logic',
+              suggestion: 'Remove respond_to - use direct Turbo Stream rendering or HTML only'
+            }
+          end
+
+          # Detect any format.* usage (forbidden)
+          if stripped.match?(/\bformat\.\w+/)
+            violations << {
+              file: relative_path,
+              line: line_number,
+              code: stripped,
+              type: 'format.*',
+              issue: 'Format-based response handling adds complexity and violates Turbo Stream architecture',
+              suggestion: 'Remove format blocks - render Turbo Streams directly or HTML templates only'
             }
           end
         end
       end
 
-      # Check frontend Stimulus controllers for fetch usage (forbidden)
-      ts_controller_files = Dir.glob(controllers_dir.join('*_controller.ts'))
-
-      ts_controller_files.each do |file|
-        content = File.read(file)
+      # Check frontend Stimulus controllers for anti-patterns
+      controller_data.each do |controller_name, data|
+        file = data[:file]
         relative_path = file.sub(Rails.root.to_s + '/', '')
-        lines = content.split("\n")
 
+        # Check for preventDefault + requestSubmit anti-pattern (from parser)
+        data[:anti_patterns].each do |pattern|
+          violations << {
+            file: relative_path,
+            line: pattern['line'],
+            code: "#{pattern['method']}()",
+            type: pattern['type'],
+            issue: pattern['issue'],
+            suggestion: "In #{pattern['method']}(): Remove preventDefault() if you want the form to submit"
+          }
+        end
+
+        # Check for fetch() calls (simple regex check)
+        content = File.read(file)
+        lines = content.split("\n")
         lines.each_with_index do |line, index|
           line_number = index + 1
 
-          # Detect fetch() calls (forbidden)
           if line.match?(/\bfetch\s*\(/)
             violations << {
               file: relative_path,
@@ -2072,18 +2173,6 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
               type: 'fetch()',
               issue: 'Using fetch() breaks Turbo Stream architecture and requires manual response handling',
               suggestion: 'Use standard form submission to let Turbo handle the interaction'
-            }
-          end
-
-          # Detect requestSubmit() calls (forbidden)
-          if line.match?(/\.requestSubmit\s*\(/)
-            violations << {
-              file: relative_path,
-              line: line_number,
-              code: line.strip,
-              type: 'requestSubmit()',
-              issue: 'Manual form submission bypasses Turbo automatic handling',
-              suggestion: 'FORMS: Use Turbo + Turbo Streams (no manual code needed) - let forms submit naturally with data-turbo attributes'
             }
           end
         end
@@ -2104,6 +2193,8 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
         end
 
         puts "   ℹ️  Why this matters:"
+        puts "      • respond_to blocks add unnecessary complexity and branching logic"
+        puts "      • format.* methods (html, json, etc.) violate Turbo Stream architecture"
         puts "      • head :ok only returns status code, frontend cannot determine what to update"
         puts "      • JSON responses require manual DOM updates, easy to miss related elements (e.g. counters)"
         puts "      • Manual form submission (requestSubmit) bypasses Turbo's automatic handling"

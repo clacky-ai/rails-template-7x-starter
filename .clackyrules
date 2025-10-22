@@ -12,8 +12,7 @@ Active_Storage for upload file
 Kaminari
 Puma
 RSpec
-Stimulus
-Turbo (Drive enabled, full SPA experience)
+Stimulus + Turbo( TURBO STREAM ARCHITECTURE )
 ActionCable( solid_queue, no redis )
 FriendlyId
 
@@ -151,12 +150,18 @@ Use `rails generate pwa` to generate Progressive Web App setup with manifest, se
 
 Use `rails generate stimulus_controller xxx` to create new Stimulus controller. Forms are handled automatically by Turbo Drive.
 
-**⚠️ CRITICAL: When writing Stimulus controllers:**
-- ❌ NEVER manually submit forms in JavaScript (no `fetch()`, `requestSubmit()`, or `submit()`)
-- ❌ Backend NEVER return `head :ok` or `render json:` - JSON responses are forbidden
-- ✅ Let Turbo handle form submissions automatically - just use HTML forms with proper actions
-- ✅ Backend MUST return `format.turbo_stream` with explicit Turbo Stream DOM updates
-- ✅ Stimulus is ONLY for UI interactions (toggle, show/hide, validation) - NOT for data submission
+**⚠️ TURBO STREAM ARCHITECTURE - Mandatory Rules:**
+
+**Frontend (Stimulus):**
+- ❌ NO `fetch()` - breaks Turbo Stream, requires manual DOM updates
+- ❌ NO `preventDefault() + requestSubmit()` - preventDefault blocks submission, causing failure
+- ✅ Stimulus for UI only (toggle, show/hide) - NOT for data submission
+
+**Backend (Controllers):**
+- ❌ NO `respond_to` blocks - unnecessary branching
+- ❌ NO `format.html/json/xml` - violates architecture
+- ❌ NO `render json:` - JSON data passing is disabled for frontend-backend stability, use Turbo Stream instead (API namespace `app/controllers/api/` exempt)
+- ❌ NO `head :ok` - frontend cannot determine UI updates
 
 **STIMULUS TARGET RULES**: Optional targets must be declared with `declare readonly hasXXXTarget: boolean` to bypass validation. Required targets without this declaration will be validated.
 

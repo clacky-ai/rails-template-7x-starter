@@ -29,7 +29,8 @@ const result = {
   values: [],
   valuesWithDefaults: [],
   methods: [],
-  querySelectors: []
+  querySelectors: [],
+  antiPatterns: []
 };
 
 // Helper function to extract string literals from array
@@ -75,6 +76,45 @@ function extractValuesWithDefaults(node) {
   }
 
   return { values, valuesWithDefaults };
+}
+
+// Helper function to check for preventDefault + requestSubmit anti-pattern
+function checkAntiPatterns(methodBody, methodName) {
+  let hasPreventDefault = false;
+  let hasRequestSubmit = false;
+  let preventDefaultLine = null;
+  let requestSubmitLine = null;
+
+  function traverse(node) {
+    // Check for preventDefault() call
+    if (ts.isCallExpression(node) &&
+        ts.isPropertyAccessExpression(node.expression) &&
+        node.expression.name.text === 'preventDefault') {
+      hasPreventDefault = true;
+      preventDefaultLine = sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1;
+    }
+
+    // Check for requestSubmit() call
+    if (ts.isCallExpression(node) &&
+        ts.isPropertyAccessExpression(node.expression) &&
+        node.expression.name.text === 'requestSubmit') {
+      hasRequestSubmit = true;
+      requestSubmitLine = sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1;
+    }
+
+    ts.forEachChild(node, traverse);
+  }
+
+  traverse(methodBody);
+
+  if (hasPreventDefault && hasRequestSubmit) {
+    result.antiPatterns.push({
+      type: 'preventDefault + requestSubmit',
+      method: methodName,
+      line: requestSubmitLine,
+      issue: 'preventDefault() blocks form submission, making requestSubmit() ineffective'
+    });
+  }
 }
 
 // Helper function to extract querySelector calls
@@ -177,8 +217,9 @@ function visitNode(node) {
           result.methods.push(methodName);
         }
 
-        // Extract querySelector calls from method body
+        // Check method body for anti-patterns and querySelector calls
         if (member.body) {
+          checkAntiPatterns(member.body, methodName);
           extractQuerySelectors(member.body, methodName);
         }
       }
