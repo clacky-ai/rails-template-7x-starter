@@ -18,26 +18,26 @@ class LlmStreamJob < ApplicationJob
   # ⚠️  DO NOT rescue exceptions here!
   # ApplicationJob handles all exceptions globally and reports them automatically.
   # If you catch exceptions here, they will be "swallowed" and not reported.
-  def perform(chat_id:, prompt:, system: nil, **options)
-    full_content = ""
-
-    # Stream LLM response chunk by chunk
-    LlmService.call(prompt: prompt, system: system, **options) do |chunk|
-      full_content += chunk
-
-      # Broadcast each chunk → client handleChunk(data)
-      ActionCable.server.broadcast("chat_#{chat_id}", {
-        type: 'chunk',  # REQUIRED: routes to handleChunk() method
-        chunk: chunk
-      })
-    end
-
-    # Broadcast completion → client handleDone(data)
-    ActionCable.server.broadcast("chat_#{chat_id}", {
-      type: 'done',  # REQUIRED: routes to handleDone() method
-      content: full_content
-    })
-
-    # Note: Let exceptions bubble up to ApplicationJob for proper error handling
+  #
+  # Example implementation:
+  #   def perform(chat_id:, prompt:, system: nil, **options)
+  #     full_content = ""
+  #
+  #     LlmService.call(prompt: prompt, system: system, **options) do |chunk|
+  #       full_content += chunk
+  #       ActionCable.server.broadcast("chat_#{chat_id}", {
+  #         type: 'chunk',
+  #         chunk: chunk
+  #       })
+  #     end
+  #
+  #     ActionCable.server.broadcast("chat_#{chat_id}", {
+  #       type: 'done',
+  #       content: full_content
+  #     })
+  #   end
+  def perform(*args)
+    # TODO: Implement streaming logic here
+    raise 'Not Implement job here'
   end
 end

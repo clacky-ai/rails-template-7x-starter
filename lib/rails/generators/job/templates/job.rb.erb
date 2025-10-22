@@ -20,6 +20,13 @@ class <%= class_name %> < ApplicationJob
   #
   # Why: Development uses inline mode for immediate feedback.
   #      Production has GoodJob dashboard to track failures.
+  #
+  # 💡 Always consider syncing results to frontend, use the following example code:
+  #
+  #   ActionCable.server.broadcast("xxx_#{id}", {
+  #     type: 'update',  # REQUIRED: type field routes to client handler method
+  #     data: your_data  # Frontend MUST implement xxxController#handleUpdate() method
+  #   })
   def perform(*args)
     # TODO: Implement your job logic here
     raise 'Not Implement job here'
