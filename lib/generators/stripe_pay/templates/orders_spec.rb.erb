@@ -23,4 +23,41 @@ RSpec.describe "Orders", type: :request do
       expect(response).to be_success_with_view_check('show')
     end
   end
+
+<% unless @for_test -%>
+  describe "Order creation implementation" do
+    it "validates that order creation workflow has been implemented" do
+      index_view_path = Rails.root.join('app/views/orders/index.html.erb')
+
+      if File.exist?(index_view_path)
+        view_content = File.read(index_view_path)
+
+        # Check if TODO comment still exists
+        has_todo = view_content.include?('TODO: Implement order creation')
+
+        if has_todo
+          error_message = <<~MSG
+
+            ❌ Order creation workflow not implemented yet!
+
+            The orders index view still contains the TODO placeholder.
+            You need to implement order creation in your business workflow:
+
+            Examples:
+            1. Shopping cart checkout → creates Order → redirects to order_path(order)
+            2. Booking system → creates Order → redirects to order_path(order)
+            3. Service purchase → creates Order → redirects to order_path(order)
+
+            After implementing, remove the TODO comment from:
+            app/views/orders/index.html.erb
+
+            DO NOT create standalone orders#new - integrate into your feature!
+          MSG
+
+          fail error_message
+        end
+      end
+    end
+  end
+<% end -%>
 end
