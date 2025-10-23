@@ -5,6 +5,8 @@ Bundler.require(*Rails.groups)
 require_relative '../lib/middleware/clacky_health_check'
 require_relative '../lib/env_checker'
 
+require 'open-uri'
+
 module Myapp
   class Application < Rails::Application
 

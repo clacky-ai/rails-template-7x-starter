@@ -113,7 +113,7 @@ Create new home page, please write it in `app/views/home/index.html.erb` if need
 
 Generate images using this placeholder website: https://images.unsplash.com/ and simultaneously verify accessibility with `curl` if you need static assets.
 
-Use Unsplash images instead of self-generated icons if you need placeholder images with ActiveStorage.
+**ActiveStorage in Seeds**: When creating seed data for models with image attachments, add `require 'open-uri'` at top and use hash format. Example: `Photo.create!(title: 'Demo', image: { io: URI.open('https://picsum.photos/800'), filename: 'photo.jpg' })`.
 
 When installing any new gem or npm packages, always specify a version you are most familiar with and suitable for the project. Do not use the latest version directly.
 

@@ -2060,6 +2060,136 @@ RSpec.describe 'Simple Stimulus Validator', type: :system do
     end
   end
 
+  describe 'ActiveStorage Seed Image Validation' do
+    it 'validates that seed file attaches images for models being created' do
+      missing_attachments = []
+      seed_file = Rails.root.join('db/seeds.rb')
+
+      unless File.exist?(seed_file)
+        puts "\n⚠️  Skipping ActiveStorage seed validation: db/seeds.rb not found"
+        next
+      end
+
+      seed_content = File.read(seed_file)
+
+      begin
+        ast = Parser::CurrentRuby.parse(seed_content)
+      rescue Parser::SyntaxError
+        puts "\n⚠️  Skipping ActiveStorage seed validation: db/seeds.rb has syntax errors"
+        next
+      end
+
+      # Ensure all models are loaded
+      Rails.application.eager_load! unless Rails.application.config.eager_load
+
+      # Find all Model.create! / Model.create calls in seed file
+      model_creations = find_model_creations_in_ast(ast)
+
+      # Check each model that has image attachments
+      ApplicationRecord.descendants.each do |model|
+        next if model.abstract_class? || model.attachment_reflections.empty?
+
+        model_name = model.name
+
+        # Check if this model is being created in seed
+        creations = model_creations[model_name]
+        next unless creations && creations.any?
+
+        # Get image attachments for this model
+        image_attachments = model.attachment_reflections.select do |name, _|
+          name.to_s.match?(/image|photo|picture|avatar|cover|banner|logo|thumbnail|icon|gallery/) &&
+          !name.to_s.match?(/document|file|pdf|resume|cv|report/)
+        end
+
+        next if image_attachments.empty?
+
+        # Check each creation
+        creations.each do |creation|
+          image_attachments.each do |attachment_name, reflection|
+            unless creation[:params].include?(attachment_name.to_s)
+              missing_attachments << {
+                model: model_name,
+                attachment: attachment_name,
+                type: reflection.macro.to_s.gsub('has_', '').gsub('_attached', ''),
+                line: creation[:line]
+              }
+            end
+          end
+        end
+      end
+
+      if missing_attachments.any?
+        puts "\n❌ ActiveStorage Seed Errors (#{missing_attachments.length}):"
+        missing_attachments.group_by { |e| e[:model] }.each do |model, errors|
+          puts "   📦 #{model}:"
+          errors.each do |e|
+            puts "      • Line #{e[:line]}: missing #{e[:attachment]} (#{e[:type]})"
+          end
+        end
+
+        puts "\n   💡 Fix: Add 'require \"open-uri\"' at top, then:"
+        missing_attachments.group_by { |e| e[:model] }.each do |model, errors|
+          puts "      #{model}.create!("
+          errors.uniq { |e| e[:attachment] }.each do |e|
+            url_example = e[:type] == 'one' ?
+              "{ io: URI.open('https://picsum.photos/800'), filename: 'photo.jpg' }" :
+              "[{ io: URI.open('https://picsum.photos/800'), filename: 'photo.jpg' }]"
+            puts "        #{e[:attachment]}: #{url_example},"
+          end
+          puts "      )"
+        end
+
+        expect(missing_attachments).to be_empty,
+          "Seed must attach images: #{missing_attachments.map { |e| "#{e[:model]}##{e[:attachment]}" }.uniq.join(', ')}"
+      else
+        puts "\n✅ ActiveStorage seed validation passed!"
+      end
+    end
+
+    def find_model_creations_in_ast(node, results = {})
+      return results unless node
+
+      if node.type == :send
+        receiver = node.children[0]
+        method = node.children[1]
+
+        # Match Model.create / Model.create!
+        if receiver && receiver.type == :const && [:create, :create!].include?(method)
+          model_name = receiver.children[1].to_s
+
+          # Extract hash parameters
+          params = []
+          node.children[2..-1].each do |arg|
+            if arg.is_a?(Parser::AST::Node) && arg.type == :hash
+              arg.children.each do |pair|
+                if pair.type == :pair
+                  key = pair.children[0]
+                  param_name = key.type == :sym ? key.children[0].to_s : key.children[0]
+                  params << param_name
+                end
+              end
+            end
+          end
+
+          results[model_name] ||= []
+          results[model_name] << {
+            line: node.loc.line,
+            params: params
+          }
+        end
+      end
+
+      # Recursively search child nodes
+      if node.respond_to?(:children)
+        node.children.each do |child|
+          find_model_creations_in_ast(child, results) if child.is_a?(Parser::AST::Node)
+        end
+      end
+
+      results
+    end
+  end
+
   describe 'Turbo Stream Architecture Enforcement' do
     it 'validates frontend-backend interactions use Turbo Streams exclusively' do
       violations = []
