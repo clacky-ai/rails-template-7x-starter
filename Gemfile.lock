@@ -148,6 +148,9 @@ GEM
       thor (>= 1.0.0)
     i18n (1.14.7)
       concurrent-ruby (~> 1.0)
+    image_processing (1.14.0)
+      mini_magick (>= 4.9.5, < 6)
+      ruby-vips (>= 2.0.17, < 3)
     io-console (0.8.0)
     irb (1.15.2)
       pp (>= 0.6.0)
@@ -333,6 +336,9 @@ GEM
       rubocop-performance (>= 1.24)
       rubocop-rails (>= 2.30)
     ruby-progressbar (1.13.0)
+    ruby-vips (2.2.5)
+      ffi (~> 1.12)
+      logger
     rubyzip (2.4.1)
     securerandom (0.4.1)
     selenium-webdriver (4.32.0)
@@ -387,12 +393,12 @@ DEPENDENCIES
   figaro
   friendly_id (~> 5.5)
   good_job (~> 4.6)
+  image_processing (~> 1.2)
   jbuilder
   jsbundling-rails
   kaminari
   launchy
   listen
-  mini_magick (~> 5.3, >= 5.3.1)
   ostruct (~> 0.6.3)
   parser (= 3.3.5.0)
   pg (>= 1.1)

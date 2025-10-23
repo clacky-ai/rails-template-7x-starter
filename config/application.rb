@@ -47,6 +47,9 @@ module Myapp
     # Configure GoodJob as the Active Job queue adapter
     config.active_job.queue_adapter = :good_job
 
+    # Use vips for Active Storage variants
+    config.active_storage.variant_processor = :vips
+
     # Use custom MailDeliveryJob that inherits from ApplicationJob
     config.action_mailer.delivery_job = "MailDeliveryJob"
 
