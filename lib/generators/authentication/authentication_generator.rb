@@ -98,7 +98,8 @@ class AuthenticationGenerator < Rails::Generators::Base
     copy_file 'views/profiles/edit_password.html.erb', 'app/views/profiles/edit_password.html.erb'
 
     # Shared components
-    copy_file 'views/shared/_navbar.html.erb', 'app/views/shared/_navbar.html.erb'
+    # Force overwrite navbar to ensure it has authentication support
+    copy_file 'views/shared/_navbar.html.erb', 'app/views/shared/_navbar.html.erb', force: true
     copy_file 'views/shared/_user_dropdown.html.erb', 'app/views/shared/_user_dropdown.html.erb'
   end
 
