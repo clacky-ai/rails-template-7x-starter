@@ -80,8 +80,8 @@ class OrdersController < ApplicationController
   end
 
   def failure
-    # Allow access regardless of status for display purposes
-    # The view will show appropriate content based on order status
+    # Render show page which already handles failed status
+    render :show
   end
 
   # Webhook endpoint for Stripe
@@ -124,36 +124,6 @@ class OrdersController < ApplicationController
 
   # Update order status by checking Stripe directly (for development)
   def update_order_status_from_stripe
-    return unless @order&.stripe_payment_intent_id&.present?
-
-    begin
-      # Check if it's a checkout session ID
-      if @order.stripe_payment_intent_id.start_with?('cs_')
-        session = Stripe::Checkout::Session.retrieve(@order.stripe_payment_intent_id)
-
-        case session.payment_status
-        when 'paid'
-          @order.mark_as_paid!
-          Rails.logger.info "Development: Updated order #{@order.id} to paid status"
-        when 'unpaid'
-          Rails.logger.info "Development: Order #{@order.id} still unpaid in Stripe"
-        end
-      else
-        # If it's a payment intent ID
-        payment_intent = Stripe::PaymentIntent.retrieve(@order.stripe_payment_intent_id)
-
-        case payment_intent.status
-        when 'succeeded'
-          @order.mark_as_paid!
-          Rails.logger.info "Development: Updated order #{@order.id} to paid status"
-        when 'requires_payment_method', 'requires_confirmation'
-          Rails.logger.info "Development: Order #{@order.id} still requires payment"
-        end
-      end
-    rescue Stripe::StripeError => e
-      Rails.logger.error "Development: Failed to check Stripe status for order #{@order.id}: #{e.message}"
-    rescue => e
-      Rails.logger.error "Development: Error updating order status: #{e.message}"
-    end
+    StripePaymentService.sync_order_status_from_stripe(@order) if @order
   end
 end

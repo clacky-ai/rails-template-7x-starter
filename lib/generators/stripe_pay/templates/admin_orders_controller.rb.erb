@@ -8,12 +8,8 @@ class Admin::OrdersController < Admin::BaseController
     @stats = {
       total_orders: Order.count,
       pending_orders: Order.pending.count,
-      processing_orders: Order.processing.count,
       paid_orders: Order.paid.count,
-      failed_orders: Order.failed.count,
       total_revenue: Order.paid.sum(:amount),
-      today_orders: Order.where(created_at: Date.current.all_day).count,
-      today_revenue: Order.paid.where(created_at: Date.current.all_day).sum(:amount)
     }
   end
 

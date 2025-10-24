@@ -114,10 +114,7 @@ class StripePaymentService < ApplicationService
     order.mark_as_paid!
     Rails.logger.info "Checkout session completed for order #{order.id}"
 
-    # Here you can add additional logic like:
-    # - Send confirmation email
-    # - Update inventory
-    # - Trigger fulfillment process
+    process_order_paid(order)
   end
 
   def self.handle_checkout_expiration(checkout_session)
@@ -135,10 +132,7 @@ class StripePaymentService < ApplicationService
     order.mark_as_paid!
     Rails.logger.info "Payment succeeded for order #{order.id}"
 
-    # Here you can add additional logic like:
-    # - Send confirmation email
-    # - Update inventory
-    # - Trigger fulfillment process
+    process_order_paid(order)
   end
 
   def self.handle_payment_failure(payment_intent)
@@ -155,5 +149,36 @@ class StripePaymentService < ApplicationService
 
     order.mark_as_canceled!
     Rails.logger.info "Payment canceled for order #{order.id}"
+  end
+
+  # CLACKY_TODO: Implement post-payment business logic
+  # Examples: send emails, update inventory, trigger fulfillment
+  def self.process_order_paid(order)
+  end
+
+  # Sync order status from Stripe (for development when webhooks aren't configured)
+  def self.sync_order_status_from_stripe(order)
+    return unless order&.stripe_payment_intent_id&.present?
+    return if order.paid? # Already paid, no need to sync
+
+    begin
+      if order.stripe_payment_intent_id.start_with?('cs_')
+        session = Stripe::Checkout::Session.retrieve(order.stripe_payment_intent_id)
+        if session.payment_status == 'paid'
+          order.mark_as_paid!
+          process_order_paid(order)
+          Rails.logger.info "Development: Synced order #{order.id} to paid status"
+        end
+      else
+        payment_intent = Stripe::PaymentIntent.retrieve(order.stripe_payment_intent_id)
+        if payment_intent.status == 'succeeded'
+          order.mark_as_paid!
+          process_order_paid(order)
+          Rails.logger.info "Development: Synced order #{order.id} to paid status"
+        end
+      end
+    rescue Stripe::StripeError => e
+      Rails.logger.error "Development: Failed to sync order #{order.id}: #{e.message}"
+    end
   end
 end

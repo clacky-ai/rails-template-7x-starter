@@ -93,32 +93,36 @@ document.addEventListener('turbo:load', convertLegacyAttributes)
 document.addEventListener('turbo:frame-load', convertLegacyAttributes)
 
 // Handle data-disable-with for forms with data-turbo="false" (like OAuth)
-// Since Turbo is disabled, we need to manually handle button disable/enable
+// Since Turbo is disabled, we need to manually handle submit element disable/enable
 function handleNonTurboFormSubmit(event: Event): void {
   const form = event.target as HTMLFormElement
-  const button = form.querySelector<HTMLButtonElement>('button[type="submit"], button:not([type])')
+  const submit = form.querySelector<HTMLButtonElement | HTMLInputElement>(
+    'button[type="submit"], button:not([type]), input[type="submit"]'
+  )
 
-  // Check if turbo is disabled on form or button
-  const isTurboDisabled = form.dataset.turbo === 'false' || button?.dataset.turbo === 'false'
+  // Check if turbo is disabled
+  const isTurboDisabled = form.dataset.turbo === 'false' || submit?.dataset.turbo === 'false'
 
-  if (isTurboDisabled && button && button.dataset.disableWith) {
-    // Store original text and disable button
-    button.dataset.originalText = button.textContent || ''
-    button.textContent = button.dataset.disableWith
-    button.disabled = true
+  if (isTurboDisabled && submit?.dataset.disableWith) {
+    const isButton = submit instanceof HTMLButtonElement
+    const key = isButton ? 'textContent' : 'value'
+    submit.dataset.originalText = submit[key] || ''
+    submit[key] = submit.dataset.disableWith
+    submit.disabled = true
   }
 }
 
-// Re-enable buttons when page becomes visible (e.g., switching back from payment window)
+// Re-enable submit elements when page becomes visible (e.g., switching back from payment window)
 function handleVisibilityChange(): void {
   if (document.visibilityState === 'visible') {
-    const selector = 'form[data-turbo="false"] button[disabled][data-original-text], button[data-turbo="false"][disabled][data-original-text]'
-    document.querySelectorAll<HTMLButtonElement>(selector).forEach(button => {
-      button.disabled = false
-      const originalText = button.dataset.originalText
+    const selector = 'form[data-turbo="false"] [disabled][data-original-text], [data-turbo="false"][disabled][data-original-text]'
+    document.querySelectorAll<HTMLButtonElement | HTMLInputElement>(selector).forEach(submit => {
+      submit.disabled = false
+      const originalText = submit.dataset.originalText
       if (originalText) {
-        button.textContent = originalText
-        delete button.dataset.originalText
+        const key = submit instanceof HTMLButtonElement ? 'textContent' : 'value'
+        submit[key] = originalText
+        delete submit.dataset.originalText
       }
     })
   }

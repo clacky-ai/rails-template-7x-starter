@@ -1,0 +1,47 @@
+<%% # Stripe payment button with test card info
+   # MUST use this partial for all payment-related buttons
+   #
+   # Why these settings are required:
+   # - data: { turbo: false } - Stripe redirect needs full page navigation
+   # - form: { onsubmit: ... } - Detects iframe and opens in new tab (prevents X-Frame-Options errors)
+   #
+   # Usage:
+   #   render 'orders/pay_button', order: @order
+   #   render 'orders/pay_button', order: @order, text: 'Buy Now', css_class: 'btn-secondary'
+-%>
+
+<%% if Rails.env.development? && (order.pending? || order.failed? || order.processing?) %>
+<div class="alert-info mb-6">
+  <div class="flex">
+    <div class="flex-shrink-0">
+      <svg class="h-5 w-5 text-info mr-3" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+      </svg>
+    </div>
+    <div class="ml-3">
+      <h3 class="text-sm font-medium">Development Mode - Test Payment</h3>
+      <div class="mt-2 text-sm">
+        <p class="mb-2">Use these test card numbers (no real charges):</p>
+        <ul class="list-disc list-inside space-y-1">
+          <li><strong>Successful:</strong> 4242424242424242</li>
+          <li><strong>Declined:</strong> 4000000000000002</li>
+          <li><strong>Expired:</strong> 4000000000000069</li>
+        </ul>
+        <p class="mt-2"><strong>Expiry:</strong> Any future date | <strong>CVC:</strong> Any 3 digits | <strong>ZIP:</strong> Any 5 digits</p>
+      </div>
+    </div>
+  </div>
+</div>
+<%% end %>
+
+<%% if order.pending? || order.failed? || order.processing? %>
+  <%% text ||= order.failed? ? "Retry Payment" : "Pay Now" -%>
+  <%% css_class ||= "btn-primary" -%>
+
+  <%%= button_to text,
+      pay_order_path(order),
+      method: :post,
+      class: css_class,
+      form: { onsubmit: "this.target = (window.self !== window.parent) ? '_blank' : '_self';" },
+      data: { turbo: false, disable_with: "Processing..." } %>
+<%% end %>

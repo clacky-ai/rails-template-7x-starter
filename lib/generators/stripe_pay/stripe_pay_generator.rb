@@ -98,7 +98,7 @@ class StripePayGenerator < Rails::Generators::Base
     end
     template "views/show.html.erb", "app/views/orders/show.html.erb"
     template "views/success.html.erb", "app/views/orders/success.html.erb"
-    template "views/failure.html.erb", "app/views/orders/failure.html.erb"
+    template "views/_pay_button.html.erb", "app/views/orders/_pay_button.html.erb"
   end
 
   def generate_initializer
@@ -254,35 +254,19 @@ class StripePayGenerator < Rails::Generators::Base
 
   def display_next_steps
     say "\n" + "="*60, :green
-    say "Stripe Payment Generator completed successfully!", :green
-    if options[:auth]
-      say "(with user authentication)", :green
-    end
+    say "Stripe Payment Generator completed!", :green
     say "="*60, :green
     say "\nNext steps:", :yellow
-    say "1. Run bundle install to install the Stripe gem:", :cyan
-    say "   bundle install"
-    say "\n2. Run the migration:", :cyan
-    say "   rails db:migrate"
-    say "\n3. Configure your Stripe keys in config/application.yml:", :cyan
-    say "   STRIPE_PUBLISHABLE_KEY: 'pk_test_...'"
-    say "   STRIPE_SECRET_KEY: 'sk_test_...'"
-    say "   STRIPE_WEBHOOK_SECRET: 'whsec_...'"
-    say "\n4. Set up Stripe webhook endpoint in your Stripe dashboard:", :cyan
-    say "   Endpoint URL: https://yourdomain.com/webhooks/stripe"
-    say "   Events: checkout.session.completed, checkout.session.expired"
-    say "\n5. Test the payment flow:", :cyan
-    say "   1. View all orders: /orders"
-    if options[:for_test]
-      say "   2. Create order: /orders/new"
-      say "   3. View order and initiate payment: /orders/:id"
-    else
-      say "   2. Create orders programmatically in your application"
-      say "   3. View order and initiate payment: /orders/:id"
-      say "   - Note: Order creation form not generated (use --for-test to include it)"
+    say "1. Setup: bundle install && rails db:migrate", :cyan
+    say "\n2. Configure Stripe keys in config/application.yml", :cyan
+    say "\n3. Resolve CLACKY_TODOs (tests will fail until resolved):", :cyan
+    unless options[:for_test]
+      say "   - Implement order creation in your business workflow"
     end
-    say "\n6. Access admin panel to manage orders:", :cyan
-    say "   /admin/orders"
+    say "   - Implement process_order_paid() in app/services/stripe_payment_service.rb"
+    say "   - Remove CLACKY_TODO comments after implementing"
+    say "\n4. Setup Stripe webhook: https://yourdomain.com/webhooks/stripe", :cyan
+    say "   Events: checkout.session.completed, checkout.session.expired"
     say "\n" + "="*60, :green
   end
 end

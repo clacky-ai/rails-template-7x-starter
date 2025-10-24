@@ -92,11 +92,13 @@
             <% if @for_test %>
             <p class="mt-1 text-sm text-muted">Get started by creating your first order.</p>
             <% else %>
-            <%%# TODO: Implement order creation in your business workflow.
-                This could be: cart checkout, booking system, service purchase, etc.
-                After creating an order, redirect to order_path(order) for payment.
-                DO NOT create standalone orders#new - integrate into your feature. %>
-            <p class="mt-1 text-sm text-muted">Implement order creation in your business workflow.</p>
+            <%%# CLACKY_TODO: Implement order creation in your business workflow
+                Example: In your feature, create order then redirect to show page for payment:
+                  @order = Order.create!(product_name: 'xxx', amount: 19.9, ...)
+                  redirect_to order_path(@order)
+                The order show page uses render 'orders/pay_button' for Stripe-compatible payment.
+                DO NOT create orders#new or add "Create Order" button here. %>
+            <p class="mt-1 text-sm text-muted">Orders appear here after users create them from your business feature.</p>
             <% end %>
           </div>
         <%% end %>

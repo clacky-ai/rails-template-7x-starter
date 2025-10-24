@@ -25,37 +25,97 @@ RSpec.describe "Orders", type: :request do
   end
 
 <% unless @for_test -%>
-  describe "Order creation implementation" do
-    it "validates that order creation workflow has been implemented" do
-      index_view_path = Rails.root.join('app/views/orders/index.html.erb')
+  describe "CLACKY_TODO validation" do
+    it "validates that all CLACKY_TODOs have been resolved" do
+      files_to_check = [
+        'app/views/orders/index.html.erb',
+        'app/services/stripe_payment_service.rb'
+      ]
 
-      if File.exist?(index_view_path)
-        view_content = File.read(index_view_path)
+      todos_found = []
 
-        # Check if TODO comment still exists
-        has_todo = view_content.include?('TODO: Implement order creation')
+      files_to_check.each do |file_path|
+        full_path = Rails.root.join(file_path)
+        next unless File.exist?(full_path)
 
-        if has_todo
-          error_message = <<~MSG
+        content = File.read(full_path)
 
-            ❌ Order creation workflow not implemented yet!
-
-            The orders index view still contains the TODO placeholder.
-            You need to implement order creation in your business workflow:
-
-            Examples:
-            1. Shopping cart checkout → creates Order → redirects to order_path(order)
-            2. Booking system → creates Order → redirects to order_path(order)
-            3. Service purchase → creates Order → redirects to order_path(order)
-
-            After implementing, remove the TODO comment from:
-            app/views/orders/index.html.erb
-
-            DO NOT create standalone orders#new - integrate into your feature!
-          MSG
-
-          fail error_message
+        # Extract CLACKY_TODO and its description
+        content.scan(/CLACKY_TODO:\s*(.+)/) do |match|
+          todos_found << {
+            file: file_path,
+            description: match[0].strip
+          }
         end
+      end
+
+      if todos_found.any?
+        error_message = "\n❌ Found #{todos_found.length} unresolved CLACKY_TODO(s):\n\n"
+
+        todos_found.each do |todo|
+          error_message += "📄 #{todo[:file]}\n"
+          error_message += "   TODO: #{todo[:description]}\n\n"
+        end
+
+        error_message += "Please implement the required functionality and remove CLACKY_TODO comments.\n"
+
+        fail error_message
+      end
+    end
+
+    it "validates payment flow uses pay_button partial correctly" do
+      violations = []
+
+      # Check views for direct button_to pay_order_path
+      Dir.glob(Rails.root.join('app/views/**/*.html.erb')).each do |file_path|
+        content = File.read(file_path)
+        relative_path = file_path.sub(Rails.root.to_s + '/', '')
+
+        next if relative_path.include?('_pay_button.html.erb')
+
+        if content.match?(/button_to.*pay_order_path/) && !content.match?(/render.*pay_button/)
+          violations << {
+            file: relative_path,
+            issue: "Direct button_to pay_order_path instead of using pay_button partial"
+          }
+        end
+      end
+
+      # Check controllers for direct redirect to pay_order_path
+      Dir.glob(Rails.root.join('app/controllers/**/*_controller.rb')).each do |file_path|
+        content = File.read(file_path)
+        relative_path = file_path.sub(Rails.root.to_s + '/', '')
+
+        next if relative_path.include?('orders_controller.rb')
+
+        if content.match?(/redirect_to.*pay_order_path/)
+          violations << {
+            file: relative_path,
+            issue: "Direct redirect to pay_order_path - should redirect to order_path first"
+          }
+        end
+      end
+
+      if violations.any?
+        error_message = "\n❌ Found #{violations.length} payment flow violation(s):\n\n"
+
+        violations.each do |v|
+          error_message += "📄 #{v[:file]}\n"
+          error_message += "   Issue: #{v[:issue]}\n"
+          if v[:file].include?('views/')
+            error_message += "   Fix: Use <%%%= render 'orders/pay_button', order: @order %>\n\n"
+          else
+            error_message += "   Fix: redirect_to order_path(@order) then let user click Pay button\n\n"
+          end
+        end
+
+        error_message += "Correct flow:\n"
+        error_message += "  1. Create order in controller: @order = Order.create!(...)\n"
+        error_message += "  2. Redirect to order show: redirect_to order_path(@order)\n"
+        error_message += "  3. Show page displays order details + pay_button partial\n"
+        error_message += "  4. User clicks 'Pay Now' → triggers pay_order_path\n"
+
+        fail error_message
       end
     end
   end
