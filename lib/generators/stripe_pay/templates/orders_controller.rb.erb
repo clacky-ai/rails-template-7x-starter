@@ -59,9 +59,8 @@ class OrdersController < ApplicationController
     result = stripe_service.call
 
     if result[:success]
-      @checkout_session = result[:checkout_session]
-      # Redirect to Stripe Checkout with 303 status for Turbo compatibility
-      redirect_to @checkout_session.url, allow_other_host: true, status: :see_other
+      @checkout_url = result[:checkout_session].url
+      # Turbo stream will handle the redirect with turbo: false
     else
       flash[:alert] = "Payment initialization failed: #{result[:error]}"
       redirect_to @order

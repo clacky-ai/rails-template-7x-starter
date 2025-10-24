@@ -1,9 +1,10 @@
 <%% # Stripe payment button with test card info
    # MUST use this partial for all payment-related buttons
    #
-   # Why these settings are required:
-   # - data: { turbo: false } - Stripe redirect needs full page navigation
-   # - form: { onsubmit: ... } - Detects iframe and opens in new tab (prevents X-Frame-Options errors)
+   # Payment flow uses Turbo Stream:
+   # - Button submits via Turbo (default behavior)
+   # - Controller returns turbo_stream response with redirect action
+   # - JavaScript redirect action handles iframe detection and external redirect
    #
    # Usage:
    #   render 'orders/pay_button', order: @order
@@ -42,6 +43,5 @@
       pay_order_path(order),
       method: :post,
       class: css_class,
-      form: { onsubmit: "this.target = (window.self !== window.parent) ? '_blank' : '_self';" },
-      data: { turbo: false, disable_with: "Processing..." } %>
+      data: { turbo_submits_with: "Processing..." } %>
 <%% end %>

@@ -149,3 +149,26 @@ StreamActions.report_async_error = function(this: any) {
     })
   }
 }
+
+// Register custom Turbo Stream action for redirect with turbo: false
+StreamActions.redirect = function(this: any) {
+  const url = this.getAttribute('url')
+  const turbo = this.getAttribute('data-turbo')
+
+  if (url) {
+    if (turbo === 'false') {
+      // Full page redirect (turbo: false)
+      // Check if in iframe and open in new window to avoid X-Frame-Options errors
+      if (window.self !== window.parent) {
+        // In iframe, open in new window
+        window.open(url, '_blank')
+      } else {
+        // Normal redirect
+        window.location.href = url
+      }
+    } else {
+      // Turbo navigation
+      Turbo.visit(url)
+    }
+  }
+}

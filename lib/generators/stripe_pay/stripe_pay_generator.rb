@@ -99,6 +99,7 @@ class StripePayGenerator < Rails::Generators::Base
     template "views/show.html.erb", "app/views/orders/show.html.erb"
     template "views/success.html.erb", "app/views/orders/success.html.erb"
     template "views/_pay_button.html.erb", "app/views/orders/_pay_button.html.erb"
+    template "views/pay.turbo_stream.erb", "app/views/orders/pay.turbo_stream.erb"
   end
 
   def generate_initializer
