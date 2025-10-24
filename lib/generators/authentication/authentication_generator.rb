@@ -349,6 +349,15 @@ class AuthenticationGenerator < Rails::Generators::Base
     nil
   end
 
+  def check_session_cookie_availability
+    # Check if session cookie is available (privacy + iframe mode detection)
+    if request.session.id.nil? || !cookies.key?('_clacky_app_session')
+      flash.now[:alert] = "Your browser may be in privacy + iframe mode. " \\
+                          "Login features may not work properly. " \\
+                          "Please open in a new window using the top-right button."
+    end
+  end
+
   def handle_password_errors(user)
     error_messages = []
 

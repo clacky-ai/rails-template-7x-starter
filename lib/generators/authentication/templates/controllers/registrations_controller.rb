@@ -1,4 +1,6 @@
 class RegistrationsController < ApplicationController
+  before_action :check_session_cookie_availability, only: [:new]
+
   def new
     @user = User.new
   end

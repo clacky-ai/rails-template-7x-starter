@@ -1,0 +1,78 @@
+#!/usr/bin/env ruby
+require 'fileutils'
+
+# path to your application root.
+APP_ROOT = File.expand_path('..', __dir__)
+
+def system!(*args)
+  system(*args) || abort("\n== Command #{args} failed ==")
+end
+
+def git_clean?
+  # Refresh git index to avoid false positives from timestamp changes
+  system('git update-index --refresh', out: File::NULL, err: File::NULL)
+  system('git diff-index --quiet HEAD --', out: File::NULL, err: File::NULL)
+end
+
+def files_identical?(file1, file2)
+  system("diff -q #{file1} #{file2}", out: File::NULL, err: File::NULL)
+end
+
+FileUtils.chdir APP_ROOT do
+  puts '== Template Prebuild Check =='
+  puts ''
+
+  # 0. Check if git status is clean
+  puts '📋 Checking git status...'
+  unless git_clean?
+    abort "\n❌ Git working directory is not clean!\n" +
+          "Please commit or stash your changes before running this script.\n" +
+          `git status`
+  end
+  puts '✅ Git working directory is clean'
+  puts ''
+
+  # 1. Pull latest changes
+  puts '📥 Pulling latest changes...'
+  system! 'git pull --rebase'
+  puts '✅ Successfully pulled latest changes'
+  puts ''
+
+  # 2. Bundle install
+  puts '💎 Running bundle install...'
+  system! 'bundle install'
+  puts '✅ Bundle install completed'
+  puts ''
+
+  # 3. npm install
+  puts '📦 Running npm install...'
+  system! 'npm install'
+  puts '✅ npm install completed'
+  puts ''
+
+  # 4. Check if application.yml differs from application.yml.example
+  puts '🔍 Checking application.yml vs application.yml.example...'
+  unless files_identical?('config/application.yml', 'config/application.yml.example')
+    abort "\n❌ application.yml differs from application.yml.example!\n" +
+          "Please manually review and sync these files:\n\n" +
+          `diff config/application.yml config/application.yml.example`
+  end
+  puts '✅ application.yml matches application.yml.example'
+  puts ''
+
+  # 5. Check if git status is still clean
+  puts '📋 Final git status check...'
+  unless git_clean?
+    abort "\n❌ Git working directory is not clean after updates!\n" +
+          "Please review the changes:\n" +
+          `git status`
+  end
+  puts '✅ Git working directory is still clean'
+  puts ''
+
+  # 6. All checks passed
+  puts '🎉 ========================================'
+  puts '   ✅ OK - All checks passed!'
+  puts '   Template is ready for publishing.'
+  puts '========================================'
+end
