@@ -49,9 +49,19 @@ module.exports = {
         },
       },
       textColor: {
-        primary: 'hsl(var(--color-text-primary) / <alpha-value>)',
-        secondary: 'hsl(var(--color-text-secondary) / <alpha-value>)',
-        muted: 'hsl(var(--color-text-muted) / <alpha-value>)',
+        primary: {
+          DEFAULT: 'hsl(var(--color-text-primary) / <alpha-value>)',
+          light: 'hsl(var(--color-primary-light) / <alpha-value>)',
+          dark: 'hsl(var(--color-primary-dark) / <alpha-value>)',
+        },
+        secondary: {
+          DEFAULT: 'hsl(var(--color-text-secondary) / <alpha-value>)',
+          light: 'hsl(var(--color-secondary-light) / <alpha-value>)',
+          dark: 'hsl(var(--color-secondary-dark) / <alpha-value>)',
+        },
+        muted: {
+          DEFAULT: 'hsl(var(--color-text-muted) / <alpha-value>)',
+        },
       },
       fontFamily: {
         sans: ['var(--font-family-sans)', 'ui-sans-serif', 'system-ui'],
