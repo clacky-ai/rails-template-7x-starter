@@ -2,6 +2,7 @@ require 'rails_helper'
 
 RSpec.describe "Authenticated Access", type: :request do
   let(:user) { create(:user) }
+  let(:navbar_file) { 'app/views/shared/_navbar.html.erb' }
 
   describe "Home page access after login" do
     context "when user is logged in" do
@@ -17,12 +18,6 @@ RSpec.describe "Authenticated Access", type: :request do
         # This test assumes the home page shows some user info or login-specific content
         # Adjust the expectation based on your actual home page implementation
         expect(response.body).not_to include('Sign in')
-      end
-
-      it "displays navbar with sign out link" do
-        get root_path
-        expect(response.body).to match(/<nav|data-navbar|class="navbar"/),
-          "Navbar not found. Please update app/views/shared/_navbar.html.erb with navigation links"
       end
 
       it "allows access to profile page" do
@@ -81,6 +76,22 @@ RSpec.describe "Authenticated Access", type: :request do
       # Verify we can access other protected pages
       get profile_path
       expect(response).to have_http_status(:ok)
+    end
+  end
+
+  describe "Navbar customization" do
+    it "validates navbar TODOs resolved and uses user_dropdown partial" do
+      # Check CLACKY_TODOs are resolved
+      check_clacky_todos([navbar_file])
+
+      # Check navbar file exists and uses user_dropdown
+      navbar_path = Rails.root.join(navbar_file)
+      expect(File.exist?(navbar_path)).to be_truthy,
+        "Navbar partial should exist at #{navbar_path}"
+
+      content = File.read(navbar_path)
+      expect(content).to match(/render\s+['"]shared\/user_dropdown['"]/),
+        "Navbar should use the user_dropdown partial for logged-in users"
     end
   end
 end

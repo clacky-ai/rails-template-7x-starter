@@ -1,0 +1,36 @@
+<!-- CLACKY_TODO: Customize this navbar to match your app's design -->
+<!-- The user dropdown component is production-ready, focus on logo and navigation links -->
+<nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between h-16">
+      <!-- CLACKY_TODO: Left side - Add your logo and brand name -->
+      <div class="flex items-center space-x-8">
+        <div class="flex-shrink-0 flex items-center">
+          <%= link_to root_path, class: "text-xl font-bold text-gray-900 dark:text-white" do %>
+            <%= Rails.application.config.x.appname %>
+          <% end %>
+        </div>
+
+        <!-- CLACKY_TODO: Add your main navigation links here (optional) -->
+        <!-- Example:
+        <div class="hidden md:flex md:space-x-4">
+          <%#= link_to "Dashboard", dashboard_path, class: "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors" %>
+          <%#= link_to "Features", features_path, class: "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors" %>
+        </div>
+        -->
+      </div>
+
+      <!-- Right side: User dropdown or auth links -->
+      <div class="flex items-center space-x-4">
+        <% if user_signed_in? %>
+          <!-- User dropdown (production-ready component) -->
+          <%= render 'shared/user_dropdown' %>
+        <% else %>
+          <!-- CLACKY_TODO: Customize guest user links if needed -->
+          <%= link_to "Sign In", sign_in_path, class: "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors" %>
+          <%= link_to "Sign Up", sign_up_path, class: "bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-md text-sm font-medium transition-colors shadow-sm" %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</nav>

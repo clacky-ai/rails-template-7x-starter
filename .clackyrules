@@ -26,8 +26,9 @@ When project has been setup, call `run_project` tool immediately. ALWAYS keep pr
 
 Restarting project is unnecessary because Rails automatically hot-reloads code changes in most cases. Changes to the following explicitly require a restart:
 - `config/` directory files (except `config/routes.rb`)
-- `Gemfile` or `Gemfile.lock`
+- `Gemfile` or `Gemfile.lock` (run `bundle install` first, then restart)
 - `config/application.yml`
+- After running `rails g authentication` or `rails g stripe_pay` (they modify Gemfile - need `bundle install` then restart)
 
 ## ⚠️ MANDATORY PROJECT WORKFLOW - FOLLOW EXACTLY IN THIS ORDER
 

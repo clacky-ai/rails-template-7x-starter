@@ -27,40 +27,10 @@ RSpec.describe "Orders", type: :request do
 <% unless @for_test -%>
   describe "CLACKY_TODO validation" do
     it "validates that all CLACKY_TODOs have been resolved" do
-      files_to_check = [
+      check_clacky_todos([
         'app/views/orders/index.html.erb',
         'app/services/stripe_payment_service.rb'
-      ]
-
-      todos_found = []
-
-      files_to_check.each do |file_path|
-        full_path = Rails.root.join(file_path)
-        next unless File.exist?(full_path)
-
-        content = File.read(full_path)
-
-        # Extract CLACKY_TODO and its description
-        content.scan(/CLACKY_TODO:\s*(.+)/) do |match|
-          todos_found << {
-            file: file_path,
-            description: match[0].strip
-          }
-        end
-      end
-
-      if todos_found.any?
-        error_message = "\n❌ Found #{todos_found.length} unresolved CLACKY_TODO(s):\n\n"
-
-        todos_found.each do |todo|
-          error_message += "📄 #{todo[:file]}\n"
-          error_message += "   TODO: #{todo[:description]}\n\n"
-        end
-
-        error_message += "Please implement the required functionality and remove CLACKY_TODO comments.\n"
-
-        fail error_message
-      end
+      ])
     end
 
     it "validates payment flow uses pay_button partial correctly" do
