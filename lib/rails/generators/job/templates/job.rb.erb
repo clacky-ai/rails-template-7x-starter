@@ -1,27 +1,11 @@
 class <%= class_name %> < ApplicationJob
   queue_as :<%= queue_name %>
 
-  # Configure retry strategy
-  # retry_on StandardError, wait: :exponentially_longer, attempts: 3
-  # discard_on ActiveRecord::RecordNotFound
-
-  # IMPORTANT: Do NOT catch exceptions and swallow them!
-  # BAD:
-  #   rescue => e
-  #     Rails.logger.error(e)
-  #     # Error is hidden, job appears successful
-  #   end
+  # DO NOT add retry_on/discard_on here - ApplicationJob manages all retry strategies
+  # DO NOT rescue exceptions unless you re-raise them
+  # All uncaught exceptions are automatically reported to frontend via SystemMonitor Channel
   #
-  # GOOD: Let exceptions propagate naturally
-  #   rescue => e
-  #     Rails.logger.error(e)
-  #     raise  # Re-raise to trigger retry/failure handling
-  #   end
-  #
-  # Why: Development uses inline mode for immediate feedback.
-  #      Production has GoodJob dashboard to track failures.
-  #
-  # 💡 Always consider syncing results to frontend, use the following example code:
+  # Consider syncing results to frontend via ActionCable:
   #
   #   ActionCable.server.broadcast("xxx_#{id}", {
   #     type: 'update',  # REQUIRED: type field routes to client handler method
