@@ -454,6 +454,7 @@ class ErrorHandler {
     // Setup error handlers immediately
     this.setupGlobalErrorHandlers();
     this.setupInteractionTracking();
+    this.setupTurboHandlers();
 
     // Defer UI creation until DOM is ready
     if (document.readyState === 'loading') {
@@ -461,6 +462,23 @@ class ErrorHandler {
     } else {
       this.initUI();
     }
+  }
+
+  setupTurboHandlers() {
+    // Preserve status bar during Turbo navigation
+    document.addEventListener('turbo:before-render', (event: any) => {
+      if (this.statusBar && this.statusBar.parentNode) {
+        // Remove status bar from old body before render
+        this.statusBar.remove();
+      }
+    });
+
+    // Re-append status bar after render completes
+    document.addEventListener('turbo:render', () => {
+      if (this.statusBar && !document.getElementById('js-error-status-bar')) {
+        document.body.appendChild(this.statusBar);
+      }
+    });
   }
 
   initUI() {
