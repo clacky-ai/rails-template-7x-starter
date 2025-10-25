@@ -7,10 +7,6 @@ Examples:
     # Generate full authentication system
     bin/rails generate authentication
 
-    Note: This generator creates a complete authentication system with all features.
-    If you don't need certain features (like OAuth, email verification, etc.),
-    you can manually remove the corresponding files after generation.
-
 Generated Features:
     - User registration and authentication
     - Session management with device tracking
@@ -24,12 +20,9 @@ Generated Features:
     - Modern UI using DaisyUI/Tailwind CSS
 
 Post-Generation Steps:
-    1. Run: rails db:migrate
-    2. Add bcrypt gem to your Gemfile if not already present
-    3. Configure your mailer settings for email functionality
-    4. If using omniauth, configure providers in config/initializers/omniauth.rb
-    5. Customize views to match your application's design
-    6. Review generated code and adjust as needed
+    1. Run: bundle install && rails db:migrate && touch tmp/restart.txt
+    2. Customize views to match your application's design
+    3. Review generated code and adjust as needed
 
 Files Generated:
     Models:
@@ -50,8 +43,6 @@ Files Generated:
 
     ActionCable:
         app/channels/application_cable/connection.rb (authenticated connection)
-        app/channels/room_channel.rb (example authenticated channel)
-        app/javascript/channels/room_channel.js (frontend example)
 
     Views:
         Multiple view files for authentication forms and email templates

@@ -258,16 +258,12 @@ class StripePayGenerator < Rails::Generators::Base
     say "Stripe Payment Generator completed!", :green
     say "="*60, :green
     say "\nNext steps:", :yellow
-    say "1. Setup: bundle install && rails db:migrate", :cyan
+    say "1. Setup: bundle install && rails db:migrate && touch tmp/restart.txt", :cyan
     say "\n2. Configure Stripe keys in config/application.yml", :cyan
     say "\n3. Resolve CLACKY_TODOs (tests will fail until resolved):", :cyan
-    unless options[:for_test]
-      say "   - Implement order creation in your business workflow"
-    end
+    say "   - Implement order creation in your business workflow"
     say "   - Implement process_order_paid() in app/services/stripe_payment_service.rb"
     say "   - Remove CLACKY_TODO comments after implementing"
-    say "\n4. Setup Stripe webhook: https://yourdomain.com/webhooks/stripe", :cyan
-    say "   Events: checkout.session.completed, checkout.session.expired"
     say "\n" + "="*60, :green
   end
 end

@@ -1,4 +1,4 @@
-FAIL_FAST_LIMIT = 3
+FAIL_FAST_LIMIT = 5
 
 RSpec.configure do |config|
   config.fail_fast = FAIL_FAST_LIMIT

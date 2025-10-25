@@ -119,9 +119,9 @@ class LlmGenerator < Rails::Generators::Base
     say "     # result[:images] → array of image URLs"
 
     say "\n📚 Next:"
-    say "  1) Configure keys in config/application.yml"
+    say "  1) Run `touch tmp/restart.txt` make config/application.yml effect"
     say "  2) Use images: string|array for multimodal inputs when needed"
-    say "  3) ⚠️  Image generation is slow - consider async processing"
+    say "  3) Image generation is slow - consider async processing"
 
     say "\n🤖 AI Assistant Note:"
     say "  When storing LLM messages, include LlmMessageValidationConcern."

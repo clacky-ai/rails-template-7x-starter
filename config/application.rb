@@ -44,7 +44,7 @@ module Myapp
     # config.eager_load_paths << Rails.root.join("extras")
 
     # Application name configuration
-    config.x.appname = "ClackyAPP"
+    config.x.appname = File.read(Rails.root.join('config', 'appname.txt')).strip
 
     # Configure GoodJob as the Active Job queue adapter
     config.active_job.queue_adapter = :good_job

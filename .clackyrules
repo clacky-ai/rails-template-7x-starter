@@ -12,38 +12,30 @@ Active_Storage for upload file
 Kaminari
 Puma
 RSpec
-Stimulus + Turbo( TURBO STREAM ARCHITECTURE )
+Stimulus + Turbo( TURBO STREAM ARCHITECTURE: no turo-frame )
 ActionCable( solid_queue, no redis )
 FriendlyId
 
 Do not add or remove any components and avoid upgrading or downgrading components.
 
-Use simple, clear language and avoid technical jargon to user.
-
 ## What time you should run/stop project
-
-When project has been setup, call `run_project` tool immediately. ALWAYS keep project running.
 
 Restarting project is unnecessary because Rails automatically hot-reloads code changes in most cases. Changes to the following explicitly require a restart:
 - `config/` directory files (except `config/routes.rb`)
-- `Gemfile` or `Gemfile.lock` (run `bundle install` first, then restart)
+- `Gemfile`
 - `config/application.yml`
-- After running `rails g authentication` or `rails g stripe_pay` (they modify Gemfile - need `bundle install` then restart)
+
+Use `touch tmp/restart.txt` quickly restart project After running `rails g authentication` or `rails g stripe_pay` or `rails g llm`.
 
 ## ⚠️ MANDATORY PROJECT WORKFLOW - FOLLOW EXACTLY IN THIS ORDER
 
 **STOP! Before creating ANY models or controllers, you MUST complete these steps first:**
 
-### Step 0: REQUIRED - Update Application Name
-**ALWAYS start by updating `config.x.appname` in `config/application.rb` to match the project name.** This is used throughout the application for page titles, branding, and PWA manifest. Example: `config.x.appname = "MyApp"`
+### Step 1: REQUIRED - Update Application Name and Design System First
+#
+**ALWAYS start by updating the application name:** `echo "YourAppName" > config/appname.txt`
 
-### Step 1: REQUIRED - Design System First
 **ALWAYS start by updating existing design system variables in `app/assets/stylesheets/application.css`** (using `npm run build:css` to keep it right). DO NOT create any models/controllers before this.
-
-**⚠️ MODIFICATION HIERARCHY - FOLLOW EXACTLY:**
-1. **FIRST**: Modify existing CSS variables in `:root` section
-2. **SECOND**: Adjust existing dark mode variables in `.dark` section
-3. **LAST RESORT**: Only if absolutely necessary, modify existing component classes (.btn, .card, .alert, etc.)
 
 **ALWAYS use HSL colors in application.css and tailwind.config.js**
 
@@ -109,32 +101,21 @@ Do not generate any fake data that should originally be in the database for user
 
 Do not write any business logic in the admin backend that should only be for website management and maintenance.
 
-Create new home page, please write it in `app/views/home/index.html.erb` if need.
-
 Generate images using this placeholder website: https://images.unsplash.com/ and simultaneously verify accessibility with `curl` if you need static assets.
 
-**ActiveStorage in Seeds**: When creating seed data for models with image attachments, add `require 'open-uri'` at top and use hash format. Example: `Photo.create!(title: 'Demo', image: { io: URI.open('https://picsum.photos/800'), filename: 'photo.jpg' })`.
+**ActiveStorage in Seeds**: When creating seed data for models with image attachments, Use unsplash image for pretty UI. Example: `Photo.create!(title: 'Demo', image: { io: URI.open('https://images.unsplash.com/xxx'), filename: 'photo.jpg' })`.
 
 When installing any new gem or npm packages, always specify a version you are most familiar with and suitable for the project. Do not use the latest version directly.
 
 **⚠️ CRITICAL: Before Creating ANY Models - Generator Priority Check:**
-
-Before using `rails generate models` or `rails generate model`, **ALWAYS check if the feature requires these models first:**
-
-1. **Need User model?** → Use `rails generate authention` (NOT `rails g model user`)
-2. **Need Order model?** → Use `rails generate stripe_pay` (NOT `rails g model order`)
-3. **Need LLM integration?** → Use `rails generate llm` first
-4. **Other models** → Then use `rails generate models` or `rails generate model`
 
 **ALWAYS prefer `rails generate models` for batch model generation:**
 - Syntax: `rails g models product name:string:default=Untitled price:decimal:default=0 + category name:string + tag name:string color:string:default=#000000`
 - Separator: `+` splits different models
 - Enhanced syntax support:
   - **Default values**: `field:type:default=value` (e.g., `status:string:default=draft`, `count:integer:default=0`)
-  - **Null constraints**: `field:type:null` (generates `null: false` in migration)
   - **Serialize**: `field:text:serialize` (only for text/string; json/jsonb auto-handled)
 - **Protected names**: Cannot use `user`, `order`, `payment`, etc. (suggests alternatives)
-- Options: `--skip-migration`, `--skip-factory`, `--skip-spec`
 
 Use `rails generate model xxx` only when generating a single model (supports same enhanced syntax as above).
 
@@ -146,9 +127,9 @@ Use `rails generate controller xxx [action1] [action2] [--auth] [--single]` (whe
 
 Use `rails generate channel xxx [action1] [action2] [--auth]` to create ActionCable channels. Generates BOTH xxx_channel.rb (WebSocket) AND xxx_controller.ts (handles BOTH WebSocket AND UI interactions). Don't create separate controllers - extend the generated one. --auth means need current_user and authenticate_user!
 
-Use `rails generate pwa` to generate Progressive Web App setup with manifest, service worker, and install controller. Auto-detects app name from ENV['APPNAME'] and theme color from application.css --color-primary.
+Use `rails generate pwa` to generate Progressive Web App setup with manifest, service worker, and install controller. Auto-detects app name from config.x.appname and theme color from application.css --color-primary.
 
-Use `rails generate stimulus_controller xxx` to create new Stimulus controller. Forms are handled automatically by Turbo Drive.
+Use `rails generate stimulus_controller xxx` to create new Stimulus controller.
 
 **⚠️ TURBO STREAM ARCHITECTURE - Mandatory Rules:**
 
@@ -163,8 +144,6 @@ Use `rails generate stimulus_controller xxx` to create new Stimulus controller. 
 - ❌ NO `render json:` - JSON data passing is disabled for frontend-backend stability, use Turbo Stream instead (API namespace `app/controllers/api/` exempt)
 - ❌ NO `head :ok` - frontend cannot determine UI updates
 
-**STIMULUS TARGET RULES**: Optional targets must be declared with `declare readonly hasXXXTarget: boolean` to bypass validation. Required targets without this declaration will be validated.
-
 **⚠️ STIMULUS TESTING - CRITICAL COMPLIANCE**:
 - ALWAYS run `bundle exec rspec spec/javascript/simple_stimulus_validator_spec.rb` after ANY Stimulus-related changes
 - ALL stimulus validator errors are REAL errors, NOT false positives - fix them immediately
@@ -173,19 +152,19 @@ Use `rails generate stimulus_controller xxx` to create new Stimulus controller. 
 
 Use FriendlyId (already configured) if need slug URLs. For user-facing content use `friendly_id :title, use: :slugged`, for admin/API use simple IDs.
 
+Every form should include error messages using the shared partial. Add `<%= render 'shared/form_error_message', model: @your_model %>` at the beginning of every form for consistent error display. Never write nested form.
+
 ## 🎯 FRONTEND DEVELOPMENT RULES - STIMULUS + TURBO + TYPESCRIPT
 
 **MANDATORY**: ALL frontend interactions MUST use Stimulus controllers. NO inline JavaScript allowed.
 
 ALWAYS prefer TailwindCSS v3 and Stimulus controllers for UI behavior. NO pure JavaScript or jQuery allowed.
 
-Every form should include error messages using the shared partial. Add `<%= render 'shared/form_error_message', model: @your_model %>` at the beginning of every form for consistent error display. Never write nested form.
-
 ## Testing Requirements
 
 **MANDATORY**: Keep `rake test` all passed Before delivery feature to users.
 
-`rake test` is configured to only show 3 failed test cases at a time, so you should repeatedly run rake test if these have errors (no more than 10 rounds) until all tests pass
+`rake test` is configured to only show 5 failed test cases at a time, so you should repeatedly run rake test if these have errors (no more than 10 rounds) until all tests pass
 
 For authenticated curl: `rails dev:token[test@example.com]` outputs the token and example curl command (will create user if not exists). Copy the token and use it:
 ```bash

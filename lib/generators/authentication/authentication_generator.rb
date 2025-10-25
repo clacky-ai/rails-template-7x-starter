@@ -275,9 +275,8 @@ class AuthenticationGenerator < Rails::Generators::Base
     say "Authentication system generated successfully!", :green
     say "="*50, :green
     say "\nNext steps:", :yellow
-    say "1. Run: bundle install (new OAuth gems added)"
-    say "2. Run: rails db:migrate"
-    say "3. OAuth login (Google, Facebook, Twitter, GitHub) is built-in:"
+    say "1. Run: bundle install && rails db:migrate && touch tmp/restart.txt"
+    say "2. OAuth login (Google, Facebook, Twitter, GitHub) is built-in:"
     say "   - Set *_OAUTH_ENABLED: 'true' in config/application.yml to enable"
     say "   - Default credentials are pre-configured and ready to use"
     say "   - DO NOT modify CLIENT_ID/CLIENT_SECRET unless user specifies it"
