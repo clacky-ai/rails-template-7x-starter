@@ -103,6 +103,11 @@ module ActiveRecord
           if part.start_with?('default=')
             options[:default] = part.split('=', 2)[1]
           elsif part == 'null'
+            # Keep null: true (allow null) - this is more intuitive
+            # To disallow null, use 'notnull' or 'required' modifier
+            options[:null] = true
+          elsif part == 'notnull' || part == 'required'
+            # Use 'notnull' or 'required' to explicitly disallow null
             options[:null] = false
           elsif part == 'serialize'
             options[:serialize] = true
