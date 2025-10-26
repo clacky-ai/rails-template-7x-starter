@@ -3,10 +3,10 @@ name: Build and Push Docker Image
 on:
   push:
     paths:
-      - 'Dockerfile.base'
+      - '.github/Dockerfile.base'
   pull_request:
     paths:
-      - 'Dockerfile.base'
+      - '.github/Dockerfile.base'
 
 env:
   REGISTRY: ghcr.io
@@ -49,7 +49,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile.base
+          file: ./.github/Dockerfile.base
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
