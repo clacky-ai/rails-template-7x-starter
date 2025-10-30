@@ -94,10 +94,23 @@ class ImageGenerationService < ApplicationService
   end
 
   def extract_images(response)
-    # LiteLLM format: { choices: [{ message: { images: [{ image_url: { url: "..." } }] } }] }
+    # response format supported:
+    # 1. { choices: [{ message: { images: [{ image_url: { url: "..." } }] } }] }
+    # 2. { choices: [{ message: { content: "..." } }] }
     message = response.dig("choices", 0, "message")
-    images = message&.dig("images") || []
-    images.map { |img| img.dig("image_url", "url") }.compact
+    return [] unless message
+
+    if message["images"] && message["images"].is_a?(Array)
+      # 1. directly extract images array URLs
+      message["images"]
+        .map { |img| img.dig("image_url", "url") }
+        .compact
+    elsif message["content"].is_a?(String)
+      # 2. try to extract possible image URLs from content (supports Markdown and plain URLs)
+      message["content"].scan(%r{data:image/[a-zA-Z]+;base64,[A-Za-z0-9+/=]+}) rescue []
+    else
+      []
+    end
   end
 
   def api_key
