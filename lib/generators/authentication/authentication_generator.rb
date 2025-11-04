@@ -183,22 +183,22 @@ class AuthenticationGenerator < Rails::Generators::Base
       # Leave client id and secret blank to use Clacky Auth fallback
 
       # Google OAuth
-      GOOGLE_OAUTH_ENABLED: 'false'
+      GOOGLE_OAUTH_ENABLED: '<%= ENV.fetch("CLACKY_GOOGLE_OAUTH_ENABLED", "false") %>'
       GOOGLE_CLIENT_ID: '<%= ENV.fetch("CLACKY_AUTH_CLIENT_ID", "") %>'
       GOOGLE_CLIENT_SECRET: '<%= ENV.fetch("CLACKY_AUTH_CLIENT_SECRET", "") %>'
 
       # Facebook OAuth
-      FACEBOOK_OAUTH_ENABLED: 'false'
+      FACEBOOK_OAUTH_ENABLED: '<%= ENV.fetch("CLACKY_FACEBOOK_OAUTH_ENABLED", "false") %>'
       FACEBOOK_APP_ID: '<%= ENV.fetch("CLACKY_AUTH_CLIENT_ID", "") %>'
       FACEBOOK_APP_SECRET: '<%= ENV.fetch("CLACKY_AUTH_CLIENT_SECRET", "") %>'
 
       # Twitter OAuth
-      TWITTER_OAUTH_ENABLED: 'false'
+      TWITTER_OAUTH_ENABLED: '<%= ENV.fetch("CLACKY_TWITTER_OAUTH_ENABLED", "false") %>'
       TWITTER_API_KEY: '<%= ENV.fetch("CLACKY_AUTH_CLIENT_ID", "") %>'
       TWITTER_API_SECRET: '<%= ENV.fetch("CLACKY_AUTH_CLIENT_SECRET", "") %>'
 
       # GitHub OAuth
-      GITHUB_OAUTH_ENABLED: 'false'
+      GITHUB_OAUTH_ENABLED: '<%= ENV.fetch("CLACKY_GITHUB_OAUTH_ENABLED", "false") %>'
       GITHUB_CLIENT_ID: '<%= ENV.fetch("CLACKY_AUTH_CLIENT_ID", "") %>'
       GITHUB_CLIENT_SECRET: '<%= ENV.fetch("CLACKY_AUTH_CLIENT_SECRET", "") %>'
       # OAuth provider credentials generated end

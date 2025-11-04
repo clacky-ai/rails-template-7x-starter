@@ -48,7 +48,7 @@ class LlmGenerator < Rails::Generators::Base
 
       # Image Generation Service Configuration (uses LLM_BASE_URL and LLM_API_KEY)
       IMAGE_GEN_MODEL: '<%= ENV.fetch("CLACKY_IMAGE_GEN_MODEL", "gemini-2.5-flash-image") %>'
-      IMAGE_GEN_SIZE: '1024x1024' # Default image size
+      IMAGE_GEN_SIZE: '<%= ENV.fetch("CLACKY_IMAGE_GEN_SIZE", "1024x1024") %>'
       # Image Generation Service Configuration end
     YAML
 
