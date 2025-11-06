@@ -2,8 +2,9 @@
   "name": "app",
   "private": true,
   "scripts": {
-    "build": "run-p lint build:js",
-    "build:js": "esbuild app/javascript/*.* --bundle --sourcemap=inline --format=esm --outdir=app/assets/builds --public-path=/assets --loader:.ts=ts --loader:.tsx=tsx",
+    "build": "run-p build:css build:js",
+    "build:js": "esbuild app/javascript/*.* --bundle --sourcemap=external --format=esm --outdir=app/assets/builds --public-path=/assets --loader:.ts=ts --loader:.tsx=tsx --minify --legal-comments=none",
+    "build:js:dev": "esbuild app/javascript/*.* --bundle --sourcemap=inline --format=esm --outdir=app/assets/builds --public-path=/assets --loader:.ts=ts --loader:.tsx=tsx",
     "watch:js": "esbuild app/javascript/*.* --bundle --sourcemap=inline --format=esm --outdir=app/assets/builds --public-path=/assets --watch --loader:.ts=ts --loader:.tsx=tsx",
     "build:css": "run-p build:css:*",
     "build:css:app": "tailwindcss -i ./app/assets/stylesheets/application.css -o ./app/assets/builds/application.css --minify",
@@ -41,8 +42,6 @@
     "tailwindcss": "^3.4.17",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "^5.9.2"
-  },
-  "devDependencies": {
   },
   "browserslist": [
     "defaults"

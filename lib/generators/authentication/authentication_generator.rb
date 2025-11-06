@@ -262,28 +262,28 @@ class AuthenticationGenerator < Rails::Generators::Base
     end
 
     unless gemfile_content.include?('gem "omniauth"') || gemfile_content.include?("gem 'omniauth'")
-      gem 'omniauth'
+      gem 'omniauth', '~> 2.1'
     end
 
     unless gemfile_content.include?('omniauth-rails_csrf_protection')
-      gem 'omniauth-rails_csrf_protection'
+      gem 'omniauth-rails_csrf_protection', '~> 1.0'
     end
 
     # OAuth provider gems
     unless gemfile_content.include?('omniauth-google-oauth2')
-      gem 'omniauth-google-oauth2'
+      gem 'omniauth-google-oauth2', '~> 1.2'
     end
 
     unless gemfile_content.include?('omniauth-facebook')
-      gem 'omniauth-facebook'
+      gem 'omniauth-facebook', '~> 10.0'
     end
 
     unless gemfile_content.include?('omniauth-twitter2')
-      gem 'omniauth-twitter2'
+      gem 'omniauth-twitter2', '~> 1.0'
     end
 
     unless gemfile_content.include?('omniauth-github')
-      gem 'omniauth-github'
+      gem 'omniauth-github', '~> 2.0'
     end
   end
 
