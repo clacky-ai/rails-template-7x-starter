@@ -1,25 +1,33 @@
 # syntax=docker/dockerfile:1
-# Base image with all dependencies pre-installed
-# This image already contains:
-# - Ruby 3.3.5, Node.js 22.x
-# - All gems from Gemfile.lock
-# - All npm packages from package-lock.json
+# Base image with Ruby, Node.js and system dependencies
 FROM ghcr.io/clacky-ai/rails-base-template:latest
 
-# Base image uses /app as WORKDIR
 WORKDIR /app
 
 # Set production environment
 ENV RAILS_ENV="production" \
     NODE_ENV="production" \
-    PATH="${PATH}:/home/ruby/.local/bin:/node_modules/.bin:/usr/local/bundle/bin" \
-    USER="ruby" \
+    BUNDLE_DEPLOYMENT="1" \
+    BUNDLE_PATH="/usr/local/bundle" \
+    BUNDLE_WITHOUT="development" \
     PORT="3000"
 
-# Copy application code (overwrites the code from base image)
+# Install gems
+COPY --chown=ruby:ruby Gemfile Gemfile.lock ./
+RUN bundle install --jobs=4 --retry=3 && \
+    rm -rf /usr/local/bundle/cache/*.gem && \
+    find /usr/local/bundle/gems/ -name "*.c" -delete && \
+    find /usr/local/bundle/gems/ -name "*.o" -delete
+
+# Install npm packages
+COPY --chown=ruby:ruby package.json package-lock.json ./
+RUN npm ci --production=false && \
+    npm cache clean --force
+
+# Copy application code
 COPY --chown=ruby:ruby . .
 
-# Precompile assets (gems and npm packages already installed in base image)
+# Precompile assets
 RUN SECRET_KEY_BASE_DUMMY=1 bundle exec rails assets:precompile
 
 # Clean up
