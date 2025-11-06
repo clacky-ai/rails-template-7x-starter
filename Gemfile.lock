@@ -462,12 +462,12 @@ DEPENDENCIES
   kaminari
   launchy
   listen
-  omniauth
-  omniauth-facebook
-  omniauth-github
-  omniauth-google-oauth2
-  omniauth-rails_csrf_protection
-  omniauth-twitter2
+  omniauth (~> 2.1)
+  omniauth-facebook (~> 10.0)
+  omniauth-github (~> 2.0)
+  omniauth-google-oauth2 (~> 1.2)
+  omniauth-rails_csrf_protection (~> 1.0)
+  omniauth-twitter2 (~> 1.0)
   ostruct (~> 0.6.3)
   parser (= 3.3.5.0)
   pg (>= 1.1)
