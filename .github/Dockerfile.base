@@ -16,7 +16,8 @@ RUN bash -c "set -o pipefail && apt-get update \
   && apt-get clean \
   && groupadd -g \"${GID}\" ruby \
   && useradd --create-home --no-log-init -u \"${UID}\" -g \"${GID}\" ruby \
-  && mkdir /node_modules && chown ruby:ruby -R /node_modules /app"
+  && mkdir -p /node_modules /usr/local/bundle \
+  && chown -R ruby:ruby /node_modules /app /usr/local/bundle"
 
 USER ruby
 
