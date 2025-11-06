@@ -22,19 +22,23 @@ RUN bash -c "set -o pipefail && apt-get update \
 USER ruby
 
 RUN gem install bundler -v 2.6.3
-COPY --chown=ruby:ruby Gemfile* ./
 
-# Set production environment
-ENV RAILS_ENV="production" \
-    BUNDLE_DEPLOYMENT="1" \
-    BUNDLE_PATH="/usr/local/bundle" \
-    BUNDLE_WITHOUT="development"
+# Configure bundle before installing
+RUN bundle config set --local path '/usr/local/bundle' && \
+    bundle config set --local without 'development'
+
+COPY --chown=ruby:ruby Gemfile* ./
 
 # Install gems with parallel jobs and cleanup
 RUN bundle install --jobs=4 --retry=3 && \
     rm -rf /usr/local/bundle/cache/*.gem && \
     find /usr/local/bundle/gems/ -name "*.c" -delete && \
     find /usr/local/bundle/gems/ -name "*.o" -delete
+
+# Set production environment
+ENV RAILS_ENV="production" \
+    BUNDLE_PATH="/usr/local/bundle" \
+    BUNDLE_WITHOUT="development"
 
 COPY --chown=ruby:ruby package.json package-lock.json ./
 
