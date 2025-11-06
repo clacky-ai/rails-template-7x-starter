@@ -2,11 +2,21 @@ name: Build and Push Docker Image
 
 on:
   push:
+    branches:
+      - main
     paths:
       - '.github/Dockerfile.base'
+      - 'Gemfile'
+      - 'Gemfile.lock'
+      - 'package.json'
+      - 'package-lock.json'
   pull_request:
     paths:
       - '.github/Dockerfile.base'
+      - 'Gemfile'
+      - 'Gemfile.lock'
+      - 'package.json'
+      - 'package-lock.json'
   workflow_dispatch: # Allow manual trigger
 
 env:

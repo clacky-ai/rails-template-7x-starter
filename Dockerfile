@@ -1,5 +1,6 @@
 # syntax=docker/dockerfile:1
-# Base image with Ruby, Node.js and system dependencies
+# Base image contains common gems and npm packages pre-installed
+# If your Gemfile/package.json matches, you can reuse them directly!
 FROM ghcr.io/clacky-ai/rails-base-template:latest
 
 WORKDIR /app
@@ -7,22 +8,19 @@ WORKDIR /app
 # Set production environment
 ENV RAILS_ENV="production" \
     NODE_ENV="production" \
-    BUNDLE_DEPLOYMENT="1" \
-    BUNDLE_PATH="/usr/local/bundle" \
-    BUNDLE_WITHOUT="development" \
     PORT="3000"
 
-# Install gems
+# Check and install only missing gems (if Gemfile changed)
+# bundle check returns 0 if all gems are satisfied, otherwise install
 COPY --chown=ruby:ruby Gemfile Gemfile.lock ./
-RUN bundle install --jobs=4 --retry=3 && \
+RUN bundle check || (bundle install --jobs=4 --retry=3 && \
     rm -rf /usr/local/bundle/cache/*.gem && \
     find /usr/local/bundle/gems/ -name "*.c" -delete && \
-    find /usr/local/bundle/gems/ -name "*.o" -delete
+    find /usr/local/bundle/gems/ -name "*.o" -delete)
 
-# Install npm packages
+# Check and install only missing npm packages (if package.json changed)
 COPY --chown=ruby:ruby package.json package-lock.json ./
-RUN npm ci --production=false && \
-    npm cache clean --force
+RUN npm ci --production=false
 
 # Copy application code
 COPY --chown=ruby:ruby . .
