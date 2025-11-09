@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 # Base image contains common gems and npm packages pre-installed
 # If your Gemfile/package.json matches, you can reuse them directly!
-FROM ghcr.io/clacky-ai/rails-base-template:latest
+FROM ghcr.io/clacky-ai/rails-base-template:optimize-docker-build-performance
 
 WORKDIR /app
 

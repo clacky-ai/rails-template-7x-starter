@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - optimize/docker-build-performance
     paths:
       - '.github/Dockerfile.base'
       - 'Gemfile'
@@ -61,7 +62,7 @@ jobs:
         with:
           context: .
           file: ./.github/Dockerfile.base
-          push: ${{ github.event_name != 'pull_request' }}
+          push: ${{ github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/optimize/docker-build-performance') }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
