@@ -8,7 +8,7 @@ module SourceMapping
 
     # Check if source mapping should be enabled
     def self.enabled?
-      Rails.env.development?
+      true
     end
 
     # Get the main source ID attribute name
