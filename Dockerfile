@@ -1,4 +1,4 @@
-FROM ghcr.io/clacky-ai/rails-base-template:optimize-docker-build-performance
+FROM ghcr.io/clacky-ai/rails-base-template:latest
 
 WORKDIR /app
 

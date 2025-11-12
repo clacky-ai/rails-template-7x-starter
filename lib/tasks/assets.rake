@@ -1,11 +1,21 @@
-# Prevent assets:precompile in development environment
-if Rails.env.development?
-  Rake::Task['assets:precompile'].clear
-
-  namespace :assets do
+namespace :assets do
+  # Prevent assets:precompile in development environment
+  if Rails.env.development?
+    Rake::Task['assets:precompile'].clear
     task :precompile do
       puts "assets:precompile is not supported in development environment"
       puts "To check js/css issues, please use: npm run build"
+    end
+  else
+    if Rake::Task.task_defined?("javascript:build")
+      Rake::Task["javascript:build"].clear
+    end
+
+    namespace :javascript do
+      desc "Build JS via build:prod"
+      task :build do
+        sh "npm run build:prod"
+      end
     end
   end
 end
