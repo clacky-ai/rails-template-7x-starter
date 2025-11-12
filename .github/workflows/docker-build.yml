@@ -1,19 +1,9 @@
 name: Build and Push Docker Image
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - '.github/Dockerfile.base'
   pull_request:
     paths:
       - '.github/Dockerfile.base'
-      - 'Gemfile'
-      - 'Gemfile.lock'
-      - 'package.json'
-      - 'package-lock.json'
-  workflow_dispatch: # Allow manual trigger
 
 env:
   REGISTRY: ghcr.io
@@ -47,10 +37,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=raw,value={{date 'YYYYMMDD'}},enable={{is_default_branch}}
+            type=raw,value=latest
+            type=raw,value={{date 'YYYYMMDD'}}-{{branch}}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
