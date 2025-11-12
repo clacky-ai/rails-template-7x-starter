@@ -15,7 +15,7 @@ namespace :assets do
     namespace :javascript do
       desc "Build JS via build:js:prod"
       task :build do
-        sh "npm run build:js:prod"
+        system("npm run build:js:prod")
       end
     end
   end
