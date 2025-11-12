@@ -5,10 +5,7 @@ WORKDIR /app
 # Set production environment
 ENV RAILS_ENV="production" \
     NODE_ENV="production" \
-    PORT="3000" \
-    BUNDLE_WITHOUT="development:test" \
-    BUNDLE_DEPLOYMENT="1" \
-    BUNDLE_PATH="/usr/local/bundle" 
+    PORT="3000"
 
 # Check and install only missing gems (if Gemfile changed)
 # bundle check returns 0 if all gems are satisfied, otherwise install
