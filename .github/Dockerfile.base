@@ -9,7 +9,7 @@ ARG GID=1000
 
 # Install build dependencies and setup user
 RUN bash -c "set -o pipefail && apt-get update \
-  && apt-get install -y --no-install-recommends build-essential curl git libpq-dev libyaml-dev libvips pkg-config postgresql-client \
+  && apt-get install -y --no-install-recommends build-essential curl git libpq-dev libyaml-dev libvips \
   && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key -o /etc/apt/keyrings/nodesource.asc \
   && echo 'deb [signed-by=/etc/apt/keyrings/nodesource.asc] https://deb.nodesource.com/node_22.x nodistro main' | tee /etc/apt/sources.list.d/nodesource.list \
   && apt-get update && apt-get install -y --no-install-recommends nodejs \
@@ -28,23 +28,26 @@ RUN gem install bundler -v 2.6.3
 
 # Configure bundle to use system-wide path for caching
 RUN bundle config set --local path '/usr/local/bundle' && \
-    bundle config set --local without 'development'
+    bundle config set --local without 'development:test'
 
 # Copy and install gems (these will be cached in base image)
-COPY --chown=ruby:ruby Gemfile Gemfile.lock ./
+COPY --chown=ruby:ruby .github/Gemfile.base ./Gemfile
+COPY --chown=ruby:ruby .github/Gemfile.base.lock ./Gemfile.lock
 RUN bundle install --jobs=4 --retry=3 && \
     rm -rf /usr/local/bundle/cache/*.gem && \
     find /usr/local/bundle/gems/ -name "*.c" -delete && \
     find /usr/local/bundle/gems/ -name "*.o" -delete
 
 # Copy and install npm packages (these will be cached in base image)
-COPY --chown=ruby:ruby package.json package-lock.json ./
-RUN npm ci --production=false && \
+COPY --chown=ruby:ruby .github/package.base.json ./package.json
+COPY --chown=ruby:ruby .github/package-lock.base.json ./package-lock.json
+RUN npm ci && \
     npm cache clean --force
 
 # Set default environment
 ENV RAILS_ENV="production" \
     NODE_ENV="production" \
+    BUNDLE_DEPLOYMENT="true" \
     BUNDLE_PATH="/usr/local/bundle" \
     BUNDLE_WITHOUT="development:test" \
     PATH="${PATH}:/home/ruby/.local/bin:/node_modules/.bin:/usr/local/bundle/bin" \

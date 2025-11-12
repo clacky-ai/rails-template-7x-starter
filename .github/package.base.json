@@ -1,0 +1,50 @@
+{
+  "name": "app",
+  "private": true,
+  "scripts": {
+    "build": "run-p lint build:js",
+    "build:js": "esbuild app/javascript/*.* --bundle --sourcemap=inline --format=esm --outdir=app/assets/builds --public-path=/assets --loader:.ts=ts --loader:.tsx=tsx",
+    "build:js:prod": "esbuild app/javascript/*.* --bundle --format=esm --outdir=app/assets/builds --public-path=/assets --loader:.ts=ts --loader:.tsx=tsx --minify --legal-comments=none",
+    "watch:js": "esbuild app/javascript/*.* --bundle --sourcemap=inline --format=esm --outdir=app/assets/builds --public-path=/assets --watch --loader:.ts=ts --loader:.tsx=tsx",
+    "build:css": "run-p build:css:*",
+    "build:css:app": "tailwindcss -i ./app/assets/stylesheets/application.css -o ./app/assets/builds/application.css --minify",
+    "build:css:admin": "tailwindcss -i ./app/assets/stylesheets/admin.css -o ./app/assets/builds/admin.css --minify",
+    "watch:css": "run-p watch:css:*",
+    "watch:css:app": "tailwindcss -i ./app/assets/stylesheets/application.css -o ./app/assets/builds/application.css --watch",
+    "watch:css:admin": "tailwindcss -i ./app/assets/stylesheets/admin.css -o ./app/assets/builds/admin.css --watch",
+    "lint": "run-p lint:eslint lint:types",
+    "lint:eslint": "eslint",
+    "lint:types": "tsc --noEmit",
+    "type-check": "tsc --noEmit",
+    "lint:fix": "eslint --fix"
+  },
+  "dependencies": {
+    "@hotwired/stimulus": "^3.2.2",
+    "@hotwired/turbo-rails": "^8.0.18",
+    "@rails/actioncable": "^8.0.201",
+    "@rails/activestorage": "^8.0.200",
+    "@tailwindcss/forms": "^0.5.10",
+    "@tailwindcss/typography": "^0.5.16",
+    "@types/alpinejs": "^3.13.11",
+    "@types/hotwired__turbo": "^8.0.4",
+    "@types/node": "^24.5.2",
+    "@types/rails__actioncable": "^6.1.11",
+    "@types/rails__activestorage": "^8.0.1",
+    "@typescript-eslint/eslint-plugin": "^8.44.1",
+    "@typescript-eslint/parser": "^8.44.1",
+    "alpinejs": "^3.14.9",
+    "esbuild": "^0.25.5",
+    "eslint": "^9.36.0",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-prefer-arrow": "^1.2.3",
+    "npm-run-all": "^4.1.5",
+    "source-map-js": "^1.2.1",
+    "tailwindcss": "^3.4.17",
+    "tailwindcss-animate": "^1.0.7",
+    "trix": "^2.1.15",
+    "typescript": "^5.9.2"
+  },
+  "browserslist": [
+    "defaults"
+  ]
+}

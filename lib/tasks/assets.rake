@@ -6,7 +6,8 @@ namespace :assets do
       puts "assets:precompile is not supported in development environment"
       puts "To check js/css issues, please use: npm run build"
     end
-  else
+  end
+  if Rails.env.production?
     if Rake::Task.task_defined?("javascript:build")
       Rake::Task["javascript:build"].clear
     end
