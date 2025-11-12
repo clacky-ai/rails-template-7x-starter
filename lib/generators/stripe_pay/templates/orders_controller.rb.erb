@@ -70,7 +70,7 @@ class OrdersController < ApplicationController
   def success
     # In development mode, check and update order status from Stripe
     # since webhooks might not be properly configured
-    if Rails.env.development? && @order.processing?
+    if @order.processing?
       update_order_status_from_stripe
     end
 
