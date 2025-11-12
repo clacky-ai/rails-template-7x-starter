@@ -1,6 +1,3 @@
-# syntax=docker/dockerfile:1
-# Base image contains common gems and npm packages pre-installed
-# If your Gemfile/package.json matches, you can reuse them directly!
 FROM ghcr.io/clacky-ai/rails-base-template:optimize-docker-build-performance
 
 WORKDIR /app
@@ -8,7 +5,10 @@ WORKDIR /app
 # Set production environment
 ENV RAILS_ENV="production" \
     NODE_ENV="production" \
-    PORT="3000"
+    PORT="3000" \
+    BUNDLE_WITHOUT="development:test" \
+    BUNDLE_DEPLOYMENT="1" \
+    BUNDLE_PATH="/usr/local/bundle" 
 
 # Check and install only missing gems (if Gemfile changed)
 # bundle check returns 0 if all gems are satisfied, otherwise install
