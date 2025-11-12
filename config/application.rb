@@ -32,7 +32,7 @@ module Myapp
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 7.2
 
-    config.autoload_lib(ignore: %w[assets tasks generators rails middleware])
+    config.autoload_lib(ignore: %w[assets tasks generators rails middleware source_mapping])
     config.middleware.insert_before Rails::Rack::Logger, ClackyHealthCheck
 
     # Configuration for the application, engines, and railties goes here.
