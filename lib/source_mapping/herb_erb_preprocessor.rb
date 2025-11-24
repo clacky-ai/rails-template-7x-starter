@@ -206,41 +206,51 @@ module SourceMapping
       # Find text nodes within this element
       text_nodes = find_text_nodes(node)
 
+      # Collect non-empty text nodes
+      non_empty_text_nodes = []
       text_nodes.each do |text_node|
         next unless text_node.respond_to?(:content) && text_node.respond_to?(:location)
 
         content = text_node.content
-
         # Skip if empty or whitespace only
         next if content.strip.empty?
 
-        # Calculate trimmed boundaries
-        trimmed = content.lstrip
-        trim_start = content.length - trimmed.length
-        trimmed = trimmed.rstrip
-
-        next if trimmed.empty?
-
-        # Convert to position offsets
-        loc = text_node.location
-        start_offset = location_to_offset(loc.start) + trim_start
-        end_offset = start_offset + trimmed.length  # Right-open: point after last character
-
-        # Convert back to line:col (1-based)
-        start_line = @source[0...start_offset].count("\n") + 1
-        # Find previous newline, avoiding the case where offset itself is a newline
-        prev_newline_start = @source.rindex("\n", start_offset - 1)
-        start_col = start_offset - (prev_newline_start || -1)
-
-        end_line = @source[0...end_offset].count("\n") + 1
-        # Find previous newline, avoiding the case where offset itself is a newline
-        prev_newline_end = @source.rindex("\n", end_offset - 1)
-        end_col = end_offset - (prev_newline_end || -1)
-
-        return "#{start_line}:#{start_col}:#{end_line}:#{end_col}"
+        non_empty_text_nodes << text_node
       end
 
-      nil
+      # If there are multiple non-empty text nodes, consider it non-editable
+      # This handles cases like: <button>View <br> Collection</button>
+      # or <p>Hello <strong>world</strong>!</p>
+      return nil if non_empty_text_nodes.length != 1
+
+      # Process the single text node
+      text_node = non_empty_text_nodes.first
+      content = text_node.content
+
+      # Calculate trimmed boundaries
+      trimmed = content.lstrip
+      trim_start = content.length - trimmed.length
+      trimmed = trimmed.rstrip
+
+      return nil if trimmed.empty?
+
+      # Convert to position offsets
+      loc = text_node.location
+      start_offset = location_to_offset(loc.start) + trim_start
+      end_offset = start_offset + trimmed.length  # Right-open: point after last character
+
+      # Convert back to line:col (1-based)
+      start_line = @source[0...start_offset].count("\n") + 1
+      # Find previous newline, avoiding the case where offset itself is a newline
+      prev_newline_start = @source.rindex("\n", start_offset - 1)
+      start_col = start_offset - (prev_newline_start || -1)
+
+      end_line = @source[0...end_offset].count("\n") + 1
+      # Find previous newline, avoiding the case where offset itself is a newline
+      prev_newline_end = @source.rindex("\n", end_offset - 1)
+      end_col = end_offset - (prev_newline_end || -1)
+
+      "#{start_line}:#{start_col}:#{end_line}:#{end_col}"
     end
 
     def find_text_nodes(node)
