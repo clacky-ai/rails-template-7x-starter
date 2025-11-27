@@ -1,0 +1,81 @@
+#!/usr/bin/env ruby
+require 'fileutils'
+
+APP_ROOT = File.expand_path('..', __dir__)
+
+def needs_compilation?
+  js_files = Dir.glob("app/javascript/**/*.{js,ts,tsx}")
+  css_files = Dir.glob("app/assets/stylesheets/**/*.css")
+
+  # Check if build output directory exists
+  return true unless Dir.exist?("app/assets/builds")
+
+  # Filter out directories, only keep files
+  built_files = Dir.glob("app/assets/builds/**/*").select { |f| File.file?(f) }
+  return true if built_files.empty?
+
+  # Compare modification times between source and built files
+  source_files = js_files + css_files
+  return true if source_files.empty?
+
+  latest_source = source_files.map { |f| File.mtime(f) }.max
+  latest_built = built_files.map { |f| File.mtime(f) }.max
+
+  latest_source > latest_built
+end
+
+FileUtils.chdir APP_ROOT do
+  puts '🏗️  Pre-Deployment Build Validation'
+  puts '====================================='
+  puts ''
+
+  # 1. Bundle check
+  puts '💎 Checking bundle dependencies...'
+  unless system('bundle check', out: File::NULL, err: File::NULL)
+    abort "\n❌ Bundle check failed!\n\n   Run: bundle install\n"
+  end
+  puts '✅ Bundle dependencies satisfied'
+  puts ''
+
+  # 2. NPM dependencies
+  puts '📦 Checking npm dependencies...'
+  unless File.exist?('node_modules')
+    abort "\n❌ node_modules not found!\n\n   Run: npm install\n"
+  end
+  puts '✅ NPM dependencies installed'
+  puts ''
+
+  # 3. TypeScript type check
+  puts '🔍 Running TypeScript type check...'
+  unless system('npm run lint:types', out: File::NULL, err: File::NULL)
+    puts ''
+    puts `npm run lint:types 2>&1`
+    abort "\n❌ TypeScript type check failed!\n"
+  end
+  puts '✅ TypeScript type check passed'
+  puts ''
+
+  # 4. ESLint
+  puts '📝 Running ESLint...'
+  unless system('npm run lint:eslint', out: File::NULL, err: File::NULL)
+    puts ''
+    puts `npm run lint:eslint 2>&1`
+    abort "\n❌ ESLint check failed!\n"
+  end
+  puts '✅ ESLint check passed'
+  puts ''
+
+  # 5. Asset compilation status
+  puts '🎨 Checking asset compilation status...'
+  if needs_compilation?
+    abort "\n❌ Assets need compilation!\n\n   Run: npm run build\n   Then re-run: bin/build_check\n"
+  end
+  puts '✅ Assets are up to date'
+  puts ''
+
+  # Success
+  puts '🎉 ========================================'
+  puts '   ✅ All build checks passed!'
+  puts '   Ready for deployment.'
+  puts '========================================'
+end
