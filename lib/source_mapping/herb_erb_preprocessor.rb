@@ -239,16 +239,20 @@ module SourceMapping
       start_offset = location_to_offset(loc.start) + trim_start
       end_offset = start_offset + trimmed.length  # Right-open: point after last character
 
-      # Convert back to line:col (1-based)
+      # Convert back to line:col (1-based, columns in UTF-16 code units for JS compatibility)
       start_line = @source[0...start_offset].count("\n") + 1
       # Find previous newline, avoiding the case where offset itself is a newline
       prev_newline_start = @source.rindex("\n", start_offset - 1)
-      start_col = start_offset - (prev_newline_start || -1)
+      line_start = (prev_newline_start || -1) + 1
+      text_before_start = @source[line_start...start_offset]
+      start_col = utf16_length(text_before_start) + 1  # 1-based
 
       end_line = @source[0...end_offset].count("\n") + 1
       # Find previous newline, avoiding the case where offset itself is a newline
       prev_newline_end = @source.rindex("\n", end_offset - 1)
-      end_col = end_offset - (prev_newline_end || -1)
+      line_start_end = (prev_newline_end || -1) + 1
+      text_before_end = @source[line_start_end...end_offset]
+      end_col = utf16_length(text_before_end) + 1  # 1-based
 
       "#{start_line}:#{start_col}:#{end_line}:#{end_col}"
     end
@@ -368,6 +372,13 @@ module SourceMapping
     def position_to_user_friendly(position)
       return [1, 1] unless position
       [position.line, position.column + 1]  # Convert column to 1-based
+    end
+
+    # Calculate UTF-16 code unit length (for JavaScript compatibility)
+    # Emoji and other characters above U+FFFF use surrogate pairs (2 code units)
+    def utf16_length(str)
+      return 0 if str.nil? || str.empty?
+      str.each_codepoint.sum { |cp| cp > 0xFFFF ? 2 : 1 }
     end
   end
 
