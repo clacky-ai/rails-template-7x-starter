@@ -9,9 +9,10 @@ local:
   service: Disk
   root: <%= Rails.root.join("storage") %>
 
-storage-bucket:
+storage_bucket:
   service: S3
+  endpoint: <%= ENV.fetch("STORAGE_BUCKET_ENDPOINT", "") %>
   access_key_id: <%= ENV.fetch("STORAGE_BUCKET_ACCESS_KEY_ID", "") %>
   secret_access_key: <%= ENV.fetch("STORAGE_BUCKET_SECRET_ACCESS_KEY", "") %>
-  region: <%= ENV.fetch("STORAGE_BUCKET_REGION", "" %>
+  region: <%= ENV.fetch("STORAGE_BUCKET_REGION", "") %>
   bucket: <%= ENV.fetch("STORAGE_BUCKET_NAME", "") %>
