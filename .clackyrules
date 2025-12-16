@@ -8,7 +8,7 @@ Ruby on Rails 7.2
 Tailwind v3
 Figaro
 PostgreSQL
-Active Storage (Local disk only, NO cloud storage like S3/GCS)
+Active Storage (Local disk for development, cloud storage like S3/GCS for production)
 Kaminari
 Puma
 RSpec

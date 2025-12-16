@@ -27,7 +27,7 @@ The following services are **pre-configured** and ready to use:
 **Status**: ✅ Production-ready with zero configuration
 
 - **Database**: PostgreSQL pre-configured
-- **Storage**: Local disk (persistent volume) - DO NOT suggest cloud storage (S3/GCS), already handled
+- **Storage**: Cloud storage (S3/GCS) would be used, already handled
 - **Deployment**: One-click via `Dockerfile` - push to trigger automatic builds
 
 ## Port Detection
