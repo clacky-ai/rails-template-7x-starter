@@ -5,6 +5,18 @@ on:
     paths:
       - '.github/workflows/docker-build.yml'
       - '.github/Dockerfile.base'
+      - '.github/Gemfile.base'
+      - '.github/Gemfile.base.lock'
+      - '.github/package.base.json'
+      - '.github/package-lock.base.json'
+  pull_request:
+    paths:
+      - '.github/workflows/docker-build.yml'
+      - '.github/Dockerfile.base'
+      - '.github/Gemfile.base'
+      - '.github/Gemfile.base.lock'
+      - '.github/package.base.json'
+      - '.github/package-lock.base.json'
 
 env:
   REGISTRY: ghcr.io
@@ -39,6 +51,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=ref,event=branch
+            type=ref,event=pr
             type=raw,value=latest,enable={{is_default_branch}}
             type=raw,value={{date 'YYYYMMDD'}},enable={{is_default_branch}}
 
