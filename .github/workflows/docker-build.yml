@@ -9,14 +9,6 @@ on:
       - '.github/Gemfile.base.lock'
       - '.github/package.base.json'
       - '.github/package-lock.base.json'
-  pull_request:
-    paths:
-      - '.github/workflows/docker-build.yml'
-      - '.github/Dockerfile.base'
-      - '.github/Gemfile.base'
-      - '.github/Gemfile.base.lock'
-      - '.github/package.base.json'
-      - '.github/package-lock.base.json'
 
 env:
   REGISTRY: ghcr.io
