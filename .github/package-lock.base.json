@@ -12,14 +12,12 @@
         "@rails/activestorage": "^8.0.200",
         "@tailwindcss/forms": "^0.5.10",
         "@tailwindcss/typography": "^0.5.16",
-        "@types/alpinejs": "^3.13.11",
         "@types/hotwired__turbo": "^8.0.4",
         "@types/node": "^24.5.2",
         "@types/rails__actioncable": "^6.1.11",
         "@types/rails__activestorage": "^8.0.1",
         "@typescript-eslint/eslint-plugin": "^8.44.1",
         "@typescript-eslint/parser": "^8.44.1",
-        "alpinejs": "^3.14.9",
         "esbuild": "^0.25.5",
         "eslint": "^9.36.0",
         "eslint-plugin-import": "^2.32.0",
@@ -839,12 +837,6 @@
         "tailwindcss": ">=3.0.0 || insiders || >=4.0.0-alpha.20 || >=4.0.0-beta.1"
       }
     },
-    "node_modules/@types/alpinejs": {
-      "version": "3.13.11",
-      "resolved": "https://registry.npmjs.org/@types/alpinejs/-/alpinejs-3.13.11.tgz",
-      "integrity": "sha512-3KhGkDixCPiLdL3Z/ok1GxHwLxEWqQOKJccgaQL01wc0EVM2tCTaqlC3NIedmxAXkVzt/V6VTM8qPgnOHKJ1MA==",
-      "license": "MIT"
-    },
     "node_modules/@types/estree": {
       "version": "1.0.8",
       "resolved": "https://registry.npmjs.org/@types/estree/-/estree-1.0.8.tgz",
@@ -1112,21 +1104,6 @@
         "url": "https://opencollective.com/eslint"
       }
     },
-    "node_modules/@vue/reactivity": {
-      "version": "3.1.5",
-      "resolved": "https://registry.npmjs.org/@vue/reactivity/-/reactivity-3.1.5.tgz",
-      "integrity": "sha512-1tdfLmNjWG6t/CsPldh+foumYFo3cpyCHgBYQ34ylaMsJ+SNHQ1kApMIa8jN+i593zQuaw3AdWH0nJTARzCFhg==",
-      "license": "MIT",
-      "dependencies": {
-        "@vue/shared": "3.1.5"
-      }
-    },
-    "node_modules/@vue/shared": {
-      "version": "3.1.5",
-      "resolved": "https://registry.npmjs.org/@vue/shared/-/shared-3.1.5.tgz",
-      "integrity": "sha512-oJ4F3TnvpXaQwZJNF3ZK+kLPHKarDmJjJ6jyzVNDKH9md1dptjC7lWR//jrGuLdek/U6iltWxqAnYOu8gCiOvA==",
-      "license": "MIT"
-    },
     "node_modules/acorn": {
       "version": "8.15.0",
       "resolved": "https://registry.npmjs.org/acorn/-/acorn-8.15.0.tgz",
@@ -1162,15 +1139,6 @@
       "funding": {
         "type": "github",
         "url": "https://github.com/sponsors/epoberezkin"
-      }
-    },
-    "node_modules/alpinejs": {
-      "version": "3.15.3",
-      "resolved": "https://registry.npmjs.org/alpinejs/-/alpinejs-3.15.3.tgz",
-      "integrity": "sha512-fSI6F5213FdpMC4IWaup92KhuH3jBX0VVqajRJ6cOTCy1cL6888KyXdGO+seAAkn+g6fnrxBqQEx6gRpQ5EZoQ==",
-      "license": "MIT",
-      "dependencies": {
-        "@vue/reactivity": "~3.1.1"
       }
     },
     "node_modules/ansi-styles": {
