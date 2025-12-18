@@ -61,3 +61,8 @@ yarn-debug.log*
 /.breakpoints
 /*rules
 /!.clackyrules
+
+# Kamal deployment files
+/.kamal/env_snapshot.yml
+/.kamal/ssh_setup_done
+/.kamal/secrets

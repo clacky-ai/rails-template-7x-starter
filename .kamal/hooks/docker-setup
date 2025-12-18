@@ -1,0 +1,136 @@
+#!/bin/bash
+# Kamal hook: docker-setup
+# Automatically detects network issues and configures optimal Docker registry mirror
+
+set -e
+
+# Color output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+echo -e "${BLUE}🐳 Docker Setup for Kamal Deployment${NC}"
+echo "=================================================="
+
+# Add user to docker group
+if ! groups $USER | grep -q docker; then
+    echo -e "${YELLOW}📝 Adding user to docker group...${NC}"
+    sudo usermod -aG docker $USER
+    newgrp docker
+fi
+
+# Test Docker Hub connectivity
+echo -e "\n${BLUE}🔍 Testing Docker Hub connectivity...${NC}"
+DOCKER_HUB_WORKS=false
+
+if timeout 10s docker pull hello-world:latest >/dev/null 2>&1; then
+    echo -e "${GREEN}✅ Docker Hub is accessible directly${NC}"
+    DOCKER_HUB_WORKS=true
+else
+    echo -e "${RED}❌ Docker Hub is not accessible or too slow${NC}"
+    echo -e "${YELLOW}🔄 Testing Chinese registry mirrors...${NC}"
+fi
+
+# If Docker Hub works, no need for mirrors
+if [ "$DOCKER_HUB_WORKS" = true ]; then
+    echo -e "${GREEN}✅ No registry mirror needed${NC}"
+    exit 0
+fi
+
+# Define mirrors to test
+declare -A MIRRORS=(
+    ["Tencent Cloud"]="https://mirror.ccs.tencentyun.com"
+    ["Aliyun"]="https://registry.cn-hangzhou.aliyuncs.com"
+    ["NetEase"]="https://hub-mirror.c.163.com"
+    ["USTC"]="https://docker.mirrors.ustc.edu.cn"
+)
+
+# Test each mirror
+BEST_MIRROR=""
+BEST_TIME=999999
+TEMP_DIR="/tmp/docker_mirror_test_$$"
+
+mkdir -p "$TEMP_DIR"
+
+echo ""
+for name in "${!MIRRORS[@]}"; do
+    mirror="${MIRRORS[$name]}"
+    echo -e "${BLUE}Testing ${name} (${mirror})...${NC}"
+    
+    # Configure test mirror
+    sudo mkdir -p /etc/docker
+    cat > "$TEMP_DIR/daemon.json" <<EOF
+{
+    "registry-mirrors": ["$mirror"]
+}
+EOF
+    sudo cp "$TEMP_DIR/daemon.json" /etc/docker/daemon.json
+    
+    # Restart docker
+    sudo systemctl daemon-reload >/dev/null 2>&1 || true
+    sudo systemctl restart docker >/dev/null 2>&1 || true
+    sleep 2
+    
+    # Test speed
+    START_TIME=$(date +%s%N)
+    if timeout 10s docker pull hello-world:latest >/dev/null 2>&1; then
+        END_TIME=$(date +%s%N)
+        ELAPSED=$((($END_TIME - $START_TIME) / 1000000)) # Convert to milliseconds
+        
+        echo -e "${GREEN}  ✅ Success - ${ELAPSED}ms${NC}"
+        
+        if [ $ELAPSED -lt $BEST_TIME ]; then
+            BEST_TIME=$ELAPSED
+            BEST_MIRROR=$mirror
+            BEST_NAME=$name
+        fi
+    else
+        echo -e "${RED}  ❌ Failed or timeout${NC}"
+    fi
+    
+    # Clean up test image
+    docker rmi hello-world:latest >/dev/null 2>&1 || true
+done
+
+# Cleanup
+rm -rf "$TEMP_DIR"
+
+# Configure best mirror
+if [ -n "$BEST_MIRROR" ]; then
+    echo ""
+    echo -e "${GREEN}🏆 Best mirror: ${BEST_NAME} (${BEST_TIME}ms)${NC}"
+    echo -e "${BLUE}📝 Configuring Docker daemon...${NC}"
+    
+    sudo mkdir -p /etc/docker
+    sudo tee /etc/docker/daemon.json > /dev/null <<EOF
+{
+    "registry-mirrors": [
+        "$BEST_MIRROR"
+    ]
+}
+EOF
+    
+    sudo systemctl daemon-reload
+    sudo systemctl restart docker
+    
+    echo -e "${GREEN}✅ Docker registry mirror configured successfully${NC}"
+    echo -e "${BLUE}Mirror: ${BEST_MIRROR}${NC}"
+else
+    echo ""
+    echo -e "${RED}❌ All mirrors failed. Using direct connection.${NC}"
+    echo -e "${YELLOW}⚠️  Docker pulls may be slow or fail.${NC}"
+    
+    # Remove mirror configuration
+    if [ -f /etc/docker/daemon.json ]; then
+        sudo rm /etc/docker/daemon.json
+        sudo systemctl daemon-reload
+        sudo systemctl restart docker
+    fi
+fi
+
+echo ""
+echo -e "${GREEN}✅ Docker setup completed on $KAMAL_HOSTS${NC}"
+echo "=================================================="
+

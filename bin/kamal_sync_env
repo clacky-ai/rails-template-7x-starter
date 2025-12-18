@@ -1,0 +1,265 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'yaml'
+require 'erb'
+require 'fileutils'
+
+class KamalEnvSync
+  SNAPSHOT_FILE = '.kamal/env_snapshot.yml'
+  APPLICATION_YML = 'config/application.yml'
+  DEPLOY_YML = 'config/deploy.yml'
+
+  def initialize
+    @project_root = File.expand_path('..', __dir__)
+    Dir.chdir(@project_root)
+  end
+
+  def run
+    puts "\n🔄 Kamal Environment Sync"
+    puts "=" * 60
+
+    # Parse application.yml
+    current_env = parse_application_yml
+    if current_env.empty?
+      puts "⚠️  No environment variables found in #{APPLICATION_YML}"
+      exit 0
+    end
+
+    # Load snapshot
+    previous_env = load_snapshot
+
+    # Calculate diff
+    diff = calculate_diff(previous_env, current_env)
+
+    # Display changes
+    if diff[:added].empty? && diff[:modified].empty? && diff[:removed].empty?
+      puts "✅ No changes detected. Environment is up to date."
+      exit 0
+    end
+
+    display_diff(diff)
+
+    # Confirm changes
+    unless confirm_changes?
+      puts "❌ Sync cancelled by user"
+      exit 1
+    end
+
+    # Update deploy.yml
+    update_deploy_yml(current_env)
+
+    # Save snapshot
+    save_snapshot(current_env)
+
+    puts "\n✅ Environment sync completed successfully!"
+    puts "📝 Updated: #{DEPLOY_YML}"
+    puts "📸 Snapshot saved: #{SNAPSHOT_FILE}"
+  end
+
+  private
+
+  def parse_application_yml
+    unless File.exist?(APPLICATION_YML)
+      puts "❌ File not found: #{APPLICATION_YML}"
+      exit 1
+    end
+
+    begin
+      # Read and parse ERB template
+      erb_content = File.read(APPLICATION_YML)
+      yaml_content = ERB.new(erb_content).result
+
+      # Parse YAML
+      raw_data = YAML.safe_load(yaml_content, permitted_classes: [Symbol]) || {}
+      
+      # Convert to flat hash with string values
+      env_vars = {}
+      raw_data.each do |key, value|
+        next if key.to_s.start_with?('#') # Skip comments
+        next if value.nil?
+        
+        # Convert value to string
+        env_vars[key.to_s] = value.to_s
+      end
+
+      env_vars
+    rescue => e
+      puts "❌ Error parsing #{APPLICATION_YML}:"
+      puts "   #{e.message}"
+      exit 1
+    end
+  end
+
+  def load_snapshot
+    return {} unless File.exist?(SNAPSHOT_FILE)
+    
+    begin
+      YAML.safe_load_file(SNAPSHOT_FILE) || {}
+    rescue => e
+      puts "⚠️  Warning: Could not load snapshot: #{e.message}"
+      {}
+    end
+  end
+
+  def calculate_diff(old_env, new_env)
+    old_keys = old_env.keys.to_set
+    new_keys = new_env.keys.to_set
+
+    added = (new_keys - old_keys).sort
+    removed = (old_keys - new_keys).sort
+    modified = new_keys.intersection(old_keys).select do |key|
+      old_env[key] != new_env[key]
+    end.sort
+
+    {
+      added: added.map { |k| [k, new_env[k]] },
+      modified: modified.map { |k| [k, old_env[k], new_env[k]] },
+      removed: removed.map { |k| [k, old_env[k]] }
+    }
+  end
+
+  def display_diff(diff)
+    puts "\n📊 Changes detected:\n"
+
+    unless diff[:added].empty?
+      puts "  ➕ Added (#{diff[:added].size}):"
+      diff[:added].each do |key, value|
+        puts "     #{colorize(key, :green)}: #{truncate_value(value)}"
+      end
+      puts
+    end
+
+    unless diff[:modified].empty?
+      puts "  🔄 Modified (#{diff[:modified].size}):"
+      diff[:modified].each do |key, old_val, new_val|
+        puts "     #{colorize(key, :yellow)}:"
+        puts "       - #{truncate_value(old_val)}"
+        puts "       + #{truncate_value(new_val)}"
+      end
+      puts
+    end
+
+    unless diff[:removed].empty?
+      puts "  ➖ Removed (#{diff[:removed].size}):"
+      diff[:removed].each do |key, value|
+        puts "     #{colorize(key, :red)}: #{truncate_value(value)}"
+      end
+      puts
+    end
+  end
+
+  def confirm_changes?
+    print "❓ Apply these changes to #{DEPLOY_YML}? [y/N] "
+    response = STDIN.gets&.strip&.downcase
+    response == 'y' || response == 'yes'
+  end
+
+  def update_deploy_yml(env_vars)
+    unless File.exist?(DEPLOY_YML)
+      puts "❌ File not found: #{DEPLOY_YML}"
+      exit 1
+    end
+
+    content = File.read(DEPLOY_YML)
+    
+    # Find or create env section
+    if content =~ /^env:\s*$/m
+      # env section exists, update it
+      content = update_existing_env_section(content, env_vars)
+    else
+      # No env section, add it
+      content = add_env_section(content, env_vars)
+    end
+
+    File.write(DEPLOY_YML, content)
+  end
+
+  def update_existing_env_section(content, env_vars)
+    # Find the env section and replace/add clear subsection
+    lines = content.lines
+    env_index = lines.find_index { |line| line =~ /^env:\s*$/ }
+    
+    return add_env_section(content, env_vars) unless env_index
+
+    # Find clear subsection or insert point
+    clear_index = lines[(env_index + 1)..-1]&.find_index { |line| line =~ /^\s+clear:\s*$/ }
+    
+    if clear_index
+      clear_index += env_index + 1
+      # Find end of clear section
+      end_index = find_section_end(lines, clear_index)
+      
+      # Replace clear section
+      new_clear_lines = build_clear_section(env_vars)
+      lines[clear_index...end_index] = new_clear_lines
+    else
+      # Add clear section after env:
+      new_clear_lines = build_clear_section(env_vars)
+      lines.insert(env_index + 1, *new_clear_lines)
+    end
+
+    lines.join
+  end
+
+  def add_env_section(content, env_vars)
+    env_section = "\n# Inject ENV variables into containers (auto-synced from application.yml)\n"
+    env_section += "env:\n"
+    env_section += build_clear_section(env_vars).join
+
+    # Add before accessories or at end
+    if content =~ /^accessories:/m
+      content.sub(/^accessories:/m, "#{env_section}\naccessories:")
+    else
+      content + "\n" + env_section
+    end
+  end
+
+  def build_clear_section(env_vars)
+    lines = ["  clear:\n"]
+    env_vars.sort.each do |key, value|
+      # Escape special characters in YAML
+      escaped_value = value.gsub('"', '\\"')
+      lines << "    #{key}: \"#{escaped_value}\"\n"
+    end
+    lines
+  end
+
+  def find_section_end(lines, start_index)
+    indent_level = lines[start_index][/^\s*/].length
+    
+    (start_index + 1...lines.length).each do |i|
+      line = lines[i]
+      next if line.strip.empty? || line.strip.start_with?('#')
+      
+      current_indent = line[/^\s*/].length
+      return i if current_indent <= indent_level
+    end
+    
+    lines.length
+  end
+
+  def save_snapshot(env_vars)
+    FileUtils.mkdir_p(File.dirname(SNAPSHOT_FILE))
+    File.write(SNAPSHOT_FILE, YAML.dump(env_vars))
+  end
+
+  def truncate_value(value, max_length = 50)
+    return value if value.length <= max_length
+    "#{value[0...max_length]}... (#{value.length} chars)"
+  end
+
+  def colorize(text, color)
+    colors = {
+      red: 31,
+      green: 32,
+      yellow: 33,
+      blue: 34
+    }
+    "\e[#{colors[color]}m#{text}\e[0m"
+  end
+end
+
+# Run the sync
+KamalEnvSync.new.run if __FILE__ == $PROGRAM_NAME
+

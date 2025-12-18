@@ -1,0 +1,38 @@
+#!/bin/bash
+# Kamal hook: pre-deploy
+# Syncs application.yml environment variables to deploy.yml before deployment
+
+set -e
+
+# Color output
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+echo ""
+echo -e "${BLUE}📦 Pre-Deploy: Environment Sync${NC}"
+echo "=================================================="
+
+# Get project root (2 levels up from .kamal/hooks)
+PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+cd "$PROJECT_ROOT"
+
+# Check if kamal_sync_env exists
+if [ ! -f "bin/kamal_sync_env" ]; then
+    echo -e "${YELLOW}⚠️  bin/kamal_sync_env not found, skipping env sync${NC}"
+    exit 0
+fi
+
+# Run the sync script
+echo -e "${BLUE}🔄 Syncing environment variables...${NC}"
+if ruby bin/kamal_sync_env; then
+    echo -e "${GREEN}✅ Environment sync completed${NC}"
+else
+    echo -e "${YELLOW}⚠️  Environment sync failed or was cancelled${NC}"
+    echo "   Deployment will continue with existing configuration"
+fi
+
+echo "=================================================="
+echo ""
+

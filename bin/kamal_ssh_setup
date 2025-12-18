@@ -1,0 +1,250 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'yaml'
+require 'io/console'
+require 'fileutils'
+
+class KamalSSHSetup
+  DEPLOY_YML = 'config/deploy.yml'
+  SETUP_MARKER = '.kamal/ssh_setup_done'
+  
+  def initialize
+    @project_root = File.expand_path('..', __dir__)
+    Dir.chdir(@project_root)
+  end
+
+  def run
+    puts "\n🔐 Kamal SSH Setup"
+    puts "=" * 60
+
+    # Load deploy configuration
+    config = load_deploy_config
+    servers = extract_servers(config)
+    ssh_user = config.dig('ssh', 'user') || 'root'
+
+    if servers.empty?
+      puts "❌ No servers found in #{DEPLOY_YML}"
+      exit 1
+    end
+
+    puts "\n📋 Configuration:"
+    puts "   Servers: #{servers.join(', ')}"
+    puts "   SSH User: #{ssh_user}"
+
+    # Check local SSH keys
+    ssh_key = ensure_ssh_key
+
+    puts "\n🔍 Testing SSH connections...\n"
+
+    failed_servers = []
+    servers.each do |server|
+      unless test_ssh_connection(server, ssh_user)
+        failed_servers << server
+      end
+    end
+
+    # Handle failed connections
+    if failed_servers.empty?
+      mark_setup_complete
+      puts "\n✅ All SSH connections successful!"
+      puts "📝 Setup marker created: #{SETUP_MARKER}"
+      exit 0
+    end
+
+    puts "\n⚠️  Failed to connect to #{failed_servers.size} server(s)"
+    puts "📤 Will attempt to inject SSH public key...\n"
+
+    failed_servers.each do |server|
+      inject_ssh_key(server, ssh_user, ssh_key)
+    end
+
+    # Verify all connections again
+    puts "\n🔍 Verifying all connections...\n"
+    all_success = true
+    servers.each do |server|
+      unless test_ssh_connection(server, ssh_user, quiet: true)
+        all_success = false
+        puts "   ❌ #{colorize(server, :red)} - Still cannot connect"
+      end
+    end
+
+    if all_success
+      mark_setup_complete
+      puts "\n✅ SSH setup completed successfully!"
+      puts "📝 Setup marker created: #{SETUP_MARKER}"
+    else
+      puts "\n❌ Some servers still cannot be accessed"
+      puts "💡 Please check:"
+      puts "   1. Server is online and accessible"
+      puts "   2. SSH service is running"
+      puts "   3. Firewall allows SSH connections"
+      puts "   4. Correct username and password"
+      exit 1
+    end
+  end
+
+  private
+
+  def load_deploy_config
+    unless File.exist?(DEPLOY_YML)
+      puts "❌ File not found: #{DEPLOY_YML}"
+      exit 1
+    end
+
+    begin
+      YAML.safe_load_file(DEPLOY_YML) || {}
+    rescue => e
+      puts "❌ Error parsing #{DEPLOY_YML}:"
+      puts "   #{e.message}"
+      exit 1
+    end
+  end
+
+  def extract_servers(config)
+    servers = []
+    
+    # Extract from servers.web, servers.workers, etc.
+    if config['servers'].is_a?(Hash)
+      config['servers'].each do |_role, hosts|
+        if hosts.is_a?(Array)
+          servers.concat(hosts)
+        elsif hosts.is_a?(String)
+          servers << hosts
+        end
+      end
+    end
+
+    # Extract from accessories (db, redis, etc.)
+    if config['accessories'].is_a?(Hash)
+      config['accessories'].each do |_name, acc_config|
+        if acc_config['host']
+          servers << acc_config['host']
+        end
+      end
+    end
+
+    servers.uniq.compact
+  end
+
+  def ensure_ssh_key
+    ssh_dir = File.expand_path('~/.ssh')
+    FileUtils.mkdir_p(ssh_dir) unless Dir.exist?(ssh_dir)
+
+    # Check for existing keys (prefer ed25519)
+    %w[ed25519 rsa].each do |type|
+      key_path = "#{ssh_dir}/id_#{type}"
+      return key_path if File.exist?(key_path)
+    end
+
+    # No key found, generate one
+    puts "\n🔑 No SSH key found. Generating new ed25519 key..."
+    key_path = "#{ssh_dir}/id_ed25519"
+
+    print "   Enter email for SSH key (or press Enter to skip): "
+    email = STDIN.gets.strip
+    email = email.empty? ? "kamal@#{`hostname`.strip}" : email
+
+    cmd = "ssh-keygen -t ed25519 -C '#{email}' -f #{key_path} -N ''"
+    unless system(cmd)
+      puts "❌ Failed to generate SSH key"
+      exit 1
+    end
+
+    puts "   ✅ SSH key generated: #{key_path}"
+    key_path
+  end
+
+  def test_ssh_connection(server, user, quiet: false)
+    cmd = "ssh -o BatchMode=yes -o ConnectTimeout=5 -o StrictHostKeyChecking=no #{user}@#{server} 'exit' 2>/dev/null"
+    
+    if system(cmd)
+      puts "   #{colorize('✓', :green)} #{server} - Connected" unless quiet
+      true
+    else
+      puts "   #{colorize('✗', :red)} #{server} - Failed" unless quiet
+      false
+    end
+  end
+
+  def inject_ssh_key(server, user, key_path)
+    puts "\n📤 Setting up SSH key for #{colorize(server, :blue)}"
+
+    pub_key_path = "#{key_path}.pub"
+    unless File.exist?(pub_key_path)
+      puts "   ❌ Public key not found: #{pub_key_path}"
+      return
+    end
+
+    # Try ssh-copy-id first
+    if command_exists?('ssh-copy-id')
+      puts "   Using ssh-copy-id..."
+      print "   Enter password for #{user}@#{server}: "
+      password = STDIN.noecho(&:gets).chomp
+      puts # newline after hidden input
+
+      # Use sshpass if available
+      if command_exists?('sshpass')
+        cmd = "sshpass -p '#{password}' ssh-copy-id -o StrictHostKeyChecking=no #{user}@#{server} 2>&1"
+        output = `#{cmd}`
+        
+        if $?.success?
+          puts "   #{colorize('✅ Public key injected successfully', :green)}"
+        else
+          puts "   #{colorize('❌ Failed to inject key', :red)}"
+          puts "   #{output}"
+          manual_instructions(server, user, pub_key_path)
+        end
+      else
+        puts "   ⚠️  sshpass not found, trying interactive ssh-copy-id..."
+        system("ssh-copy-id -o StrictHostKeyChecking=no #{user}@#{server}")
+        
+        if $?.success?
+          puts "   #{colorize('✅ Public key injected successfully', :green)}"
+        else
+          manual_instructions(server, user, pub_key_path)
+        end
+      end
+    else
+      manual_instructions(server, user, pub_key_path)
+    end
+  end
+
+  def manual_instructions(server, user, pub_key_path)
+    puts "\n   📋 Manual setup required for #{server}"
+    puts "   " + "=" * 50
+    puts "   1. Copy your public key:"
+    puts "      #{colorize("cat #{pub_key_path}", :yellow)}"
+    puts "\n   2. SSH to your server:"
+    puts "      #{colorize("ssh #{user}@#{server}", :yellow)}"
+    puts "\n   3. Add the key to authorized_keys:"
+    puts "      #{colorize("mkdir -p ~/.ssh", :yellow)}"
+    puts "      #{colorize("echo 'YOUR_PUBLIC_KEY' >> ~/.ssh/authorized_keys", :yellow)}"
+    puts "      #{colorize("chmod 700 ~/.ssh", :yellow)}"
+    puts "      #{colorize("chmod 600 ~/.ssh/authorized_keys", :yellow)}"
+    puts "   " + "=" * 50
+  end
+
+  def mark_setup_complete
+    FileUtils.mkdir_p(File.dirname(SETUP_MARKER))
+    File.write(SETUP_MARKER, Time.now.to_s)
+  end
+
+  def command_exists?(cmd)
+    system("which #{cmd} > /dev/null 2>&1")
+  end
+
+  def colorize(text, color)
+    colors = {
+      red: 31,
+      green: 32,
+      yellow: 33,
+      blue: 34
+    }
+    "\e[#{colors[color]}m#{text}\e[0m"
+  end
+end
+
+# Run the setup
+KamalSSHSetup.new.run if __FILE__ == $PROGRAM_NAME
+
