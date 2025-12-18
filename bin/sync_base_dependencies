@@ -1,7 +1,5 @@
 #!/usr/bin/env ruby
-require 'fileutils'
 require 'pathname'
-require 'set'
 
 # Check base dependencies for Docker base image
 # This script checks if base files are in sync and scans generators for required gems
@@ -113,12 +111,10 @@ class BaseDependencyChecker
     
     missing_gems = []
     required_gems.each do |gem_name, gem_info|
-      version = gem_info[:version]
-      source = gem_info[:source]
-      line = gem_info[:line]
+      version, source, line = gem_info.values_at(:version, :source, :line)
       
-      gem_pattern = /gem\s+['"]#{Regexp.escape(gem_name)}['"]/
-      if base_content.match?(gem_pattern)
+      if base_content.match?(/gem\s+['"]#{Regexp.escape(gem_name)}['"]/)
+
         puts "  ✓ #{gem_name} #{version} - present"
       else
         puts "  ⚠️  #{gem_name} #{version} - not in Gemfile.base"
@@ -131,7 +127,6 @@ class BaseDependencyChecker
       puts "\n  📝 Suggested gems to add to .github/Gemfile.base:"
       missing_gems.each do |gem_name, version, source, line|
         puts "     gem '#{gem_name}', '#{version}'"
-        puts "         # From: #{source}:#{line}"
       end
     end
   end
@@ -147,52 +142,26 @@ class BaseDependencyChecker
       content = File.read(file)
       relative_path = Pathname.new(file).relative_path_from(@root).to_s
       
-      # Pattern 1: Direct gem declarations (gem 'name', 'version')
       content.lines.each_with_index do |line, index|
-        line_number = index + 1
+        # Match both patterns: gem 'name', 'version' and gem \"name\", \"version\"
+        patterns = [
+          /^\s*gem\s+['"]([a-z0-9_\-]+)['"],\s+['"]([~><=\s0-9.]+)['"]/,
+          /gem\s+\\"([a-z0-9_\-]+)\\",\s+\\"([~><=\s0-9.]+)\\"/
+        ]
         
-        # Match: gem 'name', 'version'
-        if line =~ /^\s*gem\s+['"]([a-z0-9_\-]+)['"],\s+['"]([~><=\s0-9.]+)['"]/
-          name, version = $1, $2
-          next if common_rails_gem?(name)
-          next if name.include?('_') && name.split('_').length > 3
-          
-          gems[name] ||= {
-            version: version,
-            source: relative_path,
-            line: line_number
-          }
-        end
-        
-        # Match: gem \"name\", \"version\" (in string interpolations)
-        if line =~ /gem\s+\\"([a-z0-9_\-]+)\\",\s+\\"([~><=\s0-9.]+)\\"/
-          name, version = $1, $2
-          next if common_rails_gem?(name)
-          
-          gems[name] ||= {
-            version: version,
-            source: relative_path,
-            line: line_number
-          }
+        patterns.each do |pattern|
+          if line =~ pattern
+            name, version = $1, $2
+            next if common_rails_gem?(name)
+            next if name.include?('_') && name.split('_').length > 3
+            
+            gems[name] ||= { version: version, source: relative_path, line: index + 1 }
+          end
         end
       end
     end
     
     gems
-  end
-
-  def detect_gem_version(gem_name)
-    # Map known gems to their versions used in generators
-    version_map = {
-      'stripe' => '~> 12.0',
-      'omniauth' => '~> 2.1',
-      'omniauth-rails_csrf_protection' => '~> 1.0',
-      'omniauth-google-oauth2' => '~> 1.2',
-      'omniauth-facebook' => '~> 10.0',
-      'omniauth-twitter2' => '~> 1.0',
-      'omniauth-github' => '~> 2.0'
-    }
-    version_map[gem_name] || '(version unknown)'
   end
 
   def common_rails_gem?(name)
