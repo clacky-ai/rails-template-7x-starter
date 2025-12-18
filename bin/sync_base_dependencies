@@ -14,6 +14,9 @@ class BaseDependencyChecker
   def run
     puts "🔍 Checking base dependencies...\n"
     
+    # First scan generators to know which gems are scaffold gems
+    @scaffold_gems = scan_generators_for_gems.keys
+    
     check_gemfile_differences
     check_package_differences
     check_generator_gems
@@ -53,20 +56,28 @@ class BaseDependencyChecker
     source_content = File.read(source_gemfile)
     base_content = File.read(base_gemfile)
     
-    # Extract base content without scaffold gems section
-    base_without_scaffold = base_content.gsub(/\n# Scaffold gems.*?\z/m, '')
+    # Compare: remove scaffold gems from base before comparison
+    base_without_scaffold = remove_scaffold_gems(base_content)
     
-    # Normalize both for comparison (remove comments and extra whitespace)
+    # Normalize both for comparison
     source_normalized = normalize_gemfile(source_content)
     base_normalized = normalize_gemfile(base_without_scaffold)
     
     if source_normalized != base_normalized
-      puts "  ❌ Gemfile differs from Gemfile.base (excluding scaffold gems)"
+      puts "  ❌ Gemfile.base needs update (base part out of sync)"
       @has_differences = true
       show_diff(source_normalized, base_normalized, "Gemfile", "Gemfile.base")
     else
-      puts "  ✓ Gemfile matches Gemfile.base (excluding scaffold gems)"
+      puts "  ✓ Gemfile.base is up to date"
     end
+  end
+  
+  def remove_scaffold_gems(content)
+    # Remove lines containing scaffold gems
+    lines = content.lines
+    lines.reject { |line| 
+      @scaffold_gems.any? { |gem_name| line =~ /^\s*gem\s+['"]#{Regexp.escape(gem_name)}['"]/ }
+    }.join
   end
 
   def check_package_differences
