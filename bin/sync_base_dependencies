@@ -1,164 +1,235 @@
 #!/usr/bin/env ruby
 require 'fileutils'
 require 'pathname'
+require 'set'
 
-# Sync base dependencies for Docker base image
-# This script copies root dependencies to .github/ and adds scaffold gems
+# Check base dependencies for Docker base image
+# This script checks if base files are in sync and scans generators for required gems
 
-class BaseDependencySync
-  SCAFFOLD_GEMS = {
-    'stripe' => '~> 12.0',
-    'omniauth' => '~> 2.1',
-    'omniauth-rails_csrf_protection' => '~> 1.0',
-    'omniauth-google-oauth2' => '~> 1.2',
-    'omniauth-facebook' => '~> 10.0',
-    'omniauth-twitter2' => '~> 1.0',
-    'omniauth-github' => '~> 2.0'
-  }.freeze
-
-  SCAFFOLD_MARKER = '# Scaffold gems for generators (authentication, stripe_pay)'
-
+class BaseDependencyChecker
   def initialize
     @root = Pathname.new(__dir__).parent
     @github_dir = @root.join('.github')
+    @has_differences = false
   end
 
   def run
-    puts "🚀 Syncing base dependencies..."
+    puts "🔍 Checking base dependencies...\n"
     
-    copy_dependency_files
-    update_gemfile_base
-    copy_package_files
-    generate_lock_file
+    check_gemfile_differences
+    check_package_differences
+    check_generator_gems
     
-    puts "✅ Base dependencies synced successfully!"
+    if @has_differences
+      puts "\n" + "="*70
+      puts "❌ BASE FILES OUT OF SYNC"
+      puts "="*70
+      puts "\n💡 To update base files, run:"
+      puts "   cp Gemfile .github/Gemfile.base"
+      puts "   cp Gemfile.lock .github/Gemfile.base.lock"
+      puts "   cp package.json .github/package.base.json"
+      puts "   cp package-lock.json .github/package-lock.base.json"
+      puts ""
+      puts "   # Then regenerate lock file if you modified Gemfile.base:"
+      puts "   cd .github && bundle lock --gemfile=Gemfile.base --lockfile=Gemfile.base.lock"
+      exit 1
+    end
+    
+    exit 0
   end
 
   private
 
-  def copy_dependency_files
-    puts "\n📦 Copying Gemfile and Gemfile.lock..."
+  def check_gemfile_differences
+    puts "📦 Checking Gemfile differences..."
     
     source_gemfile = @root.join('Gemfile')
-    source_lock = @root.join('Gemfile.lock')
-    dest_gemfile = @github_dir.join('Gemfile.base')
-    dest_lock = @github_dir.join('Gemfile.base.lock')
-
-    FileUtils.cp(source_gemfile, dest_gemfile)
-    puts "  ✓ Copied Gemfile → .github/Gemfile.base"
+    base_gemfile = @github_dir.join('Gemfile.base')
     
-    if source_lock.exist?
-      FileUtils.cp(source_lock, dest_lock)
-      puts "  ✓ Copied Gemfile.lock → .github/Gemfile.base.lock"
+    unless base_gemfile.exist?
+      puts "  ❌ .github/Gemfile.base does not exist"
+      @has_differences = true
+      return
+    end
+    
+    source_content = File.read(source_gemfile)
+    base_content = File.read(base_gemfile)
+    
+    # Extract base content without scaffold gems section
+    base_without_scaffold = base_content.gsub(/\n# Scaffold gems.*?\z/m, '')
+    
+    # Normalize both for comparison (remove comments and extra whitespace)
+    source_normalized = normalize_gemfile(source_content)
+    base_normalized = normalize_gemfile(base_without_scaffold)
+    
+    if source_normalized != base_normalized
+      puts "  ❌ Gemfile differs from Gemfile.base (excluding scaffold gems)"
+      @has_differences = true
+      show_diff(source_normalized, base_normalized, "Gemfile", "Gemfile.base")
+    else
+      puts "  ✓ Gemfile matches Gemfile.base (excluding scaffold gems)"
     end
   end
 
-  def update_gemfile_base
-    puts "\n💎 Adding scaffold gems to Gemfile.base..."
-    
-    gemfile_path = @github_dir.join('Gemfile.base')
-    content = File.read(gemfile_path)
-    
-    # Check if scaffold gems section already exists
-    if content.include?(SCAFFOLD_MARKER)
-      puts "  ⚠️  Scaffold gems section already exists, updating..."
-      # Remove old scaffold section
-      content = content.gsub(/\n#{Regexp.escape(SCAFFOLD_MARKER)}.*?\z/m, '')
-    end
-    
-    # Build scaffold gems section
-    scaffold_section = "\n#{SCAFFOLD_MARKER}\n"
-    SCAFFOLD_GEMS.each do |gem_name, version|
-      # Check if gem already exists in main Gemfile (not in our scaffold section)
-      unless content.match?(/^gem\s+['"]#{gem_name}['"]/)
-        scaffold_section += "gem '#{gem_name}', '#{version}'\n"
-        puts "  ✓ Added: #{gem_name} #{version}"
-      else
-        puts "  ⊘ Skipped: #{gem_name} (already exists in Gemfile)"
-      end
-    end
-    
-    # Append scaffold section
-    content += scaffold_section
-    File.write(gemfile_path, content)
-  end
-
-  def copy_package_files
-    puts "\n📦 Copying package.json and package-lock.json..."
+  def check_package_differences
+    puts "\n📦 Checking package.json differences..."
     
     source_package = @root.join('package.json')
-    source_lock = @root.join('package-lock.json')
-    dest_package = @github_dir.join('package.base.json')
-    dest_lock = @github_dir.join('package-lock.base.json')
-
-    if source_package.exist?
-      FileUtils.cp(source_package, dest_package)
-      puts "  ✓ Copied package.json → .github/package.base.json"
+    base_package = @github_dir.join('package.base.json')
+    
+    unless base_package.exist?
+      puts "  ❌ .github/package.base.json does not exist"
+      @has_differences = true
+      return
     end
     
-    if source_lock.exist?
-      FileUtils.cp(source_lock, dest_lock)
-      puts "  ✓ Copied package-lock.json → .github/package-lock.base.json"
-    end
-  end
-
-  def generate_lock_file
-    puts "\n🔒 Generating Gemfile.base.lock..."
+    source_content = File.read(source_package).strip
+    base_content = File.read(base_package).strip
     
-    gemfile_path = @github_dir.join('Gemfile.base')
-    
-    # Try to use Docker if available, otherwise use local bundle
-    if docker_available?
-      generate_lock_with_docker
+    if source_content != base_content
+      puts "  ❌ package.json differs from package.base.json"
+      @has_differences = true
     else
-      generate_lock_locally
+      puts "  ✓ package.json matches package.base.json"
     end
   end
 
-  def docker_available?
-    system('which docker > /dev/null 2>&1')
-  end
-
-  def generate_lock_with_docker
-    puts "  🐳 Using Docker to generate lock file..."
+  def check_generator_gems
+    puts "\n💎 Scanning generators for required gems..."
     
-    # Use official Ruby image to generate lock file
-    cmd = [
-      'docker', 'run', '--rm',
-      '-v', "#{@github_dir}:/work",
-      '-w', '/work',
-      'ruby:3.3.5-slim',
-      'bash', '-c',
-      'apt-get update -qq > /dev/null 2>&1 && ' \
-      'apt-get install -y -qq build-essential > /dev/null 2>&1 && ' \
-      'gem install bundler -v 2.6.3 > /dev/null 2>&1 && ' \
-      'bundle lock --gemfile=Gemfile.base --lockfile=Gemfile.base.lock 2>&1'
-    ].join(' ')
-    
-    if system(cmd)
-      puts "  ✓ Lock file generated successfully with Docker"
-    else
-      puts "  ⚠️  Docker generation failed, trying local bundle..."
-      generate_lock_locally
+    base_gemfile = @github_dir.join('Gemfile.base')
+    unless base_gemfile.exist?
+      puts "  ⚠️  Skipping: .github/Gemfile.base does not exist"
+      return
     end
-  end
-
-  def generate_lock_locally
-    puts "  💻 Using local bundle to generate lock file..."
     
-    Dir.chdir(@github_dir) do
-      system('bundle lock --gemfile=Gemfile.base --lockfile=Gemfile.base.lock')
-      if $?.success?
-        puts "  ✓ Lock file generated successfully"
+    base_content = File.read(base_gemfile)
+    required_gems = scan_generators_for_gems
+    
+    if required_gems.empty?
+      puts "  ℹ️  No additional gems found in generators"
+      return
+    end
+    
+    missing_gems = []
+    required_gems.each do |gem_name, gem_info|
+      version = gem_info[:version]
+      source = gem_info[:source]
+      line = gem_info[:line]
+      
+      gem_pattern = /gem\s+['"]#{Regexp.escape(gem_name)}['"]/
+      if base_content.match?(gem_pattern)
+        puts "  ✓ #{gem_name} #{version} - present"
       else
-        puts "  ⚠️  Failed to generate lock file - you may need to run bundle install manually"
+        puts "  ⚠️  #{gem_name} #{version} - not in Gemfile.base"
+        puts "     Source: #{source}:#{line}"
+        missing_gems << [gem_name, version, source, line]
+      end
+    end
+    
+    if missing_gems.any?
+      puts "\n  📝 Suggested gems to add to .github/Gemfile.base:"
+      missing_gems.each do |gem_name, version, source, line|
+        puts "     gem '#{gem_name}', '#{version}'"
+        puts "         # From: #{source}:#{line}"
       end
     end
   end
+
+  def scan_generators_for_gems
+    generators_dir = @root.join('lib/generators')
+    return {} unless generators_dir.exist?
+    
+    gems = {}
+    
+    # Scan all generator files
+    Dir.glob("#{generators_dir}/**/*.rb").each do |file|
+      content = File.read(file)
+      relative_path = Pathname.new(file).relative_path_from(@root).to_s
+      
+      # Pattern 1: Direct gem declarations (gem 'name', 'version')
+      content.lines.each_with_index do |line, index|
+        line_number = index + 1
+        
+        # Match: gem 'name', 'version'
+        if line =~ /^\s*gem\s+['"]([a-z0-9_\-]+)['"],\s+['"]([~><=\s0-9.]+)['"]/
+          name, version = $1, $2
+          next if common_rails_gem?(name)
+          next if name.include?('_') && name.split('_').length > 3
+          
+          gems[name] ||= {
+            version: version,
+            source: relative_path,
+            line: line_number
+          }
+        end
+        
+        # Match: gem \"name\", \"version\" (in string interpolations)
+        if line =~ /gem\s+\\"([a-z0-9_\-]+)\\",\s+\\"([~><=\s0-9.]+)\\"/
+          name, version = $1, $2
+          next if common_rails_gem?(name)
+          
+          gems[name] ||= {
+            version: version,
+            source: relative_path,
+            line: line_number
+          }
+        end
+      end
+    end
+    
+    gems
+  end
+
+  def detect_gem_version(gem_name)
+    # Map known gems to their versions used in generators
+    version_map = {
+      'stripe' => '~> 12.0',
+      'omniauth' => '~> 2.1',
+      'omniauth-rails_csrf_protection' => '~> 1.0',
+      'omniauth-google-oauth2' => '~> 1.2',
+      'omniauth-facebook' => '~> 10.0',
+      'omniauth-twitter2' => '~> 1.0',
+      'omniauth-github' => '~> 2.0'
+    }
+    version_map[gem_name] || '(version unknown)'
+  end
+
+  def common_rails_gem?(name)
+    # Skip common Rails gems that are already in base Gemfile
+    %w[rails bcrypt].include?(name)
+  end
+
+  def normalize_gemfile(content)
+    # Remove comments and extra whitespace for comparison
+    content.gsub(/#[^\n]*/, '')  # Remove comments
+           .gsub(/\n\s*\n+/, "\n")  # Remove multiple blank lines
+           .strip
+  end
+
+  def show_diff(source, base, source_name, base_name)
+    # Show a simple diff summary
+    source_lines = source.lines.map(&:strip).reject(&:empty?)
+    base_lines = base.lines.map(&:strip).reject(&:empty?)
+    
+    only_in_source = (source_lines - base_lines).reject { |l| l.start_with?('#') }
+    only_in_base = (base_lines - source_lines).reject { |l| l.start_with?('#') }
+    
+    if only_in_source.any?
+      puts "\n  📝 Lines only in #{source_name}:"
+      only_in_source.first(5).each { |line| puts "     + #{line}" }
+      puts "     ... (#{only_in_source.size - 5} more)" if only_in_source.size > 5
+    end
+    
+    if only_in_base.any?
+      puts "\n  📝 Lines only in #{base_name}:"
+      only_in_base.first(5).each { |line| puts "     - #{line}" }
+      puts "     ... (#{only_in_base.size - 5} more)" if only_in_base.size > 5
+    end
+  end
 end
 
-# Run the sync
+# Run the checker
 if __FILE__ == $0
-  BaseDependencySync.new.run
+  BaseDependencyChecker.new.run
 end
-
