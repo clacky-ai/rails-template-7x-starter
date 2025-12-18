@@ -1,0 +1,164 @@
+#!/usr/bin/env ruby
+require 'fileutils'
+require 'pathname'
+
+# Sync base dependencies for Docker base image
+# This script copies root dependencies to .github/ and adds scaffold gems
+
+class BaseDependencySync
+  SCAFFOLD_GEMS = {
+    'stripe' => '~> 12.0',
+    'omniauth' => '~> 2.1',
+    'omniauth-rails_csrf_protection' => '~> 1.0',
+    'omniauth-google-oauth2' => '~> 1.2',
+    'omniauth-facebook' => '~> 10.0',
+    'omniauth-twitter2' => '~> 1.0',
+    'omniauth-github' => '~> 2.0'
+  }.freeze
+
+  SCAFFOLD_MARKER = '# Scaffold gems for generators (authentication, stripe_pay)'
+
+  def initialize
+    @root = Pathname.new(__dir__).parent
+    @github_dir = @root.join('.github')
+  end
+
+  def run
+    puts "🚀 Syncing base dependencies..."
+    
+    copy_dependency_files
+    update_gemfile_base
+    copy_package_files
+    generate_lock_file
+    
+    puts "✅ Base dependencies synced successfully!"
+  end
+
+  private
+
+  def copy_dependency_files
+    puts "\n📦 Copying Gemfile and Gemfile.lock..."
+    
+    source_gemfile = @root.join('Gemfile')
+    source_lock = @root.join('Gemfile.lock')
+    dest_gemfile = @github_dir.join('Gemfile.base')
+    dest_lock = @github_dir.join('Gemfile.base.lock')
+
+    FileUtils.cp(source_gemfile, dest_gemfile)
+    puts "  ✓ Copied Gemfile → .github/Gemfile.base"
+    
+    if source_lock.exist?
+      FileUtils.cp(source_lock, dest_lock)
+      puts "  ✓ Copied Gemfile.lock → .github/Gemfile.base.lock"
+    end
+  end
+
+  def update_gemfile_base
+    puts "\n💎 Adding scaffold gems to Gemfile.base..."
+    
+    gemfile_path = @github_dir.join('Gemfile.base')
+    content = File.read(gemfile_path)
+    
+    # Check if scaffold gems section already exists
+    if content.include?(SCAFFOLD_MARKER)
+      puts "  ⚠️  Scaffold gems section already exists, updating..."
+      # Remove old scaffold section
+      content = content.gsub(/\n#{Regexp.escape(SCAFFOLD_MARKER)}.*?\z/m, '')
+    end
+    
+    # Build scaffold gems section
+    scaffold_section = "\n#{SCAFFOLD_MARKER}\n"
+    SCAFFOLD_GEMS.each do |gem_name, version|
+      # Check if gem already exists in main Gemfile (not in our scaffold section)
+      unless content.match?(/^gem\s+['"]#{gem_name}['"]/)
+        scaffold_section += "gem '#{gem_name}', '#{version}'\n"
+        puts "  ✓ Added: #{gem_name} #{version}"
+      else
+        puts "  ⊘ Skipped: #{gem_name} (already exists in Gemfile)"
+      end
+    end
+    
+    # Append scaffold section
+    content += scaffold_section
+    File.write(gemfile_path, content)
+  end
+
+  def copy_package_files
+    puts "\n📦 Copying package.json and package-lock.json..."
+    
+    source_package = @root.join('package.json')
+    source_lock = @root.join('package-lock.json')
+    dest_package = @github_dir.join('package.base.json')
+    dest_lock = @github_dir.join('package-lock.base.json')
+
+    if source_package.exist?
+      FileUtils.cp(source_package, dest_package)
+      puts "  ✓ Copied package.json → .github/package.base.json"
+    end
+    
+    if source_lock.exist?
+      FileUtils.cp(source_lock, dest_lock)
+      puts "  ✓ Copied package-lock.json → .github/package-lock.base.json"
+    end
+  end
+
+  def generate_lock_file
+    puts "\n🔒 Generating Gemfile.base.lock..."
+    
+    gemfile_path = @github_dir.join('Gemfile.base')
+    
+    # Try to use Docker if available, otherwise use local bundle
+    if docker_available?
+      generate_lock_with_docker
+    else
+      generate_lock_locally
+    end
+  end
+
+  def docker_available?
+    system('which docker > /dev/null 2>&1')
+  end
+
+  def generate_lock_with_docker
+    puts "  🐳 Using Docker to generate lock file..."
+    
+    # Use official Ruby image to generate lock file
+    cmd = [
+      'docker', 'run', '--rm',
+      '-v', "#{@github_dir}:/work",
+      '-w', '/work',
+      'ruby:3.3.5-slim',
+      'bash', '-c',
+      'apt-get update -qq > /dev/null 2>&1 && ' \
+      'apt-get install -y -qq build-essential > /dev/null 2>&1 && ' \
+      'gem install bundler -v 2.6.3 > /dev/null 2>&1 && ' \
+      'bundle lock --gemfile=Gemfile.base --lockfile=Gemfile.base.lock 2>&1'
+    ].join(' ')
+    
+    if system(cmd)
+      puts "  ✓ Lock file generated successfully with Docker"
+    else
+      puts "  ⚠️  Docker generation failed, trying local bundle..."
+      generate_lock_locally
+    end
+  end
+
+  def generate_lock_locally
+    puts "  💻 Using local bundle to generate lock file..."
+    
+    Dir.chdir(@github_dir) do
+      system('bundle lock --gemfile=Gemfile.base --lockfile=Gemfile.base.lock')
+      if $?.success?
+        puts "  ✓ Lock file generated successfully"
+      else
+        puts "  ⚠️  Failed to generate lock file - you may need to run bundle install manually"
+      end
+    end
+  end
+end
+
+# Run the sync
+if __FILE__ == $0
+  BaseDependencySync.new.run
+end
+

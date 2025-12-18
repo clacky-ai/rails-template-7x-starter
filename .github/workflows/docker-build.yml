@@ -3,12 +3,10 @@ name: Build and Push Docker Image
 on:
   push:
     paths:
+      - 'Gemfile.lock'
+      - 'package-lock.json'
       - '.github/workflows/docker-build.yml'
       - '.github/Dockerfile.base'
-      - '.github/Gemfile.base'
-      - '.github/Gemfile.base.lock'
-      - '.github/package.base.json'
-      - '.github/package-lock.base.json'
 
 env:
   REGISTRY: ghcr.io
@@ -25,6 +23,17 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3.5'
+          bundler-cache: false
+
+      - name: Sync base dependencies
+        run: |
+          chmod +x bin/sync_base_dependencies
+          bin/sync_base_dependencies
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
