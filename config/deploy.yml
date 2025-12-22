@@ -7,21 +7,51 @@ image: clacky-ai/my-app
 # Deploy to these servers.
 servers:
   web:
-    - 43.139.83.103
+    - 139.199.178.175
+  # job:
+  #   hosts:
+  #     - 192.168.0.1
+  #   cmd: bin/jobs
 
-# Credentials for your image host.
+# Enable SSL auto certification via Let's Encrypt and allow for multiple apps on a single web server.
+# Remove this section when using multiple web servers and ensure you terminate SSL at your load balancer.
+#
+# Note: If using Cloudflare, set encryption mode in SSL/TLS setting to "Full" to enable CF-to-app encryption.
+proxy:
+  ssl: true
+  host: app.example.com
+  # Proxy connects to your container on port 80 by default.
+  # app_port: 3000
+
+# Use registry on remote server (central registry for multi-server deployment)
+# Note: This registry doesn't require authentication, but Kamal requires username/password fields
 registry:
-  server: localhost:5555
+  # server: localhost:5555
+  server: 172.17.0.1:5000
+  # Dummy credentials - registry doesn't actually require auth
+  username: "noauth"
+  password: "noauth"
 
 # Configure builder setup.
 builder:
+  remote: ssh://ubuntu@139.199.178.175
+  context: .
+  local: false
   arch: amd64
+  name: my-insecure-builder  # Use pre-configured builder with HTTP registry support
+  # Pass in additional build args needed for your Dockerfile.
+  args:
+    # Use NJU mirror for base image (faster in China)
+    BASE_REGISTRY: ghcr.nju.edu.cn
+    # Use Tsinghua mirror for RubyGems (faster in China)
+    # Set to https://rubygems.org to use official source
+    BUNDLE_MIRROR_URL: https://mirrors.tuna.tsinghua.edu.cn/rubygems/
+    # Use npmmirror (Taobao) for npm packages (faster in China)
+    # Set to https://registry.npmjs.org to use official source
+    NPM_REGISTRY: https://registry.npmmirror.com
+  # args:
+  #   RUBY_VERSION: <%= ENV["RBENV_VERSION"] || ENV["rvm_ruby_string"] || "#{RUBY_ENGINE}-#{RUBY_ENGINE_VERSION}" %>
 
-# Inject ENV variables into containers (secrets come from .kamal/secrets).
-#
-env:
-  clear:
-    CLACKY_PUBLIC_HOST: app.example.com
 
 # Use a different ssh user than root
 #
@@ -39,12 +69,25 @@ volumes:
 #
 asset_path: /app/public/assets
 
+# Configure rolling deploys by setting a wait time between batches of restarts.
+#
+# boot:
+#   limit: 10 # Can also specify as a percentage of total hosts, such as "25%"
+#   wait: 2
+
 # Use accessory services (secrets come from .kamal/secrets).
+#
+
+
+# Inject ENV variables into containers (auto-synced from application.yml)
+env:
+  clear:
+    APPNAME: "ClackyAI APP"
 
 accessories:
   db:
     image: postgres:16.2
-    host: 43.139.83.103
+    host: 139.199.178.175
     port: 5432
     env:
       clear:
@@ -53,4 +96,3 @@ accessories:
         POSTGRES_DB: myapp_production
     directories:
       - data:/var/lib/postgresql/data
-      

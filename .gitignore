@@ -66,3 +66,4 @@ yarn-debug.log*
 /.kamal/env_snapshot.yml
 /.kamal/ssh_setup_done
 /.kamal/secrets
+.claude/

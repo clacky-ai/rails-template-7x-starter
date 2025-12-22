@@ -150,6 +150,12 @@ class KamalEnvSync
   end
 
   def confirm_changes?
+    # Auto-confirm in non-interactive mode (e.g., CI/CD, Kamal hooks)
+    if !STDIN.tty?
+      puts "✅ Auto-confirming changes (non-interactive mode)"
+      return true
+    end
+    
     print "❓ Apply these changes to #{DEPLOY_YML}? [y/N] "
     response = STDIN.gets&.strip&.downcase
     response == 'y' || response == 'yes'

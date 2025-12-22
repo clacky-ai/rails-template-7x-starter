@@ -1,0 +1,23 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Wrapper script for Kamal that loads custom monkey patches
+#
+# This wrapper ensures that custom patches are loaded AFTER Kamal is required
+# but BEFORE it processes commands, allowing us to extend Kamal's functionality
+# without modifying the gem.
+#
+# Usage:
+#   bin/kamal build push
+#   bin/kamal deploy
+#   bin/kamal [any kamal command]
+#
+
+# First, require Kamal gem to load all its classes
+require 'kamal'
+
+# Then apply our custom patches (now that Kamal classes exist)
+require_relative '../lib/kamal_patches'
+
+# Load and execute the actual Kamal gem binary
+load Gem.bin_path('kamal', 'kamal')
