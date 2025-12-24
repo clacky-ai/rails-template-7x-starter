@@ -211,6 +211,27 @@ Kamal hooks are shell scripts that run on your **local development machine** at 
 
 ## 📚 Related Documentation
 
-- [Insecure/HTTP Registry Support](../docs/kamal-insecure-registry.md)
+- [Insecure/HTTP Registry Support](../docs/kamal-insecure-registry.md) - Setup Docker registry and configure Kamal for HTTP registries
 - [Kamal Official Documentation](https://kamal-deploy.org/)
 - [Kamal Hooks Documentation](https://kamal-deploy.org/docs/hooks)
+
+## 🐳 Additional Tools
+
+### Docker Registry Setup
+
+If you need to set up a Docker registry on a remote server:
+
+```bash
+# Install Docker and create registry (for new servers)
+bin/setup-docker-registry \
+  --host 139.199.178.175 \
+  --user ubuntu \
+  --password your-password
+```
+
+This is useful when:
+- You want a private registry for your images
+- You need HTTP registry support (for internal networks)
+- You're setting up a build server from scratch
+
+See [Insecure/HTTP Registry Support](../docs/kamal-insecure-registry.md) for complete setup guide.

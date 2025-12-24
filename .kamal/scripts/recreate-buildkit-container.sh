@@ -15,11 +15,14 @@
 set -e
 
 # Read configuration from config/deploy.yml
-BUILDER_NAME=$(ruby -ryaml -e "puts YAML.load_file('config/deploy.yml')['builder']['name']")
 REMOTE_SSH=$(ruby -ryaml -e "puts YAML.load_file('config/deploy.yml')['builder']['remote']")
 
 # Extract user@host from SSH URL
 REMOTE_HOST=$(echo "$REMOTE_SSH" | sed 's|ssh://||')
+
+# Calculate default Kamal builder name
+# Kamal uses: "kamal-remote-#{remote.gsub(/[^a-z0-9_-]/, "-")}"
+BUILDER_NAME=$(ruby -e "puts 'kamal-remote-' + '$REMOTE_SSH'.gsub(/[^a-z0-9_-]/, '-')")
 
 echo "======================================"
 echo "Recreating BuildKit container"

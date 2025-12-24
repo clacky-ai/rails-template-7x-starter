@@ -27,8 +27,9 @@ proxy:
 # Note: This registry doesn't require authentication, but Kamal requires username/password fields
 registry:
   # server: localhost:5555
-  server: 172.17.0.1:5000
-  # Dummy credentials - registry doesn't actually require auth
+  server: 139.199.178.175:5000
+  # Registry is configured without authentication
+  # These dummy values are required by Kamal but ignored by the registry
   username: "noauth"
   password: "noauth"
 
@@ -38,7 +39,6 @@ builder:
   context: .
   local: false
   arch: amd64
-  name: my-insecure-builder  # Use pre-configured builder with HTTP registry support
   # Pass in additional build args needed for your Dockerfile.
   args:
     # Use NJU mirror for base image (faster in China)
