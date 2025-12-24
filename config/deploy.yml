@@ -26,8 +26,8 @@ proxy:
 # Use registry on remote server (central registry for multi-server deployment)
 # Note: This registry doesn't require authentication, but Kamal requires username/password fields
 registry:
-  # server: localhost:5555
-  server: 139.199.178.175:5000
+  # Docker bridge IP
+  server: 172.17.0.1:5000
   # Registry is configured without authentication
   # These dummy values are required by Kamal but ignored by the registry
   username: "noauth"
