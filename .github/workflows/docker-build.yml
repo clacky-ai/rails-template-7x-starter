@@ -3,8 +3,8 @@ name: Build and Push Docker Image
 on:
   push:
     paths:
-      - '.github/Gemfile.base.lock'
-      - '.github/package-lock.base.json'
+      - '.github/Gemfile.lock'
+      - '.github/package-lock.json'
       - '.github/workflows/docker-build.yml'
       - '.github/Dockerfile.base'
 

@@ -34,16 +34,16 @@ class BaseDependencyChecker
 
       if @gemfile_differs
         puts "   # For Gemfile changes:"
-        puts "   cp Gemfile .github/Gemfile.base"
-        puts "   cp Gemfile.lock .github/Gemfile.base.lock"
-        puts "   cd .github && bundle lock --gemfile=Gemfile.base --lockfile=Gemfile.base.lock"
+        puts "   cp Gemfile .github/"
+        puts "   cp Gemfile.lock .github/"
+        puts "   cd .github && bundle lock"
         puts "" if @package_differs
       end
 
       if @package_differs
         puts "   # For package.json changes:"
-        puts "   cp package.json .github/package.base.json"
-        puts "   cp package-lock.json .github/package-lock.base.json"
+        puts "   cp package.json .github/"
+        puts "   cp package-lock.json .github/"
       end
 
       exit 1
@@ -58,10 +58,10 @@ class BaseDependencyChecker
     puts "📦 Checking Gemfile differences..."
 
     source_gemfile = @root.join('Gemfile')
-    base_gemfile = @github_dir.join('Gemfile.base')
+    base_gemfile = @github_dir.join('Gemfile')
 
     unless base_gemfile.exist?
-      puts "  ❌ .github/Gemfile.base does not exist"
+      puts "  ❌ .github/Gemfile does not exist"
       @has_differences = true
       @gemfile_differs = true
       return
@@ -78,12 +78,12 @@ class BaseDependencyChecker
     base_normalized = normalize_gemfile(base_without_scaffold)
 
     if source_normalized != base_normalized
-      puts "  ❌ Gemfile.base needs update (base part out of sync)"
+      puts "  ❌ .github/Gemfile needs update (out of sync)"
       @has_differences = true
       @gemfile_differs = true
-      show_diff(source_normalized, base_normalized, "Gemfile", "Gemfile.base")
+      show_diff(source_normalized, base_normalized, "Gemfile", ".github/Gemfile")
     else
-      puts "  ✓ Gemfile.base is up to date"
+      puts "  ✓ .github/Gemfile is up to date"
     end
   end
   
@@ -99,10 +99,10 @@ class BaseDependencyChecker
     puts "\n📦 Checking package.json differences..."
 
     source_package = @root.join('package.json')
-    base_package = @github_dir.join('package.base.json')
+    base_package = @github_dir.join('package.json')
 
     unless base_package.exist?
-      puts "  ❌ .github/package.base.json does not exist"
+      puts "  ❌ .github/package.json does not exist"
       @has_differences = true
       @package_differs = true
       return
@@ -127,21 +127,21 @@ class BaseDependencyChecker
     base_normalized = normalize_package_json(base_without_scaffold)
 
     if source_normalized != base_normalized
-      puts "  ❌ package.json differs from package.base.json"
+      puts "  ❌ .github/package.json differs from root package.json"
       @has_differences = true
       @package_differs = true
       show_package_diff(source_json, base_without_scaffold)
     else
-      puts "  ✓ package.json is in sync with package.base.json"
+      puts "  ✓ .github/package.json is in sync"
     end
   end
 
   def check_generator_gems
     puts "\n💎 Scanning generators for required gems..."
 
-    base_gemfile = @github_dir.join('Gemfile.base')
+    base_gemfile = @github_dir.join('Gemfile')
     unless base_gemfile.exist?
-      puts "  ⚠️  Skipping: .github/Gemfile.base does not exist"
+      puts "  ⚠️  Skipping: .github/Gemfile does not exist"
       return
     end
 
@@ -161,14 +161,14 @@ class BaseDependencyChecker
 
         puts "  ✓ #{gem_name} #{version} - present"
       else
-        puts "  ⚠️  #{gem_name} #{version} - not in Gemfile.base"
+        puts "  ⚠️  #{gem_name} #{version} - not in .github/Gemfile"
         puts "     Source: #{source}:#{line}"
         missing_gems << [gem_name, version, source, line]
       end
     end
 
     if missing_gems.any?
-      puts "\n  📝 Suggested gems to add to .github/Gemfile.base:"
+      puts "\n  📝 Suggested gems to add to .github/Gemfile:"
       missing_gems.each do |gem_name, version, source, line|
         puts "     gem '#{gem_name}', '#{version}'"
       end
@@ -178,15 +178,15 @@ class BaseDependencyChecker
   def check_generator_packages
     puts "\n📦 Scanning generators for required packages..."
 
-    base_package = @github_dir.join('package.base.json')
+    base_package = @github_dir.join('package.json')
     unless base_package.exist?
-      puts "  ⚠️  Skipping: .github/package.base.json does not exist"
+      puts "  ⚠️  Skipping: .github/package.json does not exist"
       return
     end
 
     base_json = parse_json_safe(base_package)
     unless base_json
-      puts "  ⚠️  Skipping: Cannot parse package.base.json"
+      puts "  ⚠️  Skipping: Cannot parse .github/package.json"
       return
     end
 
@@ -207,16 +207,24 @@ class BaseDependencyChecker
       if base_deps.include?(pkg_name)
         puts "  ✓ #{pkg_name}@#{version} - present"
       else
-        puts "  ⚠️  #{pkg_name}@#{version} - not in package.base.json"
+        puts "  ⚠️  #{pkg_name}@#{version} - not in .github/package.json"
         puts "     Source: #{source}:#{line}"
         missing_packages << [pkg_name, version, source, line]
       end
     end
 
     if missing_packages.any?
-      puts "\n  📝 Suggested packages to add to .github/package.base.json:"
+      puts "\n  📝 Missing packages found in generators:"
       missing_packages.each do |pkg_name, version, source, line|
-        puts "     \"#{pkg_name}\": \"#{version}\","
+        puts "     \"#{pkg_name}\": \"#{version}\""
+      end
+
+      puts "\n  💡 To add these packages to .github/package.json:"
+      puts ""
+      puts "     cd .github"
+      missing_packages.each do |pkg_name, version, source, line|
+        clean_version = version.gsub(/^[~^>=<]+/, '')
+        puts "     npm install #{pkg_name}@#{clean_version}"
       end
     end
   end

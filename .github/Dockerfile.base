@@ -31,16 +31,16 @@ RUN bundle config set --local path '/usr/local/bundle' && \
     bundle config set --local without 'development:test'
 
 # Copy and install gems (these will be cached in base image)
-COPY --chown=ruby:ruby .github/Gemfile.base ./Gemfile
-COPY --chown=ruby:ruby .github/Gemfile.base.lock ./Gemfile.lock
+COPY --chown=ruby:ruby .github/Gemfile ./Gemfile
+COPY --chown=ruby:ruby .github/Gemfile.lock ./Gemfile.lock
 RUN bundle install --jobs=4 --retry=3 && \
     rm -rf /usr/local/bundle/cache/*.gem && \
     find /usr/local/bundle/gems/ -name "*.c" -delete && \
     find /usr/local/bundle/gems/ -name "*.o" -delete
 
 # Copy and install npm packages (these will be cached in base image)
-COPY --chown=ruby:ruby .github/package.base.json ./package.json
-COPY --chown=ruby:ruby .github/package-lock.base.json ./package-lock.json
+COPY --chown=ruby:ruby .github/package.json ./package.json
+COPY --chown=ruby:ruby .github/package-lock.json ./package-lock.json
 RUN npm ci && \
     npm cache clean --force
 
