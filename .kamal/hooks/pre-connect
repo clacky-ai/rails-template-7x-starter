@@ -63,12 +63,12 @@ class PreConnectCheck
       puts "   • Server was reinstalled/reset"
       puts "   • Network connectivity issues"
       puts ""
-      puts "🔧 Try running: #{colorize('bin/kamal_ssh_setup', :yellow)}"
+      puts "🔧 Try running: #{colorize('.kamal/scripts/kamal_ssh_setup', :yellow)}"
     else
       # First time or setup never completed
       puts "🔐 SSH keys are not set up for this server."
       puts ""
-      puts "🔧 Please run: #{colorize('bin/kamal_ssh_setup', :yellow)}"
+      puts "🔧 Please run: #{colorize('.kamal/scripts/kamal_ssh_setup', :yellow)}"
       puts "   This will:"
       puts "   • Check/generate SSH keys"
       puts "   • Test connections to all servers"

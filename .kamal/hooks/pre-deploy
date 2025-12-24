@@ -19,14 +19,14 @@ PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$PROJECT_ROOT"
 
 # Check if kamal_sync_env exists
-if [ ! -f "bin/kamal_sync_env" ]; then
-    echo -e "${YELLOW}⚠️  bin/kamal_sync_env not found, skipping env sync${NC}"
+if [ ! -f ".kamal/scripts/kamal_sync_env" ]; then
+    echo -e "${YELLOW}⚠️  .kamal/scripts/kamal_sync_env not found, skipping env sync${NC}"
     exit 0
 fi
 
 # Run the sync script
 echo -e "${BLUE}🔄 Syncing environment variables...${NC}"
-if ruby bin/kamal_sync_env; then
+if ruby .kamal/scripts/kamal_sync_env; then
     echo -e "${GREEN}✅ Environment sync completed${NC}"
 else
     echo -e "${YELLOW}⚠️  Environment sync failed or was cancelled${NC}"

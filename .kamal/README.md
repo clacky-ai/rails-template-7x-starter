@@ -4,7 +4,7 @@ This project's Kamal deployment tool includes three intelligent enhancement feat
 
 ## 🎯 Feature Overview
 
-### 1. 📦 Smart Environment Variable Sync (`bin/kamal_sync_env`)
+### 1. 📦 Smart Environment Variable Sync (`.kamal/scripts/kamal_sync_env`)
 
 Automatically syncs environment variables from `config/application.yml` to `config/deploy.yml`.
 
@@ -20,7 +20,7 @@ Automatically syncs environment variables from `config/application.yml` to `conf
 **Usage**:
 ```bash
 # Run sync manually
-bin/kamal_sync_env
+.kamal/scripts/kamal_sync_env
 
 # Automatic integration: runs before every kamal deploy
 ```
@@ -51,7 +51,7 @@ kamal setup
 # The hook runs locally but configures Docker on remote servers
 ```
 
-### 3. 🔐 SSH Key Auto-Management (`bin/kamal_ssh_setup`)
+### 3. 🔐 SSH Key Auto-Management (`.kamal/scripts/kamal_ssh_setup`)
 
 Automatically detects, generates, and injects SSH keys to servers.
 
@@ -68,7 +68,7 @@ Automatically detects, generates, and injects SSH keys to servers.
 **Usage**:
 ```bash
 # Run before first deployment
-bin/kamal_ssh_setup
+.kamal/scripts/kamal_ssh_setup
 
 # Will automatically:
 # 1. Check/generate SSH keys
@@ -108,7 +108,7 @@ KAMAL_USE_CHINA_MIRROR=false kamal deploy
 vim config/deploy.yml
 
 # 2. Setup SSH connection
-bin/kamal_ssh_setup
+.kamal/scripts/kamal_ssh_setup
 
 # 3. Deploy application (automatically syncs env vars and configures Docker)
 kamal setup
@@ -147,14 +147,14 @@ All Kamal hooks run on the **local machine**, not on remote servers. Here's how 
 ruby -c config/application.yml
 
 # Manually run sync to see detailed errors
-bin/kamal_sync_env
+.kamal/scripts/kamal_sync_env
 ```
 
 ### SSH Connection Failed
 
 ```bash
 # Re-run SSH setup
-bin/kamal_ssh_setup
+.kamal/scripts/kamal_ssh_setup
 
 # Manually test connection
 ssh ubuntu@your-server-ip
@@ -195,7 +195,7 @@ According to project configuration, all environment variables are stored as plai
 ## 💡 Tips
 
 - After modifying `config/application.yml`, the next `kamal deploy` will automatically sync
-- Use `bin/kamal_sync_env` to preview changes without deploying
+- Use `.kamal/scripts/kamal_sync_env` to preview changes without deploying
 - SSH setup usually only needs to run once, unless changing servers or keys
 - Docker registry mirror configuration happens automatically during first `kamal setup`
 - All hooks run on your local machine with proper SSH credentials
@@ -223,7 +223,7 @@ If you need to set up a Docker registry on a remote server:
 
 ```bash
 # Install Docker and create registry (for new servers)
-bin/setup-docker-registry \
+.kamal/scripts/setup-docker-registry \
   --host 139.199.178.175 \
   --user ubuntu \
   --password your-password

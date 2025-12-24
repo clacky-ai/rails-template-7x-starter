@@ -28,7 +28,7 @@ http: server gave HTTP response to HTTPS client
 
 ```bash
 # 安装 Docker 并创建 registry
-bin/setup-docker-registry \
+.kamal/scripts/setup-docker-registry \
   --host 139.199.178.175 \
   --user ubuntu \
   --password your-password
@@ -73,7 +73,7 @@ ssh ubuntu@139.199.178.175 "ip route get 139.199.178.175"
 使用上一步返回的 registry 地址：
 
 ```bash
-bin/setup-kamal-insecure-registry \
+.kamal/scripts/setup-kamal-insecure-registry \
   --host 139.199.178.175 \
   --user ubuntu \
   --password your-password \
@@ -314,8 +314,8 @@ cat config/deploy.yml | grep -A 5 builder
 ## 相关文件
 
 ### 创建的文件
-- `bin/setup-docker-registry` - Docker registry 设置脚本
-- `bin/setup-kamal-insecure-registry` - 一键配置脚本
+- `.kamal/scripts/setup-docker-registry` - Docker registry 设置脚本
+- `.kamal/scripts/setup-kamal-insecure-registry` - 一键配置脚本
 - `.kamal/scripts/recreate-buildkit-container.sh` - BuildKit 容器重建脚本
 
 ### 修改的文件

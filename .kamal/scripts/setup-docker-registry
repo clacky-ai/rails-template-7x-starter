@@ -5,7 +5,7 @@
 # with persistent storage and optional authentication.
 #
 # Usage:
-#   bin/setup-docker-registry --host 139.199.178.175 --user ubuntu [--password pass] [--port 5000]
+#   .kamal/scripts/setup-docker-registry --host 139.199.178.175 --user ubuntu [--password pass] [--port 5000]
 
 set -e
 
@@ -52,17 +52,17 @@ if [ -z "$REMOTE_HOST" ] || [ -z "$REMOTE_USER" ]; then
   echo -e "${RED}Error: Missing required arguments${NC}"
   echo ""
   echo "Usage:"
-  echo "  bin/setup-docker-registry --host HOST --user USER [--password PASS] [--port 5000]"
+  echo "  .kamal/scripts/setup-docker-registry --host HOST --user USER [--password PASS] [--port 5000]"
   echo ""
   echo "Examples:"
   echo "  # Using SSH key"
-  echo "  bin/setup-docker-registry --host 139.199.178.175 --user ubuntu"
+  echo "  .kamal/scripts/setup-docker-registry --host 139.199.178.175 --user ubuntu"
   echo ""
   echo "  # Using password"
-  echo "  bin/setup-docker-registry --host 139.199.178.175 --user ubuntu --password mypass"
+  echo "  .kamal/scripts/setup-docker-registry --host 139.199.178.175 --user ubuntu --password mypass"
   echo ""
   echo "  # Custom port"
-  echo "  bin/setup-docker-registry --host 139.199.178.175 --user ubuntu --port 5001"
+  echo "  .kamal/scripts/setup-docker-registry --host 139.199.178.175 --user ubuntu --port 5001"
   exit 1
 fi
 
@@ -270,7 +270,7 @@ echo -e "  Registry address: ${YELLOW}${REGISTRY_ADDRESS_PUBLIC}${NC}"
 echo ""
 echo "Next steps:"
 echo -e "  1. Configure insecure registry support:"
-echo -e "     ${YELLOW}bin/setup-kamal-insecure-registry \\${NC}"
+echo -e "     ${YELLOW}.kamal/scripts/setup-kamal-insecure-registry \\${NC}"
 echo -e "     ${YELLOW}  --host ${REMOTE_HOST} \\${NC}"
 echo -e "     ${YELLOW}  --user ${REMOTE_USER} \\${NC}"
 echo -e "     ${YELLOW}  --registry <REGISTRY_ADDRESS>${NC}"

@@ -10,11 +10,11 @@
 # 5. 配置 builder
 #
 # 用法：
-#   bin/setup-kamal-insecure-registry --host <HOST> --user <USER> [--password <PASSWORD>] --registry <REGISTRY>
+#   .kamal/scripts/setup-kamal-insecure-registry --host <HOST> --user <USER> [--password <PASSWORD>] --registry <REGISTRY>
 #
 # 示例：
-#   bin/setup-kamal-insecure-registry --host 139.199.178.175 --user ubuntu --password mypass --registry 172.17.0.1:5000
-#   bin/setup-kamal-insecure-registry --host 139.199.178.175 --user ubuntu --registry 172.17.0.1:5000
+#   .kamal/scripts/setup-kamal-insecure-registry --host 139.199.178.175 --user ubuntu --password mypass --registry 172.17.0.1:5000
+#   .kamal/scripts/setup-kamal-insecure-registry --host 139.199.178.175 --user ubuntu --registry 172.17.0.1:5000
 
 set -e
 
