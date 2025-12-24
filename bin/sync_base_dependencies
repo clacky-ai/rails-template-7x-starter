@@ -9,30 +9,43 @@ class BaseDependencyChecker
     @root = Pathname.new(__dir__).parent
     @github_dir = @root.join('.github')
     @has_differences = false
+    @gemfile_differs = false
+    @package_differs = false
   end
 
   def run
     puts "🔍 Checking base dependencies...\n"
-    
-    # First scan generators to know which gems are scaffold gems
+
+    # First scan generators to know which gems and packages are scaffold dependencies
     @scaffold_gems = scan_generators_for_gems.keys
-    
+    @scaffold_packages = scan_generators_for_packages.keys
+
     check_gemfile_differences
     check_package_differences
     check_generator_gems
+    check_generator_packages
     
     if @has_differences
       puts "\n" + "="*70
       puts "❌ BASE FILES OUT OF SYNC"
       puts "="*70
       puts "\n💡 To update base files, run:"
-      puts "   cp Gemfile .github/Gemfile.base"
-      puts "   cp Gemfile.lock .github/Gemfile.base.lock"
-      puts "   cp package.json .github/package.base.json"
-      puts "   cp package-lock.json .github/package-lock.base.json"
       puts ""
-      puts "   # Then regenerate lock file if you modified Gemfile.base:"
-      puts "   cd .github && bundle lock --gemfile=Gemfile.base --lockfile=Gemfile.base.lock"
+
+      if @gemfile_differs
+        puts "   # For Gemfile changes:"
+        puts "   cp Gemfile .github/Gemfile.base"
+        puts "   cp Gemfile.lock .github/Gemfile.base.lock"
+        puts "   cd .github && bundle lock --gemfile=Gemfile.base --lockfile=Gemfile.base.lock"
+        puts "" if @package_differs
+      end
+
+      if @package_differs
+        puts "   # For package.json changes:"
+        puts "   cp package.json .github/package.base.json"
+        puts "   cp package-lock.json .github/package-lock.base.json"
+      end
+
       exit 1
     end
     
@@ -43,29 +56,31 @@ class BaseDependencyChecker
 
   def check_gemfile_differences
     puts "📦 Checking Gemfile differences..."
-    
+
     source_gemfile = @root.join('Gemfile')
     base_gemfile = @github_dir.join('Gemfile.base')
-    
+
     unless base_gemfile.exist?
       puts "  ❌ .github/Gemfile.base does not exist"
       @has_differences = true
+      @gemfile_differs = true
       return
     end
-    
+
     source_content = File.read(source_gemfile)
     base_content = File.read(base_gemfile)
-    
+
     # Compare: remove scaffold gems from base before comparison
     base_without_scaffold = remove_scaffold_gems(base_content)
-    
+
     # Normalize both for comparison
     source_normalized = normalize_gemfile(source_content)
     base_normalized = normalize_gemfile(base_without_scaffold)
-    
+
     if source_normalized != base_normalized
       puts "  ❌ Gemfile.base needs update (base part out of sync)"
       @has_differences = true
+      @gemfile_differs = true
       show_diff(source_normalized, base_normalized, "Gemfile", "Gemfile.base")
     else
       puts "  ✓ Gemfile.base is up to date"
@@ -82,48 +97,66 @@ class BaseDependencyChecker
 
   def check_package_differences
     puts "\n📦 Checking package.json differences..."
-    
+
     source_package = @root.join('package.json')
     base_package = @github_dir.join('package.base.json')
-    
+
     unless base_package.exist?
       puts "  ❌ .github/package.base.json does not exist"
       @has_differences = true
+      @package_differs = true
       return
     end
-    
-    source_content = File.read(source_package).strip
-    base_content = File.read(base_package).strip
-    
-    if source_content != base_content
+
+    # Parse JSON files
+    source_json = parse_json_safe(source_package)
+    base_json = parse_json_safe(base_package)
+
+    unless source_json && base_json
+      puts "  ❌ Failed to parse JSON files (invalid JSON)"
+      @has_differences = true
+      @package_differs = true
+      return
+    end
+
+    # Remove scaffold packages from base dependencies
+    base_without_scaffold = remove_scaffold_packages(base_json)
+
+    # Normalize and compare
+    source_normalized = normalize_package_json(source_json)
+    base_normalized = normalize_package_json(base_without_scaffold)
+
+    if source_normalized != base_normalized
       puts "  ❌ package.json differs from package.base.json"
       @has_differences = true
+      @package_differs = true
+      show_package_diff(source_json, base_without_scaffold)
     else
-      puts "  ✓ package.json matches package.base.json"
+      puts "  ✓ package.json is in sync with package.base.json"
     end
   end
 
   def check_generator_gems
     puts "\n💎 Scanning generators for required gems..."
-    
+
     base_gemfile = @github_dir.join('Gemfile.base')
     unless base_gemfile.exist?
       puts "  ⚠️  Skipping: .github/Gemfile.base does not exist"
       return
     end
-    
+
     base_content = File.read(base_gemfile)
     required_gems = scan_generators_for_gems
-    
+
     if required_gems.empty?
       puts "  ℹ️  No additional gems found in generators"
       return
     end
-    
+
     missing_gems = []
     required_gems.each do |gem_name, gem_info|
       version, source, line = gem_info.values_at(:version, :source, :line)
-      
+
       if base_content.match?(/gem\s+['"]#{Regexp.escape(gem_name)}['"]/)
 
         puts "  ✓ #{gem_name} #{version} - present"
@@ -133,7 +166,7 @@ class BaseDependencyChecker
         missing_gems << [gem_name, version, source, line]
       end
     end
-    
+
     if missing_gems.any?
       puts "\n  📝 Suggested gems to add to .github/Gemfile.base:"
       missing_gems.each do |gem_name, version, source, line|
@@ -142,14 +175,65 @@ class BaseDependencyChecker
     end
   end
 
+  def check_generator_packages
+    puts "\n📦 Scanning generators for required packages..."
+
+    base_package = @github_dir.join('package.base.json')
+    unless base_package.exist?
+      puts "  ⚠️  Skipping: .github/package.base.json does not exist"
+      return
+    end
+
+    base_json = parse_json_safe(base_package)
+    unless base_json
+      puts "  ⚠️  Skipping: Cannot parse package.base.json"
+      return
+    end
+
+    base_deps = (base_json['dependencies'] || {}).keys +
+                (base_json['devDependencies'] || {}).keys
+
+    required_packages = scan_generators_for_packages
+
+    if required_packages.empty?
+      puts "  ℹ️  No additional packages found in generators"
+      return
+    end
+
+    missing_packages = []
+    required_packages.each do |pkg_name, pkg_info|
+      version, source, line = pkg_info.values_at(:version, :source, :line)
+
+      if base_deps.include?(pkg_name)
+        puts "  ✓ #{pkg_name}@#{version} - present"
+      else
+        puts "  ⚠️  #{pkg_name}@#{version} - not in package.base.json"
+        puts "     Source: #{source}:#{line}"
+        missing_packages << [pkg_name, version, source, line]
+      end
+    end
+
+    if missing_packages.any?
+      puts "\n  📝 Suggested packages to add to .github/package.base.json:"
+      missing_packages.each do |pkg_name, version, source, line|
+        puts "     \"#{pkg_name}\": \"#{version}\","
+      end
+    end
+  end
+
   def scan_generators_for_gems
-    generators_dir = @root.join('lib/generators')
-    return {} unless generators_dir.exist?
-    
     gems = {}
-    
-    # Scan all generator files
-    Dir.glob("#{generators_dir}/**/*.rb").each do |file|
+
+    # Scan all generator files in both possible locations
+    generator_paths = [
+      @root.join('lib/generators'),
+      @root.join('lib/rails/generators')
+    ]
+
+    generator_paths.each do |generators_dir|
+      next unless generators_dir.exist?
+
+      Dir.glob("#{generators_dir}/**/*.rb").each do |file|
       content = File.read(file)
       relative_path = Pathname.new(file).relative_path_from(@root).to_s
       
@@ -170,14 +254,62 @@ class BaseDependencyChecker
           end
         end
       end
+      end
     end
-    
+
     gems
   end
 
   def common_rails_gem?(name)
     # Skip common Rails gems that are already in base Gemfile
     %w[rails bcrypt].include?(name)
+  end
+
+  def scan_generators_for_packages
+    packages = {}
+
+    # Scan all generator files in both possible locations
+    generator_paths = [
+      @root.join('lib/generators'),
+      @root.join('lib/rails/generators')
+    ]
+
+    generator_paths.each do |generators_dir|
+      next unless generators_dir.exist?
+
+      Dir.glob("#{generators_dir}/**/*.rb").each do |file|
+      content = File.read(file)
+      relative_path = Pathname.new(file).relative_path_from(@root).to_s
+
+      content.lines.each_with_index do |line, index|
+        # Match various npm/yarn install patterns
+        patterns = [
+          # run "npm install package@version"
+          /run\s+["']npm\s+(?:install|add)\s+([a-z0-9_\-]+)@([~^><=\s0-9.]+)["']/,
+          # run %q(npm install package@version)
+          /run\s+%[qQ]\(npm\s+(?:install|add)\s+([a-z0-9_\-]+)@([~^><=\s0-9.]+)\)/,
+          # yarn add package@version
+          /yarn\s+add\s+([a-z0-9_\-]+)@([~^><=\s0-9.]+)/,
+        ]
+
+        patterns.each do |pattern|
+          if line =~ pattern
+            name, version = $1, $2
+            next if common_npm_package?(name)
+
+            packages[name] ||= { version: version.strip, source: relative_path, line: index + 1 }
+          end
+        end
+      end
+      end
+    end
+
+    packages
+  end
+
+  def common_npm_package?(name)
+    # Skip common packages that are already in base package.json
+    %w[esbuild tailwindcss typescript eslint].include?(name)
   end
 
   def normalize_gemfile(content)
@@ -191,20 +323,142 @@ class BaseDependencyChecker
     # Show a simple diff summary
     source_lines = source.lines.map(&:strip).reject(&:empty?)
     base_lines = base.lines.map(&:strip).reject(&:empty?)
-    
+
     only_in_source = (source_lines - base_lines).reject { |l| l.start_with?('#') }
     only_in_base = (base_lines - source_lines).reject { |l| l.start_with?('#') }
-    
+
     if only_in_source.any?
       puts "\n  📝 Lines only in #{source_name}:"
       only_in_source.first(5).each { |line| puts "     + #{line}" }
       puts "     ... (#{only_in_source.size - 5} more)" if only_in_source.size > 5
     end
-    
+
     if only_in_base.any?
       puts "\n  📝 Lines only in #{base_name}:"
       only_in_base.first(5).each { |line| puts "     - #{line}" }
       puts "     ... (#{only_in_base.size - 5} more)" if only_in_base.size > 5
+    end
+  end
+
+  def parse_json_safe(file_path)
+    require 'json'
+    JSON.parse(File.read(file_path))
+  rescue JSON::ParserError => e
+    puts "  ERROR: Invalid JSON in #{file_path}: #{e.message}"
+    nil
+  rescue StandardError => e
+    puts "  ERROR: Failed to read #{file_path}: #{e.message}"
+    nil
+  end
+
+  def remove_scaffold_packages(json)
+    return json unless json.is_a?(Hash)
+
+    # Deep copy to avoid modifying original
+    json_copy = Marshal.load(Marshal.dump(json))
+
+    # Remove from dependencies
+    if json_copy['dependencies'].is_a?(Hash)
+      @scaffold_packages.each do |pkg_name|
+        json_copy['dependencies'].delete(pkg_name)
+      end
+    end
+
+    # Remove from devDependencies if present
+    if json_copy['devDependencies'].is_a?(Hash)
+      @scaffold_packages.each do |pkg_name|
+        json_copy['devDependencies'].delete(pkg_name)
+      end
+    end
+
+    json_copy
+  end
+
+  def normalize_package_json(json)
+    return json unless json.is_a?(Hash)
+    require 'json'
+
+    # Create normalized structure
+    normalized = {}
+
+    # Copy metadata (excluding dependencies)
+    json.each do |key, value|
+      next if %w[dependencies devDependencies].include?(key)
+      normalized[key] = value
+    end
+
+    # Normalize dependencies (sorted alphabetically for comparison)
+    normalized['dependencies'] = sort_hash(json['dependencies'] || {})
+    normalized['devDependencies'] = sort_hash(json['devDependencies'] || {})
+
+    # Return as JSON string for comparison (handles spacing/formatting)
+    JSON.pretty_generate(normalized)
+  end
+
+  def sort_hash(hash)
+    hash.is_a?(Hash) ? Hash[hash.sort] : hash
+  end
+
+  def show_package_diff(source_json, base_json)
+    # Extract and compare dependencies
+    source_deps = source_json['dependencies'] || {}
+    base_deps = base_json['dependencies'] || {}
+
+    source_dev = source_json['devDependencies'] || {}
+    base_dev = base_json['devDependencies'] || {}
+
+    # Find differences in dependencies
+    added_deps = source_deps.keys - base_deps.keys
+    removed_deps = base_deps.keys - source_deps.keys
+    modified_deps = source_deps.keys & base_deps.keys
+    modified_deps.select! { |pkg| source_deps[pkg] != base_deps[pkg] }
+
+    # Find differences in devDependencies
+    added_dev = source_dev.keys - base_dev.keys
+    removed_dev = base_dev.keys - source_dev.keys
+    modified_dev = source_dev.keys & base_dev.keys
+    modified_dev.select! { |pkg| source_dev[pkg] != base_dev[pkg] }
+
+    # Display differences
+    if added_deps.any?
+      puts "\n  📝 Packages added to dependencies:"
+      added_deps.first(5).each do |pkg|
+        puts "     + #{pkg}@#{source_deps[pkg]}"
+      end
+      puts "     ... (#{added_deps.size - 5} more)" if added_deps.size > 5
+    end
+
+    if removed_deps.any?
+      puts "\n  📝 Packages removed from dependencies:"
+      removed_deps.first(5).each do |pkg|
+        puts "     - #{pkg}@#{base_deps[pkg]}"
+      end
+      puts "     ... (#{removed_deps.size - 5} more)" if removed_deps.size > 5
+    end
+
+    if modified_deps.any?
+      puts "\n  📝 Package versions modified in dependencies:"
+      modified_deps.first(3).each do |pkg|
+        puts "     ~ #{pkg}: #{base_deps[pkg]} -> #{source_deps[pkg]}"
+      end
+      puts "     ... (#{modified_deps.size - 3} more)" if modified_deps.size > 3
+    end
+
+    # Similar output for devDependencies
+    if added_dev.any?
+      puts "\n  📝 Packages added to devDependencies:"
+      added_dev.first(5).each do |pkg|
+        puts "     + #{pkg}@#{source_dev[pkg]}"
+      end
+      puts "     ... (#{added_dev.size - 5} more)" if added_dev.size > 5
+    end
+
+    if removed_dev.any?
+      puts "\n  📝 Packages removed from devDependencies:"
+      removed_dev.first(5).each do |pkg|
+        puts "     - #{pkg}@#{base_dev[pkg]}"
+      end
+      puts "     ... (#{removed_dev.size - 5} more)" if removed_dev.size > 5
     end
   end
 end
