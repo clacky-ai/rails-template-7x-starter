@@ -7,7 +7,7 @@ image: clacky-ai/my-app
 # Deploy to these servers.
 servers:
   web:
-    - 139.199.178.175
+    - 106.52.39.164
   # job:
   #   hosts:
   #     - 192.168.0.1
@@ -35,7 +35,7 @@ registry:
 
 # Configure builder setup.
 builder:
-  remote: ssh://ubuntu@139.199.178.175
+  remote: ssh://ubuntu@106.52.39.164
   context: .
   local: false
   arch: amd64
@@ -87,7 +87,7 @@ env:
 accessories:
   db:
     image: postgres:16.2
-    host: 139.199.178.175
+    host: 106.52.39.164
     port: 5432
     env:
       clear:

@@ -157,11 +157,12 @@ builder:
 #### 步骤 4: 创建 Builder
 
 ```bash
-# 1. 创建 builder（会创建不带配置的 BuildKit 容器）
-kamal build create
-
-# 2. 重新创建 BuildKit 容器并挂载配置
-.kamal/scripts/recreate-buildkit-container.sh
+# 重新运行配置脚本即可完成 builder 创建和容器配置
+.kamal/scripts/setup-kamal-insecure-registry \
+  --host 139.199.178.175 \
+  --user ubuntu \
+  --password your-password \
+  --registry 139.199.178.175:5000
 ```
 
 ## 使用
@@ -178,11 +179,13 @@ kamal deploy
 
 ### 删除 Builder 后
 
-如果你用 `kamal build remove` 删除了 builder，需要重新创建：
+如果你用 `kamal build remove` 删除了 builder，重新运行配置脚本：
 
 ```bash
-kamal build create
-.kamal/scripts/recreate-buildkit-container.sh
+.kamal/scripts/setup-kamal-insecure-registry \
+  --host 139.199.178.175 \
+  --user ubuntu \
+  --registry 139.199.178.175:5000
 ```
 
 ## 工作原理
@@ -197,11 +200,11 @@ Kamal 根据 `builder.remote` 自动生成 builder 名称：
 # 生成: kamal-remote-ssh---ubuntu-139-199-178-175
 ```
 
-### 2. BuildKit 容器重建
+### 2. BuildKit 容器配置
 
-`.kamal/scripts/recreate-buildkit-container.sh` 脚本：
-1. 从 `config/deploy.yml` 读取 `builder.remote`
-2. 自动计算 Kamal 默认的 builder 名称
+`setup-kamal-insecure-registry` 脚本会自动：
+1. 从 `config/deploy.yml` 读取 `builder.remote` 和 `builder.name`
+2. 创建 builder（`kamal build create`）
 3. 连接到远程服务器
 4. 停止并删除现有的 BuildKit 容器
 5. 重新创建容器，挂载 `/etc/buildkit/buildkitd.toml` 配置文件
@@ -210,7 +213,7 @@ Kamal 根据 `builder.remote` 自动生成 builder 名称：
 **优点**：
 - 零代码修改，只使用 Kamal 原生功能
 - 配置动态读取，无需硬编码
-- IP 或用户名变更时，重新运行脚本即可
+- 一键完成所有配置
 
 ### 3. BuildKit 配置
 
@@ -237,7 +240,7 @@ docker exec buildx_buildkit_my-insecure-builder0 cat /etc/buildkit/buildkitd.tom
 
 ```bash
 # 构建并推送
-bin/kamal build push
+kamal build push
 
 # 验证镜像在 registry 中（使用 Docker bridge IP）
 ssh ubuntu@139.199.178.175 "curl -s http://172.17.0.1:5000/v2/_catalog"
@@ -262,27 +265,33 @@ ssh ubuntu@139.199.178.175 "ip route get 139.199.178.175"
 - **多服务器部署**: 必须使用公网 IP，接受较慢的速度或使用内网 IP
 
 步骤：
-1. 更新 `/etc/buildkit/buildkitd.toml` 中的 registry 地址为 `172.17.0.1:5000`
-2. 更新 `config/deploy.yml` 中的 `registry.server` 为 `172.17.0.1:5000`
-3. 重新创建 BuildKit 容器：`.kamal/scripts/recreate-buildkit-container.sh`
+1. 更新 `config/deploy.yml` 中的 `registry.server` 为 `172.17.0.1:5000`
+2. 重新运行配置脚本：
+```bash
+.kamal/scripts/setup-kamal-insecure-registry \
+  --host 139.199.178.175 \
+  --user ubuntu \
+  --registry 172.17.0.1:5000
+```
 
 ### 错误: "http: server gave HTTP response to HTTPS client"
 
-BuildKit 容器没有挂载配置文件，运行：
+BuildKit 容器没有挂载配置文件，重新运行配置脚本：
 ```bash
-.kamal/scripts/recreate-buildkit-container.sh
+.kamal/scripts/setup-kamal-insecure-registry \
+  --host 139.199.178.175 \
+  --user ubuntu \
+  --registry 139.199.178.175:5000
 ```
-
-### 错误: "No such file or directory" 重建容器时
-
-远程主机上不存在 `/etc/buildkit/buildkitd.toml` 文件，完成步骤 1 的一次性设置。
 
 ### Builder 未找到
 
-先创建 builder：
+重新运行配置脚本：
 ```bash
-bin/kamal build create
-.kamal/scripts/recreate-buildkit-container.sh
+.kamal/scripts/setup-kamal-insecure-registry \
+  --host 139.199.178.175 \
+  --user ubuntu \
+  --registry 139.199.178.175:5000
 ```
 
 ### 错误: 找不到 config/deploy.yml
@@ -313,13 +322,12 @@ cat config/deploy.yml | grep -A 5 builder
 
 ## 相关文件
 
-### 创建的文件
-- `.kamal/scripts/setup-docker-registry` - Docker registry 设置脚本
-- `.kamal/scripts/setup-kamal-insecure-registry` - 一键配置脚本
-- `.kamal/scripts/recreate-buildkit-container.sh` - BuildKit 容器重建脚本
+### 本地脚本
+- `.kamal/scripts/setup-docker-registry` - Docker registry 设置脚本（包含镜像源测速）
+- `.kamal/scripts/setup-kamal-insecure-registry` - 一键配置脚本（完成所有 Kamal 和 BuildKit 配置）
 
-### 修改的文件
-- `config/deploy.yml` - 配置 registry 和 builder 信息
+### 配置文件
+- `config/deploy.yml` - Kamal 部署配置（registry 和 builder 信息）
 
 ### 远程服务器文件
 - `/etc/buildkit/buildkitd.toml` - BuildKit insecure registry 配置

@@ -25,58 +25,39 @@ Automatically syncs environment variables from `config/application.yml` to `conf
 # Automatic integration: runs before every kamal deploy
 ```
 
-### 2. 🐳 Docker Registry Mirror Auto-Detection (`.kamal/hooks/docker-setup`)
+### 2. 🐳 Docker Registry Mirror Auto-Detection
 
 Automatically detects and configures the fastest Docker registry mirror on remote servers.
 
 **Features**:
-- ✅ First tests Docker Hub direct connection
-- ✅ If failed, automatically tests multiple Chinese registry mirrors
-- ✅ Selects the fastest responding mirror
-- ✅ Automatically configures Docker daemon on remote servers
+- ✅ Tests multiple registry mirrors with actual response time
+- ✅ Selects the fastest responding mirror automatically
+- ✅ Configures Docker daemon with the best mirror
+- ✅ Falls back to Docker Hub if all mirrors fail
+- ✅ Integrated into both manual setup and Kamal hooks
 
 **Execution**: Runs on **local machine**, executes commands on **remote servers** via SSH
 
 **Supported Mirrors**:
+- Docker Hub Direct: `registry-1.docker.io`
 - Tencent Cloud: `mirror.ccs.tencentyun.com`
-- Aliyun: `registry.cn-hangzhou.aliyuncs.com`
-- NetEase: `hub-mirror.c.163.com`
+- DockerProxy: `dockerproxy.com`
 - USTC: `docker.mirrors.ustc.edu.cn`
+- NetEase: `hub-mirror.c.163.com`
+
+**Integration**:
+- Integrated into `.kamal/scripts/setup-docker-registry` (Step 3)
+- Runs during manual Docker registry setup
+- Configures mirror before pulling registry image
+- Prevents slow downloads when setting up registry
 
 **Usage**:
 ```bash
-# Kamal automatically calls during first setup
-kamal setup
-
-# The hook runs locally but configures Docker on remote servers
+# Automatically runs during registry setup
+.kamal/scripts/setup-docker-registry --host <IP> --user <USER>
 ```
 
-### 3. 🔐 SSH Key Auto-Management (`.kamal/scripts/kamal_ssh_setup`)
-
-Automatically detects, generates, and injects SSH keys to servers.
-
-**Features**:
-- ✅ Checks for local SSH keys (prefers ed25519)
-- ✅ Automatically generates new keys if not found
-- ✅ Tests SSH connections to all servers
-- ✅ Automatically injects public keys to failed servers
-- ✅ Supports `ssh-copy-id` and `sshpass`
-- ✅ Provides manual operation instructions
-
-**Execution**: Runs on **local machine**
-
-**Usage**:
-```bash
-# Run before first deployment
-.kamal/scripts/kamal_ssh_setup
-
-# Will automatically:
-# 1. Check/generate SSH keys
-# 2. Test all server connections
-# 3. Inject public keys to unreachable servers
-```
-
-### 4. 🚀 Bundle Mirror for Faster Builds (Dockerfile + `config/deploy.yml`)
+### 3. 🚀 Bundle Mirror for Faster Builds (Dockerfile + `config/deploy.yml`)
 
 Automatically uses Tsinghua RubyGems mirror during Docker builds for faster gem installation.
 
@@ -107,8 +88,9 @@ KAMAL_USE_CHINA_MIRROR=false kamal deploy
 # 1. Configure deploy.yml
 vim config/deploy.yml
 
-# 2. Setup SSH connection
-.kamal/scripts/kamal_ssh_setup
+# 2. Setup SSH keys (if needed)
+ssh-keygen -t ed25519
+ssh-copy-id user@host
 
 # 3. Deploy application (automatically syncs env vars and configures Docker)
 kamal setup
@@ -124,19 +106,13 @@ kamal deploy
 
 ## 📋 Hook Execution Model
 
-All Kamal hooks run on the **local machine**, not on remote servers. Here's how our scripts handle this:
+All Kamal hooks run on the **local machine**, not on remote servers. Current hooks:
 
 | Hook | Runs On | What It Does |
 |------|---------|--------------|
 | `pre-deploy` | Local | Syncs environment variables locally in `config/deploy.yml` |
-| `pre-connect` | Local | Tests SSH connection from local machine to servers |
-| `docker-setup` | Local | **Executes remote commands via SSH** to configure Docker on servers |
 
-**Important**: The `docker-setup` hook runs locally but sends commands to remote servers via SSH. It:
-1. Detects the target server from `$KAMAL_HOSTS` environment variable
-2. Creates a setup script
-3. Executes the script on the remote server via `ssh`
-4. Reports results back to local terminal
+**Important**: All hooks run on your local machine. Scripts can execute commands on remote servers via SSH when needed.
 
 ## 🔧 Troubleshooting
 
@@ -153,22 +129,20 @@ ruby -c config/application.yml
 ### SSH Connection Failed
 
 ```bash
-# Re-run SSH setup
-.kamal/scripts/kamal_ssh_setup
+# Setup SSH keys manually
+ssh-keygen -t ed25519
+ssh-copy-id ubuntu@your-server-ip
 
-# Manually test connection
+# Test connection
 ssh ubuntu@your-server-ip
 ```
 
 ### Docker Image Pull Slow
 
-The `docker-setup` hook should automatically configure mirrors during `kamal setup`. If you need to reconfigure:
+Docker registry mirrors are automatically configured when you run `.kamal/scripts/setup-docker-registry`. If you need to reconfigure:
 
 ```bash
-# Manually trigger docker-setup for a specific host
-KAMAL_HOSTS=your-server-ip KAMAL_SSH_USER=ubuntu .kamal/hooks/docker-setup
-
-# Or SSH to server and configure manually
+# SSH to server and configure manually
 ssh ubuntu@your-server-ip
 sudo vim /etc/docker/daemon.json
 sudo systemctl restart docker
@@ -196,8 +170,8 @@ According to project configuration, all environment variables are stored as plai
 
 - After modifying `config/application.yml`, the next `kamal deploy` will automatically sync
 - Use `.kamal/scripts/kamal_sync_env` to preview changes without deploying
-- SSH setup usually only needs to run once, unless changing servers or keys
-- Docker registry mirror configuration happens automatically during first `kamal setup`
+- SSH keys setup usually only needs to be done once per server
+- Docker registry mirror configuration happens automatically during `.kamal/scripts/setup-docker-registry`
 - All hooks run on your local machine with proper SSH credentials
 
 ## 🔍 How Kamal Hooks Work
@@ -207,7 +181,7 @@ Kamal hooks are shell scripts that run on your **local development machine** at 
 - **Local execution**: All hooks run locally, not on servers
 - **SSH access**: Scripts can execute commands on servers via SSH
 - **Environment variables**: Kamal provides variables like `$KAMAL_HOSTS`, `$KAMAL_ROLE`, etc.
-- **Exit codes**: Non-zero exit codes can stop deployment (our docker-setup uses `exit 0` to continue even on failure)
+- **Exit codes**: Non-zero exit codes can stop deployment
 
 ## 📚 Related Documentation
 

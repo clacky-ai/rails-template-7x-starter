@@ -21,6 +21,85 @@ REGISTRY_PORT=5000
 REGISTRY_NAME="registry"
 REGISTRY_VOLUME="registry-data"
 
+# Function to install Docker (Ubuntu/Debian)
+install_docker() {
+  # Update package index
+  sudo apt-get update -qq
+
+  # Install prerequisites
+  sudo apt-get install -y -qq \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    gnupg \
+    lsb-release
+
+  # Add Docker's official GPG key
+  sudo mkdir -p /etc/apt/keyrings
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+  # Set up the repository
+  echo \
+    "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+    $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+  # Install Docker Engine
+  sudo apt-get update -qq
+  sudo apt-get install -y -qq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+  # Add current user to docker group
+  sudo usermod -aG docker $USER
+
+  # Start Docker service
+  sudo systemctl start docker
+  sudo systemctl enable docker
+}
+
+# Function to check and setup Docker
+check_and_setup_docker() {
+  if command -v docker > /dev/null 2>&1; then
+    DOCKER_VERSION=$(docker --version)
+    echo -e "${GREEN}✓ Docker is installed: ${DOCKER_VERSION}${NC}"
+
+    # Check if Docker daemon is running
+    if docker info > /dev/null 2>&1; then
+      echo -e "${GREEN}✓ Docker daemon is running${NC}"
+    else
+      echo -e "${YELLOW}⚠ Docker daemon is not running${NC}"
+      echo ""
+      echo -e "${BLUE}ℹ Starting Docker daemon...${NC}"
+
+      # Try to start Docker daemon
+      if sudo systemctl start docker 2>/dev/null; then
+        echo -e "${GREEN}✓ Docker daemon started successfully${NC}"
+      else
+        echo -e "${RED}✗ Failed to start Docker daemon${NC}"
+        echo ""
+        echo "Please start Docker manually:"
+        echo "  - macOS: Start Docker Desktop"
+        echo "  - Linux: sudo systemctl start docker"
+        exit 1
+      fi
+    fi
+  else
+    echo -e "${YELLOW}⚠ Docker is not installed${NC}"
+    echo ""
+    echo -e "${BLUE}ℹ Installing Docker...${NC}"
+
+    # Install Docker using the shared function
+    install_docker
+
+    echo -e "${GREEN}✓ Docker installed successfully${NC}"
+
+    # Verify installation
+    if docker info > /dev/null 2>&1; then
+      echo -e "${GREEN}✓ Docker daemon is running${NC}"
+    else
+      echo -e "${YELLOW}⚠ Docker installed but daemon not running. You may need to log out and back in.${NC}"
+    fi
+  fi
+}
+
 # Parse arguments
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -75,101 +154,218 @@ echo -e "Registry port: ${YELLOW}${REGISTRY_PORT}${NC}"
 echo -e "Registry name: ${YELLOW}${REGISTRY_NAME}${NC}"
 echo ""
 
-# Test SSH connection
+# Step 1: Check local Docker installation (required for Kamal)
+echo ""
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BLUE}  Step 1: Test SSH Connection${NC}"
+echo -e "${BLUE}  Step 1: Check Local Docker Installation${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
-if [ -n "$REMOTE_PASSWORD" ]; then
-  # Test with password
-  if ! command -v sshpass &> /dev/null; then
-    echo -e "${RED}✗ sshpass not found${NC}"
-    echo ""
-    echo "Please install sshpass:"
-    echo "  macOS: brew install hudochenkov/sshpass/sshpass"
-    echo "  Ubuntu: sudo apt-get install sshpass"
-    exit 1
-  fi
+check_and_setup_docker
 
-  if sshpass -p "$REMOTE_PASSWORD" ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 "${REMOTE_USER}@${REMOTE_HOST}" "echo 'SSH OK'" > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ SSH connection successful${NC}"
+# Step 2: Check remote Docker installation
+echo ""
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BLUE}  Step 2: Check Remote Docker Installation${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+
+# Export functions and execute remotely
+$SSH_CMD "${REMOTE_USER}@${REMOTE_HOST}" "
+  # Color definitions
+  GREEN='\033[0;32m'
+  YELLOW='\033[1;33m'
+  BLUE='\033[0;34m'
+  RED='\033[0;31m'
+  NC='\033[0m'
+
+  $(declare -f install_docker)
+  $(declare -f check_and_setup_docker)
+  check_and_setup_docker
+"
+
+# Configure Docker registry mirror
+echo ""
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BLUE}  Step 3: Configure Docker Registry Mirror${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+
+echo -e "${BLUE}ℹ Testing registry mirrors to find the fastest...${NC}"
+
+$SSH_CMD "${REMOTE_USER}@${REMOTE_HOST}" bash << 'REMOTE_EOF'
+# Colors for remote output
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m'
+
+# Registry mirrors to test
+MIRRORS=(
+  "https://registry-1.docker.io|Docker Hub Direct"
+  "https://mirror.ccs.tencentyun.com|Tencent Cloud"
+  "https://dockerproxy.com|DockerProxy"
+  "https://docker.mirrors.ustc.edu.cn|USTC"
+  "https://hub-mirror.c.163.com|NetEase"
+)
+
+# Function to test registry speed
+test_registry_speed() {
+  local url="$1"
+  local name="$2"
+
+  # Test with timeout of 3 seconds
+  local start_time=$(date +%s%N)
+  if curl -s -m 3 -o /dev/null -w "%{http_code}" "${url}/v2/" 2>/dev/null | grep -q "200\|401"; then
+    local end_time=$(date +%s%N)
+    local elapsed=$(( (end_time - start_time) / 1000000 )) # Convert to milliseconds
+    echo "${elapsed}|${url}|${name}"
+    return 0
   else
-    echo -e "${RED}✗ SSH connection failed${NC}"
-    exit 1
+    echo "9999|${url}|${name}"
+    return 1
   fi
-  SSH_CMD="sshpass -p $REMOTE_PASSWORD ssh -o StrictHostKeyChecking=no"
-else
-  # Test with SSH key
-  if ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 "${REMOTE_USER}@${REMOTE_HOST}" "echo 'SSH OK'" > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ SSH connection successful${NC}"
+}
+
+echo "Testing registry mirrors..."
+echo ""
+
+fastest_time=9999
+fastest_url=""
+fastest_name=""
+
+# Test all mirrors
+for mirror_info in "${MIRRORS[@]}"; do
+  IFS='|' read -r url name <<< "$mirror_info"
+
+  echo -ne "  Testing ${name}... "
+
+  result=$(test_registry_speed "$url" "$name")
+  IFS='|' read -r time test_url test_name <<< "$result"
+
+  if [ "$time" -lt "$fastest_time" ]; then
+    fastest_time=$time
+    fastest_url=$test_url
+    fastest_name=$test_name
+  fi
+
+  if [ "$time" -eq 9999 ]; then
+    echo -e "${RED}✗ Failed${NC}"
   else
-    echo -e "${RED}✗ SSH connection failed${NC}"
-    echo ""
-    echo "Please ensure SSH key is configured or provide --password"
-    exit 1
+    echo -e "${GREEN}✓ ${time}ms${NC}"
   fi
-  SSH_CMD="ssh -o StrictHostKeyChecking=no"
-fi
+done
 
-# Check if Docker is installed
-echo ""
-echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BLUE}  Step 2: Check Docker Installation${NC}"
-echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
-if $SSH_CMD "${REMOTE_USER}@${REMOTE_HOST}" "command -v docker > /dev/null 2>&1"; then
-  DOCKER_VERSION=$($SSH_CMD "${REMOTE_USER}@${REMOTE_HOST}" "docker --version")
-  echo -e "${GREEN}✓ Docker is installed: ${DOCKER_VERSION}${NC}"
-else
-  echo -e "${YELLOW}⚠ Docker is not installed${NC}"
+# Check if we found any working mirror
+if [ "$fastest_time" -eq 9999 ]; then
+  echo -e "${YELLOW}⚠ All registry mirrors failed, using default configuration${NC}"
   echo ""
-  echo -e "${BLUE}ℹ Installing Docker...${NC}"
+  echo "Configuring Docker daemon with insecure registry support..."
 
-  # Install Docker
-  $SSH_CMD "${REMOTE_USER}@${REMOTE_HOST}" << 'EOF'
-    set -e
+  # Create Docker config directory
+  sudo mkdir -p /etc/docker
 
-    # Update package index
-    sudo apt-get update -qq
+  # Create daemon.json with only insecure-registries
+  sudo tee /etc/docker/daemon.json > /dev/null <<DAEMON_JSON
+{
+  "insecure-registries": ["172.17.0.1:5000"]
+}
+DAEMON_JSON
 
-    # Install prerequisites
-    sudo apt-get install -y -qq \
-      apt-transport-https \
-      ca-certificates \
-      curl \
-      gnupg \
-      lsb-release
+  echo -e "${GREEN}✓ Docker daemon configuration updated${NC}"
 
-    # Add Docker's official GPG key
-    sudo mkdir -p /etc/apt/keyrings
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+  # Reload Docker daemon
+  sudo systemctl daemon-reload 2>/dev/null || true
+  sudo systemctl restart docker 2>/dev/null || sudo service docker restart 2>/dev/null || true
 
-    # Set up the repository
-    echo \
-      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-      $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+  # Wait for Docker to be ready
+  echo "Waiting for Docker to be ready..."
+  sleep 3
 
-    # Install Docker Engine
-    sudo apt-get update -qq
-    sudo apt-get install -y -qq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+  # Verify Docker is running
+  if docker info > /dev/null 2>&1; then
+    echo -e "${GREEN}✓ Docker daemon restarted successfully${NC}"
+  else
+    echo -e "${YELLOW}⚠ Docker daemon may need manual restart${NC}"
+  fi
+elif [[ "$fastest_url" == "https://registry-1.docker.io" ]]; then
+  echo -e "${GREEN}✓ Fastest mirror: ${fastest_name} (${fastest_time}ms)${NC}"
+  echo -e "${GREEN}✓ Docker Hub direct connection is fastest, no mirror needed${NC}"
+  echo ""
+  echo "Configuring Docker daemon with insecure registry support..."
 
-    # Add current user to docker group
-    sudo usermod -aG docker $USER
+  # Create Docker config directory
+  sudo mkdir -p /etc/docker
 
-    # Start Docker service
-    sudo systemctl start docker
-    sudo systemctl enable docker
-EOF
+  # Create daemon.json with only insecure-registries
+  sudo tee /etc/docker/daemon.json > /dev/null <<DAEMON_JSON
+{
+  "insecure-registries": ["172.17.0.1:5000"]
+}
+DAEMON_JSON
 
-  echo -e "${GREEN}✓ Docker installed successfully${NC}"
+  echo -e "${GREEN}✓ Docker daemon configuration updated${NC}"
+
+  # Reload Docker daemon
+  sudo systemctl daemon-reload 2>/dev/null || true
+  sudo systemctl restart docker 2>/dev/null || sudo service docker restart 2>/dev/null || true
+
+  # Wait for Docker to be ready
+  echo "Waiting for Docker to be ready..."
+  sleep 3
+
+  # Verify Docker is running
+  if docker info > /dev/null 2>&1; then
+    echo -e "${GREEN}✓ Docker daemon restarted successfully${NC}"
+  else
+    echo -e "${YELLOW}⚠ Docker daemon may need manual restart${NC}"
+  fi
+else
+  # Configure Docker daemon with the fastest mirror and insecure-registries
+  echo -e "${GREEN}✓ Fastest mirror: ${fastest_name} (${fastest_time}ms)${NC}"
+  echo ""
+  echo "Configuring Docker daemon with mirror and insecure registry support..."
+
+  # Create Docker config directory
+  sudo mkdir -p /etc/docker
+
+  # Create or update daemon.json with both mirror and insecure-registries
+  sudo tee /etc/docker/daemon.json > /dev/null <<DAEMON_JSON
+{
+  "registry-mirrors": ["$fastest_url"],
+  "insecure-registries": ["172.17.0.1:5000"]
+}
+DAEMON_JSON
+
+  echo -e "${GREEN}✓ Docker daemon configuration updated${NC}"
+
+  # Reload Docker daemon
+  sudo systemctl daemon-reload 2>/dev/null || true
+  sudo systemctl restart docker 2>/dev/null || sudo service docker restart 2>/dev/null || true
+
+  # Wait for Docker to be ready
+  echo "Waiting for Docker to be ready..."
+  sleep 3
+
+  # Verify Docker is running
+  if docker info > /dev/null 2>&1; then
+    echo -e "${GREEN}✓ Docker daemon reloaded successfully${NC}"
+    echo ""
+    echo "Registry mirror configured: $fastest_url"
+    echo "Insecure registry configured: 172.17.0.1:5000"
+  else
+    echo -e "${YELLOW}⚠ Docker daemon may need manual restart${NC}"
+  fi
 fi
+REMOTE_EOF
 
 # Setup Docker registry
 echo ""
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BLUE}  Step 3: Setup Docker Registry${NC}"
+echo -e "${BLUE}  Step 4: Setup Docker Registry${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
@@ -196,7 +392,7 @@ docker run -d \
   --restart=unless-stopped \
   -p ${REGISTRY_PORT}:5000 \
   -v ${REGISTRY_VOLUME}:/var/lib/registry \
-  registry:2
+  registry:3
 
 # Wait for registry to be ready
 echo "Waiting for registry to be ready..."
@@ -221,7 +417,7 @@ echo -e "${GREEN}✓ Docker registry setup completed${NC}"
 # Get registry connection info
 echo ""
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BLUE}  Step 4: Get Registry Connection Info${NC}"
+echo -e "${BLUE}  Step 5: Get Registry Connection Info${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
@@ -276,7 +472,7 @@ echo -e "     ${YELLOW}  --user ${REMOTE_USER} \\${NC}"
 echo -e "     ${YELLOW}  --registry <REGISTRY_ADDRESS>${NC}"
 echo ""
 echo -e "  2. Build and push your image:"
-echo -e "     ${YELLOW}bin/kamal build push${NC}"
+echo -e "     ${YELLOW}kamal build push${NC}"
 echo ""
 echo "Verify registry:"
 echo -e "  ${YELLOW}curl http://${REGISTRY_ADDRESS_BRIDGE}/v2/_catalog${NC}"
