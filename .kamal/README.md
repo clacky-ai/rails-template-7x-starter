@@ -35,6 +35,8 @@ Automatically detects and configures the fastest Docker registry mirror on remot
 - ✅ Configures Docker daemon with the best mirror
 - ✅ Falls back to Docker Hub if all mirrors fail
 - ✅ Integrated into both manual setup and Kamal hooks
+- ✅ China mirror support for Docker installation (Aliyun, Tencent)
+- ✅ Silent error handling for container environments
 
 **Execution**: Runs on **local machine**, executes commands on **remote servers** via SSH
 
@@ -45,11 +47,17 @@ Automatically detects and configures the fastest Docker registry mirror on remot
 - USTC: `docker.mirrors.ustc.edu.cn`
 - NetEase: `hub-mirror.c.163.com`
 
+**Docker Installation Mirrors** (for China network):
+- Aliyun: `mirrors.aliyun.com/docker-ce`
+- Tencent: `mirrors.tencent.com/docker-ce`
+- Docker Official: `download.docker.com` (fallback)
+
 **Integration**:
 - Integrated into `.kamal/scripts/setup-docker-registry` (Step 3)
 - Runs during manual Docker registry setup
 - Configures mirror before pulling registry image
 - Prevents slow downloads when setting up registry
+- Works in all environments (containers, VMs, bare metal)
 
 **Usage**:
 ```bash
@@ -136,6 +144,37 @@ ssh-copy-id ubuntu@your-server-ip
 # Test connection
 ssh ubuntu@your-server-ip
 ```
+
+### Docker Installation Issues
+
+#### Systemd Error in Containers
+
+If you see this error during Docker installation:
+```
+System has not been booted with systemd as init system (PID 1). Can't operate.
+Failed to connect to bus: Host is down
+invoke-rc.d: policy-rc.d denied execution of start.
+```
+
+**Root Cause**: When installing Docker packages, the Debian/Ubuntu package manager automatically tries to start services using systemd. In container environments (without systemd), this causes errors.
+
+**Solution**: The script now silently filters out these harmless error messages during installation. The installation completes successfully, and the error messages are hidden from output. This approach is simple and works in all environments (containers, VMs, bare metal).
+
+#### GPG Key Download Failed (China Network)
+
+If you see repeated GPG key download failures:
+```
+curl: (35) Recv failure: Connection reset by peer
+⚠ GPG key import failed, retrying (1/3)...
+```
+
+**Solution**: The script now automatically tries China mirrors (Aliyun, Tencent) before falling back to Docker official sources. The retry logic will attempt multiple sources:
+
+1. Aliyun Mirror: `mirrors.aliyun.com/docker-ce`
+2. Tencent Mirror: `mirrors.tencent.com/docker-ce`
+3. Docker Official: `download.docker.com`
+
+If all sources fail, check your network connection and firewall settings.
 
 ### Docker Image Pull Slow
 

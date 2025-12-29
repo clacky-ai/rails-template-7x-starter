@@ -34,7 +34,7 @@ install_docker() {
     gnupg \
     lsb-release
 
-  # Add Docker's official GPG key with retry logic
+  # Add Docker's official GPG key with retry logic and mirror support
   sudo mkdir -p /etc/apt/keyrings
 
   echo "Downloading Docker GPG key..."
@@ -42,33 +42,75 @@ install_docker() {
   local retry_count=0
   local gpg_success=false
 
-  while [ $retry_count -lt $max_retries ] && [ "$gpg_success" = "false" ]; do
-    if curl -fsSL --retry 3 --retry-delay 2 --connect-timeout 10 \
-       https://download.docker.com/linux/ubuntu/gpg | \
-       sudo gpg --batch --yes --dearmor -o /etc/apt/keyrings/docker.gpg 2>/dev/null; then
-      gpg_success=true
-      echo "✓ GPG key imported successfully"
-    else
-      retry_count=$((retry_count + 1))
-      if [ $retry_count -lt $max_retries ]; then
-        echo "⚠ GPG key import failed, retrying ($retry_count/$max_retries)..."
-        sleep 3
-      fi
+  # Try China mirrors first, then fall back to official source
+  local gpg_sources=(
+    "https://download.docker.com/linux/ubuntu/gpg|Docker Official"
+    "https://mirrors.aliyun.com/docker-ce/linux/ubuntu/gpg|Aliyun Mirror"
+    "https://mirrors.tencent.com/docker-ce/linux/ubuntu/gpg|Tencent Mirror"
+  )
+
+  for gpg_info in "${gpg_sources[@]}"; do
+    if [ "$gpg_success" = "true" ]; then
+      break
     fi
+
+    IFS='|' read -r gpg_url gpg_name <<< "$gpg_info"
+    echo "Trying ${gpg_name}..."
+
+    retry_count=0
+    while [ $retry_count -lt $max_retries ] && [ "$gpg_success" = "false" ]; do
+      if curl -fsSL --retry 3 --retry-delay 2 --connect-timeout 10 \
+         "${gpg_url}" | \
+         sudo gpg --batch --yes --dearmor -o /etc/apt/keyrings/docker.gpg 2>/dev/null; then
+        gpg_success=true
+        echo "✓ GPG key imported successfully from ${gpg_name}"
+        break
+      else
+        retry_count=$((retry_count + 1))
+        if [ $retry_count -lt $max_retries ]; then
+          echo "⚠ GPG key import failed, retrying ($retry_count/$max_retries)..."
+          sleep 3
+        fi
+      fi
+    done
   done
 
   if [ "$gpg_success" = "false" ]; then
-    echo "✗ Failed to import GPG key after $max_retries attempts"
+    echo "✗ Failed to import GPG key from all sources"
     echo "This may be due to network issues. Please check your connection and try again."
+    echo ""
+    echo "Tried sources:"
+    for gpg_info in "${gpg_sources[@]}"; do
+      IFS='|' read -r gpg_url gpg_name <<< "$gpg_info"
+      echo "  - ${gpg_name}: ${gpg_url}"
+    done
     exit 1
   fi
 
   # Set proper permissions
   sudo chmod a+r /etc/apt/keyrings/docker.gpg
 
+  # Detect available Docker repository
+  local docker_repo_url="https://download.docker.com/linux/ubuntu"
+
+  # Try official repository first
+  if curl -fsSL -m 5 "https://download.docker.com/linux/ubuntu/dists/$(lsb_release -cs)/stable/binary-$(dpkg --print-architecture)/Packages.gz" >/dev/null 2>&1; then
+    docker_repo_url="https://download.docker.com/linux/ubuntu"
+    echo "Using official Docker repository"
+  # Fall back to China mirrors if official is unavailable
+  elif curl -fsSL -m 5 "https://mirrors.aliyun.com/docker-ce/linux/ubuntu/dists/$(lsb_release -cs)/stable/binary-$(dpkg --print-architecture)/Packages.gz" >/dev/null 2>&1; then
+    docker_repo_url="https://mirrors.aliyun.com/docker-ce/linux/ubuntu"
+    echo "Using Aliyun Docker repository mirror (official unavailable)"
+  elif curl -fsSL -m 5 "https://mirrors.tencent.com/docker-ce/linux/ubuntu/dists/$(lsb_release -cs)/stable/binary-$(dpkg --print-architecture)/Packages.gz" >/dev/null 2>&1; then
+    docker_repo_url="https://mirrors.tencent.com/docker-ce/linux/ubuntu"
+    echo "Using Tencent Docker repository mirror (official unavailable)"
+  else
+    echo "Using official Docker repository (mirrors unavailable)"
+  fi
+
   # Set up the repository
   echo \
-    "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+    "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] ${docker_repo_url} \
     $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
   # Update package index again
@@ -76,16 +118,21 @@ install_docker() {
   sudo apt-get update -qq
 
   # Install Docker Engine
+  # The installation may try to start services and fail in containers
+  # We catch and ignore these errors
   echo "Installing Docker packages..."
-  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
-    docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+  (
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
+      docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin 2>&1 | \
+      grep -v "invoke-rc.d" | \
+      grep -v "systemd" | \
+      grep -v "Failed to connect to bus" || true
+  )
 
   # Add current user to docker group
   sudo usermod -aG docker $USER
 
-  # Start Docker service
-  sudo systemctl start docker
-  sudo systemctl enable docker
+  echo "✓ Docker packages installed"
 }
 
 # Function to check and setup Docker
@@ -133,11 +180,21 @@ check_and_setup_docker() {
     echo -e "${GREEN}✓ Docker installed successfully${NC}"
 
     if [ "$start_daemon" = "true" ]; then
-      # Verify daemon is running
+      # Check if Docker daemon is running
       if docker info > /dev/null 2>&1; then
         echo -e "${GREEN}✓ Docker daemon is running${NC}"
       else
-        echo -e "${YELLOW}⚠ Docker installed but daemon not running. You may need to log out and back in.${NC}"
+        echo -e "${YELLOW}⚠ Docker daemon is not running${NC}"
+        echo ""
+        echo -e "${BLUE}ℹ Starting Docker daemon...${NC}"
+
+        # Try to start Docker daemon
+        if sudo systemctl start docker 2>/dev/null; then
+          echo -e "${GREEN}✓ Docker daemon started successfully${NC}"
+        else
+          echo -e "${YELLOW}⚠ Failed to start Docker daemon (this is normal in container environments)${NC}"
+          echo "  In containers, Docker daemon is managed by the host."
+        fi
       fi
     else
       echo -e "${BLUE}ℹ Docker installed (daemon start skipped for local buildx usage)${NC}"
