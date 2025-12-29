@@ -90,49 +90,46 @@ install_docker() {
   # Set proper permissions
   sudo chmod a+r /etc/apt/keyrings/docker.gpg
 
-  # Detect available Docker repository
-  local docker_repo_url="https://download.docker.com/linux/ubuntu"
-
-  # Try official repository first
-  if curl -fsSL -m 5 "https://download.docker.com/linux/ubuntu/dists/$(lsb_release -cs)/stable/binary-$(dpkg --print-architecture)/Packages.gz" >/dev/null 2>&1; then
-    docker_repo_url="https://download.docker.com/linux/ubuntu"
-    echo "Using official Docker repository"
-  # Fall back to China mirrors if official is unavailable
-  elif curl -fsSL -m 5 "https://mirrors.aliyun.com/docker-ce/linux/ubuntu/dists/$(lsb_release -cs)/stable/binary-$(dpkg --print-architecture)/Packages.gz" >/dev/null 2>&1; then
-    docker_repo_url="https://mirrors.aliyun.com/docker-ce/linux/ubuntu"
-    echo "Using Aliyun Docker repository mirror (official unavailable)"
-  elif curl -fsSL -m 5 "https://mirrors.tencent.com/docker-ce/linux/ubuntu/dists/$(lsb_release -cs)/stable/binary-$(dpkg --print-architecture)/Packages.gz" >/dev/null 2>&1; then
-    docker_repo_url="https://mirrors.tencent.com/docker-ce/linux/ubuntu"
-    echo "Using Tencent Docker repository mirror (official unavailable)"
-  else
-    echo "Using official Docker repository (mirrors unavailable)"
-  fi
-
-  # Set up the repository
-  echo \
-    "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] ${docker_repo_url} \
-    $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-  # Update package index again
-  echo "Updating package index..."
-  sudo apt-get update -qq
-
-  # Install Docker Engine
-  # The installation may try to start services and fail in containers
-  # We catch and ignore these errors
-  echo "Installing Docker packages..."
-  (
-    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
-      docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin 2>&1 | \
-      grep -v "invoke-rc.d" | \
-      grep -v "systemd" | \
-      grep -v "Failed to connect to bus" || true
+  # Try Docker repositories: official -> mirrors
+  local repos=(
+    "https://download.docker.com/linux/ubuntu|Official"
+    "https://mirrors.aliyun.com/docker-ce/linux/ubuntu|Aliyun"
+    "https://mirrors.tencent.com/docker-ce/linux/ubuntu|Tencent"
   )
 
-  # Add current user to docker group
-  sudo usermod -aG docker $USER
+  for repo_info in "${repos[@]}"; do
+    IFS='|' read -r url name <<< "$repo_info"
+    echo "Trying ${name}..."
 
-  echo "✓ Docker packages installed"
+    # Configure repository
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] ${url} $(lsb_release -cs) stable" | \
+      sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+    # Try apt update and install
+    if sudo apt-get update -qq 2>&1 && apt-cache policy docker-ce >/dev/null 2>&1; then
+      echo "✓ Using ${name}"
+      break
+    fi
+    echo "⚠ ${name} failed"
+  done
+
+  # Install Docker packages
+  echo "Installing Docker packages..."
+  if ! sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+       docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin 2>&1 | \
+       grep -vE "(invoke-rc.d|runlevel|policy-rc.d|systemd|Failed to connect to bus)"; then
+    echo -e "${RED}✗ Installation failed${NC}"
+    exit 1
+  fi
+
+  # Verify installation
+  if ! command -v docker >/dev/null 2>&1; then
+    echo -e "${RED}✗ Docker command not found${NC}"
+    exit 1
+  fi
+
+  sudo usermod -aG docker $USER 2>/dev/null || true
+  echo -e "${GREEN}✓ Docker installed${NC}"
 }
 
 # Function to check and setup Docker
@@ -158,12 +155,11 @@ check_and_setup_docker() {
         if sudo systemctl start docker 2>/dev/null; then
           echo -e "${GREEN}✓ Docker daemon started successfully${NC}"
         else
-          echo -e "${RED}✗ Failed to start Docker daemon${NC}"
-          echo ""
-          echo "Please start Docker manually:"
-          echo "  - macOS: Start Docker Desktop"
-          echo "  - Linux: sudo systemctl start docker"
-          exit 1
+          echo -e "${YELLOW}⚠ Failed to start Docker daemon (this is normal in container environments)${NC}"
+          echo "  In containers, Docker daemon is managed by the host."
+          echo "  On normal hosts, you may need to start it manually:"
+          echo "    - macOS: Start Docker Desktop"
+          echo "    - Linux: sudo systemctl start docker"
         fi
       fi
     else
