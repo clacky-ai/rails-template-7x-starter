@@ -22,7 +22,7 @@ module FriendlyErrorHandlingConcern
     end
   end
 
-  def handle_routing_error
+  def handle_routing_error(path = nil)
     Rails.logger.error("404 - Path not found: #{request.method} #{request.path}", broadcast: false)
 
     if request.format.json?

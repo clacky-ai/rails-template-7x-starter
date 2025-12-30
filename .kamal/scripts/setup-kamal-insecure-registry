@@ -1,0 +1,293 @@
+#!/usr/bin/env bash
+
+# Kamal Insecure Registry One-Click Setup Script
+#
+# Features:
+# 1. Configure SSH public key to remote server
+# 2. Test SSH connection
+# 3. Create BuildKit configuration on remote server
+# 4. Update local configuration files
+# 5. Configure builder
+#
+# Usage:
+#   .kamal/scripts/setup-kamal-insecure-registry --host <HOST> --user <USER> [--password <PASSWORD>] --registry <REGISTRY>
+#
+# Examples:
+#   .kamal/scripts/setup-kamal-insecure-registry --host 139.199.178.175 --user ubuntu --password mypass --registry 172.17.0.1:5000
+#   .kamal/scripts/setup-kamal-insecure-registry --host 139.199.178.175 --user ubuntu --registry 172.17.0.1:5000
+
+set -e
+
+# Color definitions
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Default values
+REMOTE_HOST=""
+REMOTE_USER=""
+REMOTE_PASSWORD=""
+REGISTRY_SERVER=""
+BUILDER_NAME="kamal-insecure-builder"
+SSH_KEY_PATH="$HOME/.ssh/id_ed25519"
+
+# Print functions
+print_header() {
+    echo -e "\n${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${BLUE}  $1${NC}"
+    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
+}
+
+print_success() {
+    echo -e "${GREEN}✓ $1${NC}"
+}
+
+print_error() {
+    echo -e "${RED}✗ $1${NC}"
+}
+
+print_warning() {
+    echo -e "${YELLOW}⚠ $1${NC}"
+}
+
+print_info() {
+    echo -e "${BLUE}ℹ $1${NC}"
+}
+
+# Check if Kamal is installed
+check_kamal_installed() {
+    if ! gem list -i kamal > /dev/null 2>&1; then
+        print_warning "Kamal gem is not installed"
+        print_info "Installing Kamal..."
+
+        if gem install kamal; then
+            print_success "Kamal installed successfully"
+
+            # Refresh rbenv shims if using rbenv
+            if command -v rbenv > /dev/null 2>&1; then
+                print_info "Refreshing rbenv shims..."
+
+                # Fix rbenv shim corruption issue in containers
+                # Remove .rbenv-shim if it exists and is causing rehash to fail
+                if [ -n "$RBENV_ROOT" ] && [ -f "$RBENV_ROOT/shims/.rbenv-shim" ]; then
+                    rm -f "$RBENV_ROOT/shims/.rbenv-shim" 2>/dev/null || true
+                elif [ -f "$HOME/.rbenv/shims/.rbenv-shim" ]; then
+                    rm -f "$HOME/.rbenv/shims/.rbenv-shim" 2>/dev/null || true
+                fi
+
+                rbenv rehash 2>/dev/null || {
+                    print_warning "rbenv rehash failed, but kamal gem is installed"
+                }
+            fi
+
+            # Verify installation
+            if command -v kamal > /dev/null 2>&1; then
+                print_success "Kamal command is now available"
+            else
+                print_warning "Kamal installed but command not found in PATH"
+                print_info "The kamal gem is installed and should be available"
+            fi
+        else
+            print_error "Failed to install Kamal"
+            echo ""
+            echo "Please install manually:"
+            echo "  gem install kamal"
+            exit 1
+        fi
+    fi
+}
+
+# Usage help
+usage() {
+    cat << EOF
+Usage: $0 --host <HOST> --user <USER> [--password <PASSWORD>] --registry <REGISTRY>
+
+Required arguments:
+  --host <HOST>           Remote server IP address
+  --user <USER>           Remote server username
+  --registry <REGISTRY>   Registry address (e.g.: 172.17.0.1:5000)
+
+Optional arguments:
+  --password <PASSWORD>   Remote server password (not needed if SSH key is configured)
+  --builder-name <NAME>   Builder name (default: kamal-insecure-builder)
+  --ssh-key <PATH>        SSH key path (default: ~/.ssh/id_ed25519)
+  -h, --help             Show this help message
+
+Examples:
+  # Configure with password
+  $0 --host 139.199.178.175 --user ubuntu --password mypass --registry 172.17.0.1:5000
+
+  # Use existing SSH key
+  $0 --host 139.199.178.175 --user ubuntu --registry 172.17.0.1:5000
+
+EOF
+    exit 1
+}
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --host)
+            REMOTE_HOST="$2"
+            shift 2
+            ;;
+        --user)
+            REMOTE_USER="$2"
+            shift 2
+            ;;
+        --password)
+            REMOTE_PASSWORD="$2"
+            shift 2
+            ;;
+        --registry)
+            REGISTRY_SERVER="$2"
+            shift 2
+            ;;
+        --builder-name)
+            BUILDER_NAME="$2"
+            shift 2
+            ;;
+        --ssh-key)
+            SSH_KEY_PATH="$2"
+            shift 2
+            ;;
+        -h|--help)
+            usage
+            ;;
+        *)
+            print_error "Unknown argument: $1"
+            usage
+            ;;
+    esac
+done
+
+# Validate required arguments
+if [ -z "$REMOTE_HOST" ] || [ -z "$REMOTE_USER" ] || [ -z "$REGISTRY_SERVER" ]; then
+    print_error "Missing required arguments"
+    usage
+fi
+
+# Check if Kamal is installed
+check_kamal_installed
+
+# Display configuration info
+print_header "Configuration Information"
+echo "Remote server: ${REMOTE_USER}@${REMOTE_HOST}"
+echo "Registry address: ${REGISTRY_SERVER}"
+echo "Builder name: ${BUILDER_NAME}"
+echo "SSH key path: ${SSH_KEY_PATH}"
+echo ""
+
+# Step 1: Test SSH connection
+print_header "Step 1: Test SSH Connection"
+if ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 "${REMOTE_USER}@${REMOTE_HOST}" "echo 'SSH connection successful'" &> /dev/null; then
+    print_success "SSH connection test passed"
+else
+    print_error "SSH connection failed"
+    exit 1
+fi
+
+# Step 2: Create BuildKit configuration on remote server
+print_header "Step 2: Configure Remote Server BuildKit"
+
+print_info "Creating BuildKit configuration file..."
+ssh "${REMOTE_USER}@${REMOTE_HOST}" << EOF
+    set -e
+
+    # Create configuration directory
+    sudo mkdir -p /etc/buildkit
+
+    # Create configuration file
+    sudo tee /etc/buildkit/buildkitd.toml > /dev/null << 'BUILDKIT_CONFIG'
+[registry."${REGISTRY_SERVER}"]
+  http = true
+  insecure = true
+BUILDKIT_CONFIG
+
+    # Verify configuration file
+    echo "BuildKit configuration file content:"
+    sudo cat /etc/buildkit/buildkitd.toml
+EOF
+
+print_success "BuildKit configuration created"
+
+# Step 3: Create builder
+print_header "Step 3: Create Kamal Builder"
+
+print_info "Creating builder..."
+if kamal build create 2>&1; then
+    print_success "Builder created successfully"
+else
+    print_warning "Builder may already exist, continuing..."
+fi
+
+# Step 4: Recreate BuildKit container with mounted config
+print_header "Step 4: Configure BuildKit Container"
+
+print_info "Calculating Kamal builder name..."
+
+# Calculate the actual builder name that Kamal uses
+# Kamal uses: "kamal-remote-#{remote.gsub(/[^a-z0-9_-]/, "-")}"
+REMOTE_SSH="ssh://${REMOTE_USER}@${REMOTE_HOST}"
+ACTUAL_BUILDER_NAME=$(ruby -e "puts 'kamal-remote-' + '$REMOTE_SSH'.gsub(/[^a-z0-9_-]/, '-')")
+
+print_info "Actual Kamal builder name: ${ACTUAL_BUILDER_NAME}"
+print_info "Recreating BuildKit container with mounted configuration file..."
+
+# Recreate the BuildKit container with config file mounted
+ssh "${REMOTE_USER}@${REMOTE_HOST}" bash << REMOTE_EOF
+  set -e
+
+  CONTAINER_NAME="buildx_buildkit_${ACTUAL_BUILDER_NAME}0"
+  VOLUME_NAME="buildx_buildkit_${ACTUAL_BUILDER_NAME}0_state"
+
+  echo "Container name: \$CONTAINER_NAME"
+  echo "Volume name: \$VOLUME_NAME"
+  echo ""
+
+  echo "Stopping and removing \$CONTAINER_NAME..."
+  docker stop \$CONTAINER_NAME 2>/dev/null || true
+  docker rm \$CONTAINER_NAME 2>/dev/null || true
+
+  echo "Creating new BuildKit container with config mounted..."
+  docker run -d \\
+    --name \$CONTAINER_NAME \\
+    --restart unless-stopped \\
+    --net host \\
+    --privileged \\
+    -v /etc/buildkit/buildkitd.toml:/etc/buildkit/buildkitd.toml:ro \\
+    -v \$VOLUME_NAME:/var/lib/buildkit \\
+    moby/buildkit:buildx-stable-1 \\
+    --config /etc/buildkit/buildkitd.toml \\
+    --allow-insecure-entitlement=network.host
+
+  echo ""
+  echo "Verifying config file in container..."
+  docker exec \$CONTAINER_NAME cat /etc/buildkit/buildkitd.toml
+  echo ""
+  echo "BuildKit container ready!"
+REMOTE_EOF
+
+print_success "BuildKit container configured"
+
+# Completion
+print_header "Configuration Complete"
+print_success "All configuration completed!"
+echo ""
+echo "Configuration summary:"
+echo "  • SSH connection: ${REMOTE_USER}@${REMOTE_HOST}"
+echo "  • Registry: ${REGISTRY_SERVER}"
+echo "  • Builder: ${BUILDER_NAME}"
+echo ""
+echo "Next steps:"
+echo "  1. Build and push image:"
+echo "     ${GREEN}kamal build push${NC}"
+echo ""
+echo "  2. Full deployment:"
+echo "     ${GREEN}kamal deploy${NC}"
+echo ""
+echo "Notes:"
+echo "  • To reconfigure, simply run this script again"
+echo ""

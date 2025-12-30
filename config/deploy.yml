@@ -1,0 +1,98 @@
+# Name of your application. Used to uniquely configure containers.
+service: my-app
+
+# Name of the container image.
+image: clacky-ai/my-app
+
+# Deploy to these servers.
+servers:
+  web:
+    - 106.52.39.164
+  # job:
+  #   hosts:
+  #     - 192.168.0.1
+  #   cmd: bin/jobs
+
+# Enable SSL auto certification via Let's Encrypt and allow for multiple apps on a single web server.
+# Remove this section when using multiple web servers and ensure you terminate SSL at your load balancer.
+#
+# Note: If using Cloudflare, set encryption mode in SSL/TLS setting to "Full" to enable CF-to-app encryption.
+proxy:
+  ssl: true
+  host: app.example.com
+  # Proxy connects to your container on port 80 by default.
+  # app_port: 3000
+
+# Use registry on remote server (central registry for multi-server deployment)
+# Note: This registry doesn't require authentication, but Kamal requires username/password fields
+registry:
+  # Docker bridge IP
+  server: 172.17.0.1:5000
+  # Registry is configured without authentication
+  # These dummy values are required by Kamal but ignored by the registry
+  username: "noauth"
+  password: "noauth"
+
+# Configure builder setup.
+builder:
+  remote: ssh://ubuntu@106.52.39.164
+  context: .
+  local: false
+  arch: amd64
+  # Pass in additional build args needed for your Dockerfile.
+  args:
+    # Use NJU mirror for base image (faster in China)
+    BASE_REGISTRY: ghcr.nju.edu.cn
+    # Use Tsinghua mirror for RubyGems (faster in China)
+    # Set to https://rubygems.org to use official source
+    BUNDLE_MIRROR_URL: https://mirrors.tuna.tsinghua.edu.cn/rubygems/
+    # Use npmmirror (Taobao) for npm packages (faster in China)
+    # Set to https://registry.npmjs.org to use official source
+    NPM_REGISTRY: https://registry.npmmirror.com
+  # args:
+  #   RUBY_VERSION: <%= ENV["RBENV_VERSION"] || ENV["rvm_ruby_string"] || "#{RUBY_ENGINE}-#{RUBY_ENGINE_VERSION}" %>
+
+
+# Use a different ssh user than root
+#
+ssh:
+  user: ubuntu
+
+# Use a persistent storage volume.
+#
+volumes:
+  - "app_storage:/app/storage"
+
+# Bridge fingerprinted assets, like JS and CSS, between versions to avoid
+# hitting 404 on in-flight requests. Combines all files from new and old
+# version inside the asset_path.
+#
+asset_path: /app/public/assets
+
+# Configure rolling deploys by setting a wait time between batches of restarts.
+#
+# boot:
+#   limit: 10 # Can also specify as a percentage of total hosts, such as "25%"
+#   wait: 2
+
+# Use accessory services (secrets come from .kamal/secrets).
+#
+
+
+# Inject ENV variables into containers (auto-synced from application.yml)
+env:
+  clear:
+    APPNAME: "ClackyAI APP"
+
+accessories:
+  db:
+    image: postgres:16.2
+    host: 106.52.39.164
+    port: 5432
+    env:
+      clear:
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+        POSTGRES_DB: myapp_production
+    directories:
+      - data:/var/lib/postgresql/data
