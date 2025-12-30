@@ -26,7 +26,6 @@ gem "aws-sdk-s3", "~> 1.206"
 group :development do
   gem "error_highlight", ">= 0.4.0", platforms: [ :ruby ]
   gem "listen"
-  gem "herb", "~> 0.7.5"  # For ERB template parsing and manipulation
 end
 
 group :development, :test do
@@ -37,6 +36,7 @@ group :development, :test do
   gem "brakeman", require: false
   gem "rubocop-rails-omakase", require: false
   gem "parser", "3.3.5.0"  # Match Ruby 3.3.5 version
+  gem "herb", "~> 0.7.5"  # For ERB template parsing and manipulation
 end
 
 group :test do
