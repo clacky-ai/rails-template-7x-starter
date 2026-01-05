@@ -44,6 +44,8 @@ class LlmGenerator < Rails::Generators::Base
     llm_specific_config = <<~YAML
 
       # LLM Service Specific Configuration
+      # When budget exceeded or rate limited, click the "Add Feature" button at the bottom-right corner of Thread page to configure your personal API key
+      # Note: Clacky's built-in API key has monthly quota and request rate limits
       LLM_MODEL: '<%= ENV.fetch("CLACKY_LLM_MODEL", 'gemini-2.5-flash') %>'
       # LLM Service Specific Configuration end
     YAML
