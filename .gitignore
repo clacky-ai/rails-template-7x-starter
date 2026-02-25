@@ -54,6 +54,7 @@ yarn-debug.log*
 .env
 .byebug_history
 .DS_Store
+.history
 
 # Clacky-specific files
 /.1024*
